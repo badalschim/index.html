@@ -353,7 +353,7 @@ function generatePDF() {
   y+=14; doc.setFont('helvetica','bold'); doc.setTextColor(40,40,40);
   doc.text("PAY TO:", M, y);
   doc.setFont('helvetica','normal'); doc.setTextColor(80,80,80);
-  y+=13; doc.text(document.getElementById('bank').value, M, y);
+  y+=13; doc.text("Bank Name: "+document.getElementById('bank').value, M, y);
   y+=12; doc.text("Account Name: "+document.getElementById('acct').value, M, y);
   y+=12; doc.text("Zelle Number.: "+document.getElementById('zelle').value, M, y);
 
