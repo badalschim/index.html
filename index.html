@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>PCS Invoice</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: Arial, sans-serif; background: #fff; color: #222; font-size: 14px; padding: 16px; }
+.sel-screen { text-align: center; padding: 2rem 0; }
+.sel-title { font-size: 20px; font-weight: 700; color: #222; margin-bottom: 6px; }
+.sel-sub { font-size: 13px; color: #666; margin-bottom: 2rem; }
+.model-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; max-width: 500px; margin: 0 auto; }
+.model-card { border: 1.5px solid #ddd; border-radius: 12px; padding: 1.5rem 1.25rem; cursor: pointer; background: #fff; text-align: left; transition: border-color 0.15s, background 0.15s; }
+.model-card:hover { border-color: #888; background: #f9f9f9; }
+.model-card .icon { font-size: 26px; margin-bottom: 10px; }
+.model-card .mtitle { font-size: 15px; font-weight: 700; color: #222; margin-bottom: 6px; }
+.model-card .mdesc { font-size: 12px; color: #666; line-height: 1.6; }
+.model-card .mbadge { display: inline-block; margin-top: 10px; font-size: 11px; padding: 3px 10px; border-radius: 20px; background: #e8f0fe; color: #1a56c4; font-weight: 600; }
+.section { background: #fff; border: 1px solid #e0e0e0; border-radius: 10px; padding: 1.25rem; margin-bottom: 1rem; }
+.sec-title { font-size: 11px; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 1rem; }
+.g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+.g3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+label { font-size: 11px; color: #666; display: block; margin-bottom: 3px; }
+input, select, textarea { width: 100%; font-family: Arial, sans-serif; font-size: 13px; padding: 7px 9px; border: 1px solid #ccc; border-radius: 6px; background: #fff; color: #222; outline: none; }
+input:focus, select:focus { border-color: #555; }
+textarea { resize: vertical; }
+.day-block { border: 1px solid #e8e8e8; border-radius: 8px; padding: 12px; margin-bottom: 8px; }
+.day-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.day-name { font-size: 14px; font-weight: 700; color: #222; }
+.day-sum { font-size: 13px; font-weight: 700; color: #1a56c4; }
+.col-heads { display: grid; gap: 6px; margin-bottom: 4px; }
+.col-heads span { font-size: 10px; color: #888; font-weight: 700; }
+.house-row { display: grid; gap: 6px; margin-bottom: 4px; align-items: center; }
+.house-row input { font-size: 12px; padding: 5px 8px; }
+.ri { text-align: right; }
+.add-btn { background: none; border: 1.5px dashed #ccc; border-radius: 6px; padding: 5px 10px; font-size: 12px; color: #888; cursor: pointer; margin-top: 4px; }
+.add-btn:hover { background: #f5f5f5; }
+.driver-row { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
+.driver-row label { white-space: nowrap; margin: 0; font-size: 11px; }
+.driver-row select { width: auto; min-width: 100px; }
+.total-bar { display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.25rem; background: #f5f7ff; border-radius: 8px; margin-bottom: 1rem; border: 1px solid #d0d8f0; }
+.total-label { font-size: 14px; color: #555; }
+.total-value { font-size: 24px; font-weight: 700; color: #1a3a8f; }
+.gen-btn { width: 100%; padding: 13px; background: #1a3a8f; color: #fff; border: none; border-radius: 8px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: Arial, sans-serif; }
+.gen-btn:hover { background: #153070; }
+.back-btn { background: none; border: none; font-size: 13px; color: #888; cursor: pointer; padding: 0 0 1rem 0; display: block; font-family: Arial, sans-serif; }
+.back-btn:hover { color: #222; }
+.model-tag { display: inline-block; font-size: 11px; padding: 3px 12px; border-radius: 20px; background: #e8f0fe; color: #1a56c4; font-weight: 700; margin-bottom: 1rem; }
+.pct-readonly { background: #f5f5f5 !important; color: #888 !important; }
+@media (max-width: 480px) {
+  .model-cards { grid-template-columns: 1fr; }
+  .g2, .g3 { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- Selection screen -->
+<div id="screen-sel">
+  <div class="sel-screen">
+    <div class="sel-title">Paula's Cleaning Squad</div>
+    <div class="sel-sub">Selecione o tipo de invoice</div>
+    <div class="model-cards">
+      <div class="model-card" onclick="startModel(1)">
+        <div class="icon">🏠</div>
+        <div class="mtitle">70% do valor da casa</div>
+        <div class="mdesc">Informe o valor de cada casa. O sistema calcula 70% automaticamente como seu pagamento.</div>
+        <div class="mbadge">70% automático</div>
+      </div>
+      <div class="model-card" onclick="startModel(2)">
+        <div class="icon">📋</div>
+        <div class="mtitle">Diária</div>
+        <div class="mdesc">Liste as casas do dia e preencha o valor total recebido manualmente.</div>
+        <div class="mbadge">Valor manual</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Form screen -->
+<div id="screen-form" style="display:none">
+  <button class="back-btn" onclick="goBack()">← Trocar modelo</button>
+  <div id="model-tag-el" class="model-tag"></div>
+
+  <div class="section">
+    <div class="sec-title">Informações gerais</div>
+    <div class="g2">
+      <div><label>Seu nome (Account Name)</label><input id="acct" placeholder="Seu nome" /></div>
+      <div><label>Número Zelle</label><input id="zelle" placeholder="000 000 0000" /></div>
+    </div>
+    <div class="g3">
+      <div><label>Data de emissão</label><input id="date_issue" type="date" /></div>
+      <div><label>Período início</label><input id="date_start" type="date" /></div>
+      <div><label>Período fim</label><input id="date_end" type="date" /></div>
+    </div>
+    <div><label>Observação</label><textarea id="obs" rows="2" placeholder="Ex: Domingo 26/04 casa da Praia"></textarea></div>
+  </div>
+
+  <div class="section">
+    <div class="sec-title">Dias trabalhados</div>
+    <div id="days-container"></div>
+  </div>
+
+  <div class="total-bar">
+    <span class="total-label">Total geral</span>
+    <span class="total-value" id="grand-total">$0.00</span>
+  </div>
+  <button class="gen-btn" onclick="generatePDF()">⬇ Gerar e baixar PDF</button>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+const LOGO_B64 = "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";
+
+const DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+let currentModel = 0;
+
+function startModel(m) {
+  currentModel = m;
+  document.getElementById('screen-sel').style.display = 'none';
+  document.getElementById('screen-form').style.display = 'block';
+  document.getElementById('model-tag-el').textContent = m===1 ? 'Modelo: 70% do valor da casa' : 'Modelo: Diária (valor manual)';
+  buildDays();
+}
+
+function goBack() {
+  document.getElementById('screen-sel').style.display = 'block';
+  document.getElementById('screen-form').style.display = 'none';
+  document.getElementById('days-container').innerHTML = '';
+  document.getElementById('grand-total').textContent = '$0.00';
+}
+
+function buildDays() {
+  const c = document.getElementById('days-container');
+  c.innerHTML = '';
+  DAYS.forEach(day => {
+    const d = document.createElement('div');
+    d.className = 'day-block';
+    if (currentModel === 1) {
+      d.innerHTML = `
+        <div class="day-header">
+          <span class="day-name">${day}</span>
+          <span class="day-sum" id="sum-${day}">$0.00</span>
+        </div>
+        <div class="col-heads" style="grid-template-columns:1fr 105px 90px">
+          <span>Casa / Cliente</span><span style="text-align:right">Valor casa ($)</span><span style="text-align:right">Seu 70%</span>
+        </div>
+        <div id="houses-${day}"></div>
+        <button class="add-btn" onclick="addHouse('${day}')">+ Casa</button>
+        <div class="driver-row">
+          <label>Driver/Helper:</label>
+          <select id="driver-${day}"><option>Driver</option><option>Helper</option><option>—</option></select>
+        </div>`;
+    } else {
+      d.innerHTML = `
+        <div class="day-header">
+          <span class="day-name">${day}</span>
+          <span class="day-sum" id="sum-${day}"></span>
+        </div>
+        <div class="col-heads" style="grid-template-columns:1fr"><span>Casas do dia</span></div>
+        <div id="houses-${day}"></div>
+        <button class="add-btn" onclick="addHouse('${day}')">+ Casa</button>
+        <div style="margin-top:10px;display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
+          <div style="flex:1;min-width:120px"><label>Total do dia ($)</label><input type="number" id="total-${day}" step="0.01" min="0" placeholder="0.00" oninput="calcDayM2('${day}')" /></div>
+          <div class="driver-row" style="margin-top:0">
+            <label>Driver/Helper:</label>
+            <select id="driver-${day}"><option>Driver</option><option>Helper</option><option>—</option></select>
+          </div>
+        </div>`;
+    }
+    c.appendChild(d);
+    addHouse(day);
+  });
+}
+
+function addHouse(day) {
+  const c = document.getElementById('houses-'+day);
+  const row = document.createElement('div');
+  row.className = 'house-row';
+  if (currentModel === 1) {
+    row.style.gridTemplateColumns = '1fr 105px 90px';
+    row.innerHTML = `
+      <input placeholder="Nome da casa/cliente" />
+      <input class="ri" type="number" step="0.01" min="0" placeholder="0.00" oninput="calcDayM1('${day}')" />
+      <input class="ri pct-readonly" readonly placeholder="—" />`;
+  } else {
+    row.style.gridTemplateColumns = '1fr';
+    row.innerHTML = `<input placeholder="Nome da casa/cliente" />`;
+  }
+  c.appendChild(row);
+}
+
+function calcDayM1(day) {
+  const rows = document.querySelectorAll('#houses-'+day+' .house-row');
+  let sum = 0;
+  rows.forEach(r => {
+    const inputs = r.querySelectorAll('input');
+    const hv = parseFloat(inputs[1].value)||0;
+    const mv = hv * 0.7;
+    inputs[2].value = mv > 0 ? mv.toFixed(2) : '';
+    sum += mv;
+  });
+  document.getElementById('sum-'+day).textContent = '$'+sum.toFixed(2);
+  calcGrand();
+}
+
+function calcDayM2(day) {
+  const v = parseFloat(document.getElementById('total-'+day).value)||0;
+  document.getElementById('sum-'+day).textContent = v > 0 ? '$'+v.toFixed(2) : '';
+  calcGrand();
+}
+
+function calcGrand() {
+  let t = 0;
+  DAYS.forEach(d => {
+    const el = document.getElementById('sum-'+d);
+    t += parseFloat((el ? el.textContent : '').replace('$',''))||0;
+  });
+  document.getElementById('grand-total').textContent = '$'+t.toFixed(2);
+}
+
+function getDayData(day) {
+  const rows = document.querySelectorAll('#houses-'+day+' .house-row');
+  const houses = [];
+  const driver = (document.getElementById('driver-'+day)||{}).value||'Driver';
+  if (currentModel === 1) {
+    rows.forEach(r => {
+      const inputs = r.querySelectorAll('input');
+      const name = inputs[0].value.trim();
+      const hv = parseFloat(inputs[1].value)||0;
+      const mv = hv * 0.7;
+      if (name || hv) houses.push({name, hv, mv});
+    });
+    return {houses, total: houses.reduce((s,h)=>s+h.mv,0), driver};
+  } else {
+    rows.forEach(r => {
+      const name = r.querySelector('input').value.trim();
+      if (name) houses.push({name});
+    });
+    return {houses, total: parseFloat((document.getElementById('total-'+day)||{}).value)||0, driver};
+  }
+}
+
+function generatePDF() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({unit:'mm', format:'a4'});
+  const W=210, M=18;
+  let y=15;
+
+  try { doc.addImage('data:image/png;base64,'+LOGO_B64,'PNG',M,y,22,22); } catch(e){}
+
+  doc.setFont('helvetica','normal'); doc.setFontSize(28); doc.setTextColor(50,50,50);
+  doc.setCharSpace(4); doc.text("INVOICE", W-M, y+14, {align:'right'}); doc.setCharSpace(0);
+  doc.setFontSize(9); doc.setFont('helvetica','bold'); doc.setTextColor(60,60,60);
+  doc.text("Paula's", M+25, y+5);
+  doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.text("Cleaning Squad", M+25, y+9);
+
+  y+=26;
+  doc.setFontSize(8); doc.setFont('helvetica','bold'); doc.setTextColor(40,40,40); doc.text("ISSUED TO:", M, y);
+  doc.setFont('helvetica','normal'); doc.setTextColor(70,70,70);
+  y+=4; doc.text("Paula's Cleaning Squad", M, y);
+  y+=4; doc.text("2456 Deercroft Drive, 32940", M, y);
+  y+=5; doc.setFont('helvetica','bold'); doc.setTextColor(40,40,40); doc.text("PAY TO:", M, y);
+  doc.setFont('helvetica','normal'); doc.setTextColor(70,70,70);
+  y+=4; doc.text("[Bank Of America]", M, y);
+  y+=4; doc.text("Account Name: "+(document.getElementById('acct').value||''), M, y);
+  y+=4; doc.text("Zelle Number.: "+(document.getElementById('zelle').value||''), M, y);
+
+  const ry=41, di=document.getElementById('date_issue').value, ds=document.getElementById('date_start').value, de=document.getElementById('date_end').value;
+  doc.setFont('helvetica','bold'); doc.setTextColor(40,40,40);
+  doc.text("DATE:", W-55, ry); doc.text("DUE DATE:", W-55, ry+5);
+  doc.setFont('helvetica','normal'); doc.setTextColor(70,70,70);
+  doc.text(di, W-M, ry, {align:'right'}); doc.text(ds, W-M, ry+5, {align:'right'}); doc.text(de, W-M, ry+10, {align:'right'});
+
+  y+=8; doc.setDrawColor(160,160,160); doc.line(M,y,W-M,y); y+=5;
+
+  const C={day:M, houses:M+48, driver:M+90, total:W-M};
+  doc.setFont('helvetica','bold'); doc.setFontSize(7.5); doc.setTextColor(40,40,40);
+  doc.text("DAYS WORKED",C.day,y); doc.text("HOUSES",C.houses,y);
+  doc.text("DRIVER/HELPER",C.driver,y); doc.text("TOTAL",C.total,y,{align:'right'});
+  y+=3; doc.line(M,y,W-M,y); y+=5;
+
+  let grand=0;
+  DAYS.forEach(day=>{
+    const {houses,total,driver}=getDayData(day);
+    if(!houses.length && total===0) return;
+    grand+=total;
+    doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(30,30,30); doc.text(day,C.day,y);
+    doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(60,60,60);
+    doc.text(String(houses.length||''),C.houses,y); doc.text(driver,C.driver,y);
+    if(total>0){doc.setFont('helvetica','bold');doc.setTextColor(30,30,30);doc.text('$'+total.toFixed(2),C.total,y,{align:'right'});}
+    y+=5;
+    houses.forEach(h=>{
+      doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(80,80,80);
+      doc.text(h.name||'—',C.day+3,y);
+      if(currentModel===1&&h.hv){doc.text('$'+h.hv.toFixed(2),C.houses+20,y);doc.text('$'+h.mv.toFixed(2),C.total,y,{align:'right'});}
+      y+=4;
+    });
+    y+=2;
+    if(y>268){doc.addPage();y=20;}
+  });
+
+  doc.setDrawColor(160,160,160); doc.line(M,y,W-M,y); y+=5;
+  doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(30,30,30);
+  doc.text("TOTAL",M,y); doc.text('$'+grand.toFixed(2),C.total,y,{align:'right'});
+
+  const obs=document.getElementById('obs').value.trim();
+  if(obs){y+=8;doc.setFont('helvetica','bold');doc.setFontSize(8);doc.setTextColor(50,50,50);obs.split('\n').forEach(l=>{doc.text(l,M,y);y+=4;});}
+
+  doc.save(currentModel===1?'invoice-70pct.pdf':'invoice-diaria.pdf');
+}
+</script>
+</body>
+</html>
