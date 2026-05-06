@@ -404,42 +404,6 @@ function getDayData(day) {
 }
 
 
-// ── TESTE - REMOVER QUANDO TERMINAR ──
-function preencherTeste() {
-  document.getElementById('acct').value = 'Maysa Oliveira';
-  document.getElementById('zelle').value = '407 520 2574';
-  document.getElementById('bank').value = 'Bank of America';
-  document.getElementById('date_issue').value = '2026-05-03';
-  document.getElementById('date_start').value = '2026-04-25';
-  document.getElementById('date_end').value = '2026-05-01';
-  document.getElementById('obs').value = 'Domingo 26/04 casa da Praia';
-
-  // Preenche Monday
-  const rowsMon = document.querySelectorAll('#houses-Monday .house-row');
-  if(rowsMon[0]) {
-    rowsMon[0].querySelectorAll('input')[0].value = 'Karen Swift';
-    if(currentModel===1) { rowsMon[0].querySelectorAll('input')[1].value = 200; calcDayM1('Monday'); }
-  }
-  const addMon = document.querySelector('#block-Monday .add-btn');
-  if(addMon) addMon.click();
-  const rowsMon2 = document.querySelectorAll('#houses-Monday .house-row');
-  if(rowsMon2[1]) {
-    rowsMon2[1].querySelectorAll('input')[0].value = 'Shawna Mark';
-    if(currentModel===1) { rowsMon2[1].querySelectorAll('input')[1].value = 180; calcDayM1('Monday'); }
-  }
-
-  // Preenche Tuesday
-  const rowsTue = document.querySelectorAll('#houses-Tuesday .house-row');
-  if(rowsTue[0]) {
-    rowsTue[0].querySelectorAll('input')[0].value = 'Logan Platt';
-    if(currentModel===1) { rowsTue[0].querySelectorAll('input')[1].value = 220; calcDayM1('Tuesday'); }
-    else { document.getElementById('total-Tuesday').value = 150; calcDayM2('Tuesday'); }
-  }
-
-  calcGrand();
-}
-// ── FIM TESTE ──
-
 function generatePDF() {
   if (!validateForm()) {
     document.getElementById('err-msg').style.display = 'block';
