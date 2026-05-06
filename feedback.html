@@ -261,23 +261,32 @@ let allFeedbacks = [];
 
 function formatDate(dateStr) {
   if (!dateStr) return '';
-  const d = (dateStr + '').split(' ')[0].split('T')[0];
-  const parts = d.split(/[-\/]/);
-  if (parts.length === 3) {
-    // Could be yyyy-mm-dd or dd/mm/yyyy
-    if (parts[0].length === 4) return parts[2]+'/'+parts[1]+'/'+parts[0];
-    return parts[0]+'/'+parts[1]+'/'+parts[2];
-  }
-  return d;
+  const parsed = parseDate(dateStr);
+  if (!parsed || isNaN(parsed)) return (dateStr+'').split(' ')[0];
+  const d = String(parsed.getDate()).padStart(2,'0');
+  const m = String(parsed.getMonth()+1).padStart(2,'0');
+  const y = parsed.getFullYear();
+  return d+'/'+m+'/'+y;
 }
 
 function parseDate(dateStr) {
   if (!dateStr) return null;
-  const d = (dateStr + '').split(' ')[0].split('T')[0];
+  const d = (dateStr + '').trim().split(' ')[0].split('T')[0];
   const parts = d.split(/[-\/]/);
   if (parts.length === 3) {
-    if (parts[0].length === 4) return new Date(parts[0], parts[1]-1, parts[2]);
-    return new Date(parts[2], parts[1]-1, parts[0]);
+    let y, m, day;
+    if (parts[0].length === 4) {
+      // yyyy-mm-dd
+      y = parseInt(parts[0]); m = parseInt(parts[1])-1; day = parseInt(parts[2]);
+    } else if (parseInt(parts[2]) > 31) {
+      // dd/mm/yyyy
+      y = parseInt(parts[2]); m = parseInt(parts[1])-1; day = parseInt(parts[0]);
+    } else {
+      // mm/dd/yy or mm/dd/yyyy (American format)
+      y = parseInt(parts[2]); m = parseInt(parts[0])-1; day = parseInt(parts[1]);
+      if (y < 100) y += 2000;
+    }
+    return new Date(y, m, day);
   }
   return new Date(d);
 }
