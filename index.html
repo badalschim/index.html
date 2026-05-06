@@ -129,7 +129,7 @@ textarea { resize: vertical; }
       <div><label>Período início<span class="req">*</span></label><input id="date_start" type="date" /></div>
       <div><label>Período fim<span class="req">*</span></label><input id="date_end" type="date" /></div>
     </div>
-    <div><label>Observação</label><textarea id="obs" rows="2" placeholder="Ex: Domingo 26/04 casa da Praia"></textarea></div>
+    <div><label>Observação</label><textarea id="obs" rows="2" placeholder="Ex: Domingo 26/04 ..."></textarea></div>
   </div>
 
   <div class="section">
@@ -253,19 +253,19 @@ function buildDays() {
           <div id="houses-${day}"></div>
           <button class="add-btn" onclick="addHouse('${day}')">+ Casa</button>
         </div>
-        <div style="border-top:1px dashed #ddd;padding-top:10px;margin-bottom:8px">
-          <div class="col-heads" style="grid-template-columns:1fr 105px 90px;margin-bottom:4px">
-            <span>Casa 70% (opcional)</span><span style="text-align:right">Valor casa ($)</span><span style="text-align:right">Seu 70%</span>
-          </div>
-          <div id="houses70-${day}"></div>
-          <button class="add-btn" onclick="addHouse70('${day}')">+ Casa 70%</button>
-        </div>
-        <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-top:8px">
+        <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:10px">
           <div style="flex:1;min-width:120px"><label>Total da diária ($)</label><input type="number" id="total-${day}" step="0.01" min="0" placeholder="0.00" oninput="calcDayM3('${day}')" /></div>
           <div class="driver-row" style="margin-top:0">
             <label>Driver/Helper:</label>
             <select id="driver-${day}"><option>Driver</option><option>Helper</option><option>—</option></select>
           </div>
+        </div>
+        <div style="border-top:1px dashed #ddd;padding-top:10px">
+          <div class="col-heads" style="grid-template-columns:1fr 105px 90px;margin-bottom:4px">
+            <span>Casa 70% (opcional)</span><span style="text-align:right">Valor casa ($)</span><span style="text-align:right">Seu 70%</span>
+          </div>
+          <div id="houses70-${day}"></div>
+          <button class="add-btn" onclick="addHouse70('${day}')">+ Casa 70%</button>
         </div>`;
     }
     c.appendChild(d);
@@ -433,11 +433,29 @@ function generatePDF() {
   y+=13; doc.text("Paula's Cleaning Squad", M, y);
   y+=12; doc.text("2456 Deercroft Drive, 32940", M, y);
   y+=14; doc.setFont('helvetica','bold'); doc.setTextColor(40,40,40);
-  doc.text("PAY TO:", M, y,);
+    // PAY TO
+  y+=14; doc.setFont('helvetica','bold'); doc.setTextColor(40,40,40);
+  doc.text("PAY TO:", M, y);
+  y+=13;
+
+  const bankLabel = "Bank Name.:   ";
+  const acctLabel = "Account Name.:   ";
+  const zelleLabel = "Zelle Number.:   ";
+  doc.setFontSize(8);
+  doc.setFont('helvetica','bold'); doc.setTextColor(40,40,40);
+  doc.text(bankLabel, M, y);
   doc.setFont('helvetica','normal'); doc.setTextColor(80,80,80);
-  y+=13; doc.text(document.getElementById('bank').value, M, y);
-  y+=12; doc.text("Account Name: "+document.getElementById('acct').value, M, y);
-  y+=12; doc.text("Zelle Number.: "+document.getElementById('zelle').value, M, y);
+  doc.text(document.getElementById('bank').value, M+doc.getTextWidth(bankLabel), y);
+  y+=12;
+  doc.setFont('helvetica','bold'); doc.setTextColor(40,40,40);
+  doc.text(acctLabel, M, y);
+  doc.setFont('helvetica','normal'); doc.setTextColor(80,80,80);
+  doc.text(document.getElementById('acct').value, M+doc.getTextWidth(acctLabel), y);
+  y+=12;
+  doc.setFont('helvetica','bold'); doc.setTextColor(40,40,40);
+  doc.text(zelleLabel, M, y);
+  doc.setFont('helvetica','normal'); doc.setTextColor(80,80,80);
+  doc.text(document.getElementById('zelle').value, M+doc.getTextWidth(zelleLabel), y);
 
   // Dates - right column, aligned with ISSUED TO
   const di=document.getElementById('date_issue').value;
@@ -464,11 +482,12 @@ function generatePDF() {
   DAYS.forEach(day=>{
     const data=getDayData(day);
     const {houses,total,driver}=data;
-    if(!houses.length && total===0) return;
+    if(!houses.length && total===0 && !(data.houses70&&data.houses70.length)) return;
     grand+=total;
     doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(30,30,30); doc.text(day,C.day,y);
     doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(70,70,70);
-    doc.text(String(houses.length),C.houses,y); doc.text(driver,C.driver,y);
+    const houseCount = currentModel===3 ? houses.length+(data.houses70?data.houses70.length:0) : houses.length;
+    doc.text(String(houseCount),C.houses,y); doc.text(driver,C.driver,y);
     if(total>0){doc.setFont('helvetica','bold');doc.setTextColor(30,30,30);doc.text('$'+total.toFixed(2),C.total,y,{align:'right'});}
     y+=14;
     houses.forEach(h=>{
@@ -483,25 +502,21 @@ function generatePDF() {
     });
     // model 3: diaria value + 70% houses
     if(currentModel===3){
-      if(data.diaria>0){
-        doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(80,80,80);
-        doc.text('Diária:', C.day+12, y);
-        doc.setTextColor(30,30,30);
-        doc.text('$'+data.diaria.toFixed(2), C.total, y, {align:'right'});
-        y+=12;
-      }
       if(data.houses70&&data.houses70.length){
         data.houses70.forEach(h=>{
           doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(100,100,100);
-          doc.text((h.name||'—')+' (70%)', C.day+12, y);
-          doc.text('$'+h.hv.toFixed(2), C.houses+10, y);
+          doc.text(h.name||'—', C.day+12, y);
+          doc.text('(70%)', C.total-60, y);
+          doc.text('$'+h.hv.toFixed(2), C.driver, y);
           doc.setTextColor(30,30,30);
           doc.text('$'+h.mv.toFixed(2), C.total, y, {align:'right'});
           y+=12;
         });
       }
     }
-    y+=6;
+    y+=12;
+    doc.setDrawColor(220,220,220); doc.line(M,y,W-M,y);
+    y+=8;
     if(y>780){doc.addPage();y=50;}
   });
 
