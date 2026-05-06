@@ -197,7 +197,7 @@ async function doLogin() {
   loadEl.style.display = 'block';
 
   try {
-    const url = `${SCRIPT_URL}?usuario=${encodeURIComponent(user)}&senha=${encodeURIComponent(pass)}`;
+    const url = `${SCRIPT_URL}?usuario=${encodeURIComponent(user)}&senha=${encodeURIComponent(pass)}&pagina=feedback`;
     const res = await fetch(url);
     const json = await res.json();
 

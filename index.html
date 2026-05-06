@@ -159,6 +159,72 @@ let currentModel = 0;
 let currentUser = '';
 
 // ── LOGIN ──
+
+// ── SESSION MANAGEMENT (30 min) ──
+const SESSION_KEY = 'pcs_session';
+const SESSION_DURATION = 30 * 60 * 1000;
+
+function saveSession(user, nome, modelo) {
+  const session = { user, nome, modelo, expires: Date.now() + SESSION_DURATION };
+  localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+  // Also encode in URL hash for cross-iframe sharing
+  try { location.hash = btoa(JSON.stringify({user, nome, modelo})); } catch(e) {}
+}
+
+function loadSession() {
+  // Try localStorage first
+  try {
+    const s = JSON.parse(localStorage.getItem(SESSION_KEY));
+    if (s && s.expires > Date.now()) return s;
+    localStorage.removeItem(SESSION_KEY);
+  } catch(e) {}
+  // Try URL hash
+  try {
+    if (location.hash && location.hash.length > 1) {
+      const s = JSON.parse(atob(location.hash.slice(1)));
+      if (s && s.user) {
+        s.expires = Date.now() + SESSION_DURATION;
+        localStorage.setItem(SESSION_KEY, JSON.stringify(s));
+        return s;
+      }
+    }
+  } catch(e) {}
+  return null;
+}
+
+function clearSession() {
+  localStorage.removeItem(SESSION_KEY);
+  location.hash = '';
+}
+
+function renewSession() {
+  try {
+    const s = JSON.parse(localStorage.getItem(SESSION_KEY));
+    if (s) { s.expires = Date.now() + SESSION_DURATION; localStorage.setItem(SESSION_KEY, JSON.stringify(s)); }
+  } catch(e) {}
+}
+
+function applySession(s) {
+  currentUser = s.nome || s.user;
+  const m = parseInt(s.modelo);
+  currentModel = m === 1 ? 1 : m === 3 ? 3 : 2;
+  document.getElementById('screen-login').style.display = 'none';
+  document.getElementById('screen-app').style.display = 'block';
+  document.getElementById('user-name').textContent = currentUser;
+  const labels = {1:'Modelo: 70% do valor da casa', 2:'Modelo: Diária (valor manual)', 3:'Modelo: Misto (Diária + 70%)'};
+  document.getElementById('model-tag-el').textContent = labels[currentModel] || '';
+  buildDays();
+  renewSession();
+}
+
+document.addEventListener('click', renewSession);
+document.addEventListener('keydown', renewSession);
+window.addEventListener('load', function() {
+  const s = loadSession();
+  if (s) applySession(s);
+});
+// ── END SESSION ──
+
 async function doLogin() {
   const user = document.getElementById('login-user').value.trim();
   const pass = document.getElementById('login-pass').value.trim();
@@ -173,7 +239,7 @@ async function doLogin() {
   loadEl.style.display = 'block';
 
   try {
-    const url = `${SCRIPT_URL}?usuario=${encodeURIComponent(user)}&senha=${encodeURIComponent(pass)}`;
+    const url = `${SCRIPT_URL}?usuario=${encodeURIComponent(user)}&senha=${encodeURIComponent(pass)}&pagina=invoice`;
     const res = await fetch(url);
     const json = await res.json();
 
@@ -181,6 +247,7 @@ async function doLogin() {
       currentUser = json.nome || user;
       const m = parseInt(json.modelo);
 currentModel = m === 1 ? 1 : m === 3 ? 3 : 2;
+      saveSession(user, json.nome || user, json.modelo);
       document.getElementById('screen-login').style.display = 'none';
       document.getElementById('screen-app').style.display = 'block';
       document.getElementById('user-name').textContent = currentUser;
@@ -199,6 +266,7 @@ currentModel = m === 1 ? 1 : m === 3 ? 3 : 2;
 }
 
 function doLogout() {
+  clearSession();
   document.getElementById('screen-login').style.display = 'flex';
   document.getElementById('screen-app').style.display = 'none';
   document.getElementById('login-user').value = '';
