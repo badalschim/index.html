@@ -101,6 +101,17 @@ body { font-family: Arial, sans-serif; background: #f0f2f5; color: #222; font-si
     <div class="loading-msg">Carregando feedbacks...</div>
   </div>
 
+  <div class="filter-bar" style="background:#fff;border-radius:10px;padding:12px 16px;margin-bottom:1rem;box-shadow:0 1px 4px rgba(0,0,0,0.07);display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
+    <div style="flex:1;min-width:120px">
+      <label style="font-size:11px;color:#888;font-weight:600;display:block;margin-bottom:3px">De</label>
+      <input type="date" id="filter-start" onchange="applyFilter()" style="width:100%;padding:6px 8px;border:1px solid #ccc;border-radius:6px;font-size:13px;font-family:Arial" />
+    </div>
+    <div style="flex:1;min-width:120px">
+      <label style="font-size:11px;color:#888;font-weight:600;display:block;margin-bottom:3px">Até</label>
+      <input type="date" id="filter-end" onchange="applyFilter()" style="width:100%;padding:6px 8px;border:1px solid #ccc;border-radius:6px;font-size:13px;font-family:Arial" />
+    </div>
+    <button onclick="clearFilter()" style="padding:6px 14px;background:none;border:1px solid #ccc;border-radius:6px;font-size:12px;color:#888;cursor:pointer;font-family:Arial;white-space:nowrap">Limpar filtro</button>
+  </div>
   <div class="section-title">Histórico de feedbacks</div>
   <div id="feedbacks-list"><div class="loading-msg">Carregando...</div></div>
 </div>
@@ -224,7 +235,8 @@ async function loadFeedbacks(user) {
     const url = `${SCRIPT_URL}?action=feedbacks&usuario=${encodeURIComponent(user)}`;
     const res = await fetch(url);
     const json = await res.json();
-    renderFeedbacks(json.feedbacks || []);
+    allFeedbacks = json.feedbacks || [];
+    renderFeedbacks(allFeedbacks);
   } catch(e) {
     document.getElementById('feedbacks-list').innerHTML = '<div class="no-feedbacks">Erro ao carregar feedbacks.</div>';
     document.getElementById('summary-card').innerHTML = '<div class="no-feedbacks">Erro ao carregar.</div>';
@@ -243,6 +255,46 @@ function stars(n, size) {
 function avg(arr) {
   if (!arr.length) return 0;
   return arr.reduce((s,v)=>s+v,0)/arr.length;
+}
+
+let allFeedbacks = [];
+
+function formatDate(dateStr) {
+  if (!dateStr) return '';
+  const d = (dateStr + '').split(' ')[0].split('T')[0];
+  const parts = d.split(/[-\/]/);
+  if (parts.length === 3) {
+    // Could be yyyy-mm-dd or dd/mm/yyyy
+    if (parts[0].length === 4) return parts[2]+'/'+parts[1]+'/'+parts[0];
+    return parts[0]+'/'+parts[1]+'/'+parts[2];
+  }
+  return d;
+}
+
+function parseDate(dateStr) {
+  if (!dateStr) return null;
+  const d = (dateStr + '').split(' ')[0].split('T')[0];
+  const parts = d.split(/[-\/]/);
+  if (parts.length === 3) {
+    if (parts[0].length === 4) return new Date(parts[0], parts[1]-1, parts[2]);
+    return new Date(parts[2], parts[1]-1, parts[0]);
+  }
+  return new Date(d);
+}
+
+function applyFilter() {
+  const start = document.getElementById('filter-start').value;
+  const end = document.getElementById('filter-end').value;
+  let filtered = allFeedbacks;
+  if (start) filtered = filtered.filter(f => { const d = parseDate(f.data); return d && d >= new Date(start); });
+  if (end) filtered = filtered.filter(f => { const d = parseDate(f.data); return d && d <= new Date(end + 'T23:59:59'); });
+  renderFeedbacks(filtered);
+}
+
+function clearFilter() {
+  document.getElementById('filter-start').value = '';
+  document.getElementById('filter-end').value = '';
+  renderFeedbacks(allFeedbacks);
 }
 
 function renderFeedbacks(feedbacks) {
@@ -292,7 +344,7 @@ function renderFeedbacks(feedbacks) {
     <div class="feedback-card">
       <div class="feedback-header">
         <span class="feedback-client">${f.cliente||'Cliente'}</span>
-        <span class="feedback-date">${(f.data||'').split(' ')[0].split('T')[0]}</span>
+        <span class="feedback-date">${formatDate(f.data)}</span>
       </div>
       <div class="feedback-cats">
         <div class="feedback-cat">
