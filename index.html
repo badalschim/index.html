@@ -113,11 +113,6 @@ textarea { resize: vertical; }
 
   <div id="model-tag-el" class="model-tag"></div>
   
-  <!-- BOTÃO DE TESTE - REMOVER QUANDO TERMINAR -->
-  <button onclick="preencherTeste()" style="background:#e8a000;border:none;padding:8px 16px;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;margin-bottom:1rem;color:#fff;font-family:Arial;">
-    🧪 Preencher Teste
-  </button>
-  <!-- FIM BOTÃO DE TESTE -->
   <div id="err-msg" class="err-msg">Preencha todos os campos obrigatórios (*) antes de gerar o PDF.</div>
 
   <div class="section">
@@ -184,11 +179,13 @@ async function doLogin() {
 
     if (json.ok) {
       currentUser = json.nome || user;
-      currentModel = json.modelo === '1' || json.modelo === 1 ? 1 : 2;
+      const m = parseInt(json.modelo);
+currentModel = m === 1 ? 1 : m === 3 ? 3 : 2;
       document.getElementById('screen-login').style.display = 'none';
       document.getElementById('screen-app').style.display = 'block';
       document.getElementById('user-name').textContent = currentUser;
-      document.getElementById('model-tag-el').textContent = currentModel === 1 ? 'Modelo: 70% do valor da casa' : 'Modelo: Diária (valor manual)';
+      const labels = {1:'Modelo: 70% do valor da casa', 2:'Modelo: Diária (valor manual)', 3:'Modelo: Misto (Diária + 70%)'};
+  document.getElementById('model-tag-el').textContent = labels[currentModel] || '';
       buildDays();
     } else {
       errEl.textContent = 'Usuário ou senha incorretos.';
@@ -229,7 +226,7 @@ function buildDays() {
         </div>
         <div id="houses-${day}"></div>
         <button class="add-btn" onclick="addHouse('${day}')">+ Casa</button>`;
-    } else {
+    } else if (currentModel === 2) {
       d.innerHTML = `
         <div class="day-header">
           <span class="day-name">${day}</span>
@@ -240,6 +237,31 @@ function buildDays() {
         <button class="add-btn" onclick="addHouse('${day}')">+ Casa</button>
         <div style="margin-top:10px;display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
           <div style="flex:1;min-width:120px"><label>Total do dia ($)</label><input type="number" id="total-${day}" step="0.01" min="0" placeholder="0.00" oninput="calcDayM2('${day}')" /></div>
+          <div class="driver-row" style="margin-top:0">
+            <label>Driver/Helper:</label>
+            <select id="driver-${day}"><option>Driver</option><option>Helper</option><option>—</option></select>
+          </div>
+        </div>`;
+    } else {
+      d.innerHTML = `
+        <div class="day-header">
+          <span class="day-name">${day}</span>
+          <span class="day-sum" id="sum-${day}">$0.00</span>
+        </div>
+        <div style="margin-bottom:10px">
+          <div class="col-heads" style="grid-template-columns:1fr"><span>Casas do dia</span></div>
+          <div id="houses-${day}"></div>
+          <button class="add-btn" onclick="addHouse('${day}')">+ Casa</button>
+        </div>
+        <div style="border-top:1px dashed #ddd;padding-top:10px;margin-bottom:8px">
+          <div class="col-heads" style="grid-template-columns:1fr 105px 90px;margin-bottom:4px">
+            <span>Casa 70% (opcional)</span><span style="text-align:right">Valor casa ($)</span><span style="text-align:right">Seu 70%</span>
+          </div>
+          <div id="houses70-${day}"></div>
+          <button class="add-btn" onclick="addHouse70('${day}')">+ Casa 70%</button>
+        </div>
+        <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-top:8px">
+          <div style="flex:1;min-width:120px"><label>Total da diária ($)</label><input type="number" id="total-${day}" step="0.01" min="0" placeholder="0.00" oninput="calcDayM3('${day}')" /></div>
           <div class="driver-row" style="margin-top:0">
             <label>Driver/Helper:</label>
             <select id="driver-${day}"><option>Driver</option><option>Helper</option><option>—</option></select>
@@ -261,10 +283,26 @@ function addHouse(day) {
       <input type="text" placeholder="Nome da casa/cliente" />
       <input class="ri" type="number" step="0.01" min="0" placeholder="0.00" oninput="calcDayM1('${day}')" />
       <input class="ri pct-readonly" readonly placeholder="—" />`;
+  } else if (currentModel === 2) {
+    row.style.gridTemplateColumns = '1fr';
+    row.innerHTML = `<input type="text" placeholder="Nome da casa/cliente" />`;
   } else {
+    // model 3: just house name (diaria)
     row.style.gridTemplateColumns = '1fr';
     row.innerHTML = `<input type="text" placeholder="Nome da casa/cliente" />`;
   }
+  c.appendChild(row);
+}
+
+function addHouse70(day) {
+  const c = document.getElementById('houses70-'+day);
+  const row = document.createElement('div');
+  row.className = 'house-row';
+  row.style.gridTemplateColumns = '1fr 105px 90px';
+  row.innerHTML = `
+    <input type="text" placeholder="Nome da casa/cliente" />
+    <input class="ri" type="number" step="0.01" min="0" placeholder="0.00" oninput="calcDayM3('${day}')" />
+    <input class="ri pct-readonly" readonly placeholder="—" />`;
   c.appendChild(row);
 }
 
@@ -285,6 +323,24 @@ function calcDayM1(day) {
 function calcDayM2(day) {
   const v = parseFloat(document.getElementById('total-'+day).value)||0;
   document.getElementById('sum-'+day).textContent = v > 0 ? '$'+v.toFixed(2) : '';
+  calcGrand();
+}
+
+function calcDayM3(day) {
+  // diaria value
+  const diaria = parseFloat(document.getElementById('total-'+day).value)||0;
+  // 70% houses
+  const rows70 = document.querySelectorAll('#houses70-'+day+' .house-row');
+  let sum70 = 0;
+  rows70.forEach(r => {
+    const inputs = r.querySelectorAll('input');
+    const hv = parseFloat(inputs[1].value)||0;
+    const mv = hv * 0.7;
+    inputs[2].value = mv > 0 ? mv.toFixed(2) : '';
+    sum70 += mv;
+  });
+  const total = diaria + sum70;
+  document.getElementById('sum-'+day).textContent = total > 0 ? '$'+total.toFixed(2) : '$0.00';
   calcGrand();
 }
 
@@ -309,22 +365,41 @@ function validateForm() {
 function getDayData(day) {
   const rows = document.querySelectorAll('#houses-'+day+' .house-row');
   const houses = [];
-  const driver = currentModel===2 ? ((document.getElementById('driver-'+day)||{}).value||'Driver') : 'Driver';
+  const driver = currentModel===1 ? 'Driver' : ((document.getElementById('driver-'+day)||{}).value||'Driver');
   if (currentModel === 1) {
     rows.forEach(r => {
       const inputs = r.querySelectorAll('input');
       const name = inputs[0].value.trim();
       const hv = parseFloat(inputs[1].value)||0;
       const mv = hv * 0.7;
-      if (name || hv) houses.push({name, hv, mv});
+      if (name || hv) houses.push({name, hv, mv, tipo:'70pct'});
     });
     return {houses, total: houses.reduce((s,h)=>s+h.mv,0), driver};
-  } else {
+  } else if (currentModel === 2) {
     rows.forEach(r => {
       const name = r.querySelector('input').value.trim();
-      if (name) houses.push({name});
+      if (name) houses.push({name, tipo:'diaria'});
     });
     return {houses, total: parseFloat((document.getElementById('total-'+day)||{}).value)||0, driver};
+  } else {
+    // model 3: diaria houses (names only)
+    rows.forEach(r => {
+      const name = r.querySelector('input').value.trim();
+      if (name) houses.push({name, tipo:'diaria'});
+    });
+    // 70% houses
+    const rows70 = document.querySelectorAll('#houses70-'+day+' .house-row');
+    const houses70 = [];
+    rows70.forEach(r => {
+      const inputs = r.querySelectorAll('input');
+      const name = inputs[0].value.trim();
+      const hv = parseFloat(inputs[1].value)||0;
+      const mv = hv * 0.7;
+      if (name || hv) houses70.push({name, hv, mv, tipo:'70pct'});
+    });
+    const diaria = parseFloat((document.getElementById('total-'+day)||{}).value)||0;
+    const total70 = houses70.reduce((s,h)=>s+h.mv,0);
+    return {houses, houses70, diaria, total: diaria+total70, driver};
   }
 }
 
@@ -423,7 +498,8 @@ function generatePDF() {
 
   let grand=0;
   DAYS.forEach(day=>{
-    const {houses,total,driver}=getDayData(day);
+    const data=getDayData(day);
+    const {houses,total,driver}=data;
     if(!houses.length && total===0) return;
     grand+=total;
     doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(30,30,30); doc.text(day,C.day,y);
@@ -434,9 +510,33 @@ function generatePDF() {
     houses.forEach(h=>{
       doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(100,100,100);
       doc.text(h.name||'—',C.day+12,y);
-      if(currentModel===1&&h.hv){doc.text('$'+h.hv.toFixed(2),C.houses+10,y);doc.setTextColor(30,30,30);doc.text('$'+h.mv.toFixed(2),C.total,y,{align:'right'});}
+      if(currentModel===1&&h.hv){
+        doc.text('$'+h.hv.toFixed(2),C.houses+10,y);
+        doc.setTextColor(30,30,30);
+        doc.text('$'+h.mv.toFixed(2),C.total,y,{align:'right'});
+      }
       y+=12;
     });
+    // model 3: diaria value + 70% houses
+    if(currentModel===3){
+      if(data.diaria>0){
+        doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(80,80,80);
+        doc.text('Diária:', C.day+12, y);
+        doc.setTextColor(30,30,30);
+        doc.text('$'+data.diaria.toFixed(2), C.total, y, {align:'right'});
+        y+=12;
+      }
+      if(data.houses70&&data.houses70.length){
+        data.houses70.forEach(h=>{
+          doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(100,100,100);
+          doc.text((h.name||'—')+' (70%)', C.day+12, y);
+          doc.text('$'+h.hv.toFixed(2), C.houses+10, y);
+          doc.setTextColor(30,30,30);
+          doc.text('$'+h.mv.toFixed(2), C.total, y, {align:'right'});
+          y+=12;
+        });
+      }
+    }
     y+=6;
     if(y>780){doc.addPage();y=50;}
   });
