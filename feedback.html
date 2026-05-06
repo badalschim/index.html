@@ -278,7 +278,7 @@ function renderFeedbacks(feedbacks) {
     <div class="feedback-card">
       <div class="feedback-header">
         <span class="feedback-client">${f.cliente||'Cliente'}</span>
-        <span class="feedback-date">${f.data||''}</span>
+        <span class="feedback-date">${(f.data||'').split(' ')[0].split('T')[0]}</span>
       </div>
       <div class="feedback-cats">
         <div class="feedback-cat">
@@ -294,7 +294,7 @@ function renderFeedbacks(feedbacks) {
           <span class="feedback-cat-stars">${stars(parseInt(f.quality)||0, 12)}</span>
         </div>
       </div>
-      ${f.comentario ? `<div class="feedback-comment">"${f.comentario}"</div>` : ''}
+      <div class="feedback-comment">${f.comentario ? '"'+f.comentario+'"' : '<span style="color:#ccc;font-style:normal">Sem comentário</span>'}</div>
     </div>`).join('');
 }
 </script>
