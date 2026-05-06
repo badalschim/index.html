@@ -112,6 +112,12 @@ textarea { resize: vertical; }
   </div>
 
   <div id="model-tag-el" class="model-tag"></div>
+  
+  <!-- BOTÃO DE TESTE - REMOVER QUANDO TERMINAR -->
+  <button onclick="preencherTeste()" style="background:#e8a000;border:none;padding:8px 16px;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;margin-bottom:1rem;color:#fff;font-family:Arial;">
+    🧪 Preencher Teste
+  </button>
+  <!-- FIM BOTÃO DE TESTE -->
   <div id="err-msg" class="err-msg">Preencha todos os campos obrigatórios (*) antes de gerar o PDF.</div>
 
   <div class="section">
@@ -322,6 +328,43 @@ function getDayData(day) {
   }
 }
 
+
+// ── TESTE - REMOVER QUANDO TERMINAR ──
+function preencherTeste() {
+  document.getElementById('acct').value = 'Maysa Oliveira';
+  document.getElementById('zelle').value = '407 520 2574';
+  document.getElementById('bank').value = 'Bank of America';
+  document.getElementById('date_issue').value = '2026-05-03';
+  document.getElementById('date_start').value = '2026-04-25';
+  document.getElementById('date_end').value = '2026-05-01';
+  document.getElementById('obs').value = 'Domingo 26/04 casa da Praia';
+
+  // Preenche Monday
+  const rowsMon = document.querySelectorAll('#houses-Monday .house-row');
+  if(rowsMon[0]) {
+    rowsMon[0].querySelectorAll('input')[0].value = 'Karen Swift';
+    if(currentModel===1) { rowsMon[0].querySelectorAll('input')[1].value = 200; calcDayM1('Monday'); }
+  }
+  const addMon = document.querySelector('#block-Monday .add-btn');
+  if(addMon) addMon.click();
+  const rowsMon2 = document.querySelectorAll('#houses-Monday .house-row');
+  if(rowsMon2[1]) {
+    rowsMon2[1].querySelectorAll('input')[0].value = 'Shawna Mark';
+    if(currentModel===1) { rowsMon2[1].querySelectorAll('input')[1].value = 180; calcDayM1('Monday'); }
+  }
+
+  // Preenche Tuesday
+  const rowsTue = document.querySelectorAll('#houses-Tuesday .house-row');
+  if(rowsTue[0]) {
+    rowsTue[0].querySelectorAll('input')[0].value = 'Logan Platt';
+    if(currentModel===1) { rowsTue[0].querySelectorAll('input')[1].value = 220; calcDayM1('Tuesday'); }
+    else { document.getElementById('total-Tuesday').value = 150; calcDayM2('Tuesday'); }
+  }
+
+  calcGrand();
+}
+// ── FIM TESTE ──
+
 function generatePDF() {
   if (!validateForm()) {
     document.getElementById('err-msg').style.display = 'block';
@@ -333,16 +376,16 @@ function generatePDF() {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({unit:'pt', format:'a4'});
   const W=595, M=50;
-  let y=40;
+  let y=20;
 
   // Logo - larger, transparent background
-  try { doc.addImage('data:image/png;base64,'+LOGO_B64,'PNG',M,y,100,100); } catch(e){}
+  try { doc.addImage('data:image/png;base64,'+LOGO_B64,'PNG',M,y,150,150); } catch(e){}
 
   // INVOICE title - large spaced, top right
   doc.setFont('helvetica','normal'); doc.setFontSize(34); doc.setTextColor(50,50,50);
-  doc.setCharSpace(6); doc.text("INVOICE", W-M, y+30, {align:'right'}); doc.setCharSpace(0);
+  doc.setCharSpace(6); doc.text("INVOICE", W-M, y+40, {align:'right'}); doc.setCharSpace(0);
 
-  y+=102;
+  y+=150;
 
   // ISSUED TO block
   doc.setFontSize(8); doc.setFont('helvetica','bold'); doc.setTextColor(40,40,40);
@@ -351,9 +394,9 @@ function generatePDF() {
   y+=13; doc.text("Paula's Cleaning Squad", M, y);
   y+=12; doc.text("2456 Deercroft Drive, 32940", M, y);
   y+=14; doc.setFont('helvetica','bold'); doc.setTextColor(40,40,40);
-  doc.text("PAY TO:", M, y);
+  doc.text("PAY TO:", M, y,);
   doc.setFont('helvetica','normal'); doc.setTextColor(80,80,80);
-  y+=13; doc.text("Bank Name: "+document.getElementById('bank').value, M, y);
+  y+=13; doc.text(document.getElementById('bank').value, M, y);
   y+=12; doc.text("Account Name: "+document.getElementById('acct').value, M, y);
   y+=12; doc.text("Zelle Number.: "+document.getElementById('zelle').value, M, y);
 
