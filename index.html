@@ -441,7 +441,7 @@
   <span class="section-tag" style="color:var(--teal)">Get In Touch</span>
   <h2 class="section-title">Get Your <span style="color:var(--teal)">Free Estimate</span></h2>
   <p class="section-subtitle">Fill out the form and we'll get back to you with a custom quote — no strings attached.</p>
-  <form class="contact-form" onsubmit="handleSubmit(event)">
+  <form class="contact-form" action="https://formspree.io/f/mgodlwyv" method="POST">
     <div class="form-row">
       <input type="text" placeholder="First Name" required />
       <input type="text" placeholder="Last Name" required />
@@ -495,13 +495,7 @@
       if (!isOpen) item.classList.add('open');
     });
   });
-  function handleSubmit(e) {
-    e.preventDefault();
-    const btn = e.target.querySelector('button[type="submit"]');
-    btn.textContent = '✅ Request Sent! We\'ll be in touch soon.';
-    btn.style.background = '#3a9e6a';
-    btn.disabled = true;
-  }
+
 </script>
 </body>
 </html>
