@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Paula's Cleaning Squad | Space Coast, Florida</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --navy:   #0d1b3e;
+      --blue:   #1a3a8f;
+      --cyan:   #00c6ff;
+      --cyan2:  #0ea5e9;
+      --white:  #ffffff;
+      --light:  #f0f6ff;
+      --gray:   #64748b;
+      --dark:   #0a1128;
+    }
+
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Inter', sans-serif; background: var(--white); color: #1e293b; }
+
+    /* ── NAVBAR ── */
+    nav {
+      position: fixed; top: 0; width: 100%; z-index: 1000;
+      background: rgba(13,27,62,0.97); backdrop-filter: blur(8px);
+      padding: 0 5%; display: flex; align-items: center; justify-content: space-between;
+      height: 70px; border-bottom: 1px solid rgba(0,198,255,0.15);
+    }
+    .nav-logo { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+    .nav-logo-icon {
+      width: 44px; height: 44px; background: var(--cyan); border-radius: 10px;
+      display: flex; align-items: center; justify-content: center; font-size: 22px;
+    }
+    .nav-logo-text { color: var(--white); font-weight: 700; font-size: 1rem; line-height: 1.2; }
+    .nav-logo-text span { color: var(--cyan); }
+    .nav-links { display: flex; gap: 28px; list-style: none; }
+    .nav-links a { color: rgba(255,255,255,0.8); text-decoration: none; font-size: 0.88rem; font-weight: 500; transition: color .2s; }
+    .nav-links a:hover { color: var(--cyan); }
+    .nav-cta {
+      background: var(--cyan); color: var(--navy); padding: 10px 22px;
+      border-radius: 8px; font-weight: 700; font-size: 0.88rem; text-decoration: none;
+      transition: background .2s, transform .15s;
+    }
+    .nav-cta:hover { background: #00e0ff; transform: translateY(-1px); }
+
+    /* ── HERO ── */
+    #hero {
+      min-height: 100vh;
+      background: linear-gradient(135deg, var(--dark) 0%, var(--navy) 50%, #0f2d6b 100%);
+      display: flex; align-items: center; padding: 100px 5% 60px;
+      position: relative; overflow: hidden;
+    }
+    #hero::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse at 70% 40%, rgba(0,198,255,0.12) 0%, transparent 60%);
+    }
+    .hero-content { max-width: 640px; position: relative; z-index: 1; }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(0,198,255,0.15); border: 1px solid rgba(0,198,255,0.35);
+      color: var(--cyan); padding: 6px 16px; border-radius: 50px;
+      font-size: 0.8rem; font-weight: 600; margin-bottom: 24px; letter-spacing: .5px;
+    }
+    .hero-badge::before { content: '✦'; }
+    #hero h1 {
+      font-size: clamp(2.4rem, 5vw, 3.8rem); font-weight: 900;
+      color: var(--white); line-height: 1.1; margin-bottom: 20px;
+    }
+    #hero h1 span { color: var(--cyan); }
+    #hero p {
+      font-size: 1.1rem; color: rgba(255,255,255,0.75);
+      line-height: 1.7; margin-bottom: 36px; max-width: 520px;
+    }
+    .hero-actions { display: flex; gap: 16px; flex-wrap: wrap; align-items: center; }
+    .btn-primary {
+      background: var(--cyan); color: var(--navy); padding: 16px 32px;
+      border-radius: 10px; font-weight: 800; font-size: 1rem; text-decoration: none;
+      display: inline-flex; align-items: center; gap: 8px;
+      transition: background .2s, transform .15s, box-shadow .2s;
+      box-shadow: 0 4px 24px rgba(0,198,255,0.35);
+    }
+    .btn-primary:hover { background: #00e0ff; transform: translateY(-2px); box-shadow: 0 8px 32px rgba(0,198,255,0.45); }
+    .btn-secondary {
+      border: 2px solid rgba(255,255,255,0.35); color: var(--white);
+      padding: 14px 28px; border-radius: 10px; font-weight: 600; font-size: 1rem;
+      text-decoration: none; display: inline-flex; align-items: center; gap: 8px;
+      transition: border-color .2s, background .2s;
+    }
+    .btn-secondary:hover { border-color: var(--cyan); background: rgba(0,198,255,0.08); }
+    .hero-phone {
+      margin-top: 28px; color: rgba(255,255,255,0.6); font-size: 0.9rem;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .hero-phone strong { color: var(--white); font-size: 1.15rem; }
+    .hero-stats {
+      margin-top: 56px; display: flex; gap: 40px; flex-wrap: wrap;
+      padding-top: 36px; border-top: 1px solid rgba(255,255,255,0.1);
+    }
+    .stat-item { text-align: center; }
+    .stat-number { font-size: 2rem; font-weight: 900; color: var(--cyan); }
+    .stat-label { font-size: 0.8rem; color: rgba(255,255,255,0.55); margin-top: 4px; text-transform: uppercase; letter-spacing: .5px; }
+
+    /* ── SECTION BASE ── */
+    section { padding: 90px 5%; }
+    .section-tag {
+      display: inline-block; color: var(--cyan2); font-weight: 700;
+      font-size: 0.8rem; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 12px;
+    }
+    .section-title { font-size: clamp(1.8rem, 3.5vw, 2.6rem); font-weight: 800; color: var(--navy); margin-bottom: 16px; line-height: 1.2; }
+    .section-title span { color: var(--cyan2); }
+    .section-subtitle { color: var(--gray); font-size: 1.05rem; line-height: 1.7; max-width: 600px; }
+    .center { text-align: center; }
+    .center .section-subtitle { margin: 0 auto; }
+
+    /* ── ABOUT ── */
+    #about { background: var(--light); }
+    .about-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center; margin-top: 50px; }
+    .about-image-wrap {
+      border-radius: 20px; overflow: hidden; position: relative;
+      background: linear-gradient(135deg, var(--navy), var(--blue));
+      padding: 40px; min-height: 360px;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 20px 60px rgba(13,27,62,0.2);
+    }
+    .about-logo-large { font-size: 5rem; text-align: center; color: var(--white); }
+    .about-logo-text { color: var(--white); text-align: center; margin-top: 16px; }
+    .about-logo-text h3 { font-size: 1.6rem; font-weight: 900; }
+    .about-logo-text p { color: rgba(255,255,255,0.6); font-size: 0.9rem; margin-top: 6px; }
+    .about-text p { color: var(--gray); line-height: 1.8; margin-bottom: 20px; }
+    .about-highlights { display: flex; flex-direction: column; gap: 16px; margin-top: 28px; }
+    .about-highlight-item {
+      display: flex; align-items: flex-start; gap: 14px;
+      background: var(--white); padding: 16px 20px; border-radius: 12px;
+      border-left: 4px solid var(--cyan2); box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+    }
+    .about-highlight-item .icon { font-size: 1.4rem; }
+    .about-highlight-item strong { display: block; color: var(--navy); font-weight: 700; }
+    .about-highlight-item span { color: var(--gray); font-size: 0.88rem; }
+
+    /* ── SERVICES ── */
+    #services { background: var(--white); }
+    .services-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 24px; margin-top: 50px; }
+    .service-card {
+      background: var(--light); border-radius: 16px; padding: 32px 28px;
+      border: 1px solid rgba(14,165,233,0.12); transition: transform .2s, box-shadow .2s, border-color .2s;
+      cursor: default;
+    }
+    .service-card:hover { transform: translateY(-6px); box-shadow: 0 16px 40px rgba(14,165,233,0.12); border-color: rgba(14,165,233,0.3); }
+    .service-icon {
+      width: 56px; height: 56px; border-radius: 14px;
+      background: linear-gradient(135deg, var(--navy), var(--blue));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.6rem; margin-bottom: 20px;
+    }
+    .service-card h3 { font-size: 1.1rem; font-weight: 700; color: var(--navy); margin-bottom: 10px; }
+    .service-card p { font-size: 0.9rem; color: var(--gray); line-height: 1.65; }
+    .service-tag {
+      display: inline-block; margin-top: 16px;
+      background: rgba(14,165,233,0.1); color: var(--cyan2);
+      padding: 4px 12px; border-radius: 50px; font-size: 0.75rem; font-weight: 600;
+    }
+
+    /* ── GALLERY ── */
+    #gallery { background: var(--navy); }
+    #gallery .section-title { color: var(--white); }
+    #gallery .section-subtitle { color: rgba(255,255,255,0.65); }
+    .gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; margin-top: 50px; }
+    .gallery-card {
+      border-radius: 16px; overflow: hidden; position: relative;
+      background: var(--dark); height: 220px;
+      display: flex; align-items: center; justify-content: center;
+      border: 1px solid rgba(0,198,255,0.15);
+    }
+    .gallery-placeholder { text-align: center; color: rgba(255,255,255,0.4); padding: 20px; }
+    .gallery-placeholder .gallery-icon { font-size: 3rem; margin-bottom: 10px; }
+    .gallery-placeholder p { font-size: 0.85rem; line-height: 1.5; }
+    .gallery-label {
+      position: absolute; top: 12px; left: 12px;
+      background: var(--cyan); color: var(--navy);
+      padding: 4px 12px; border-radius: 50px; font-size: 0.75rem; font-weight: 800;
+    }
+
+    /* ── WHY US ── */
+    #why { background: var(--light); }
+    .why-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 24px; margin-top: 50px; }
+    .why-card {
+      background: var(--white); border-radius: 16px; padding: 30px 24px; text-align: center;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.05); border: 1px solid rgba(14,165,233,0.1);
+      transition: transform .2s;
+    }
+    .why-card:hover { transform: translateY(-4px); }
+    .why-icon { font-size: 2.2rem; margin-bottom: 14px; }
+    .why-card h3 { font-size: 1rem; font-weight: 700; color: var(--navy); margin-bottom: 8px; }
+    .why-card p { font-size: 0.87rem; color: var(--gray); line-height: 1.6; }
+
+    /* ── COVERAGE ── */
+    #coverage {
+      background: linear-gradient(135deg, var(--navy), #0f2d6b);
+      text-align: center; padding: 80px 5%;
+    }
+    #coverage .section-title { color: var(--white); }
+    #coverage .section-subtitle { color: rgba(255,255,255,0.7); margin: 0 auto 40px; }
+    .coverage-map { font-size: 6rem; margin: 20px 0 30px; }
+    .coverage-highlight {
+      display: inline-block; background: rgba(0,198,255,0.15);
+      border: 1px solid rgba(0,198,255,0.35); color: var(--cyan);
+      padding: 14px 32px; border-radius: 50px; font-size: 1.1rem; font-weight: 700;
+      letter-spacing: .5px;
+    }
+
+    /* ── TESTIMONIALS ── */
+    #testimonials { background: var(--white); }
+    .testimonials-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 24px; margin-top: 50px; }
+    .testimonial-card {
+      background: var(--light); border-radius: 16px; padding: 28px;
+      border: 1px solid rgba(14,165,233,0.12); position: relative;
+    }
+    .testimonial-card::before {
+      content: '"'; font-size: 5rem; color: var(--cyan2); opacity: 0.2;
+      position: absolute; top: -10px; left: 16px; font-family: Georgia, serif; line-height: 1;
+    }
+    .stars { color: #fbbf24; font-size: 1rem; margin-bottom: 14px; letter-spacing: 2px; }
+    .testimonial-card p { color: #334155; font-size: 0.95rem; line-height: 1.7; font-style: italic; margin-bottom: 20px; }
+    .testimonial-author { display: flex; align-items: center; gap: 12px; }
+    .author-avatar {
+      width: 44px; height: 44px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--navy), var(--cyan2));
+      display: flex; align-items: center; justify-content: center;
+      color: var(--white); font-weight: 700; font-size: 1.1rem;
+    }
+    .author-info strong { display: block; color: var(--navy); font-weight: 700; font-size: 0.9rem; }
+    .author-info span { color: var(--gray); font-size: 0.8rem; }
+
+    /* ── FAQ ── */
+    #faq { background: var(--light); }
+    .faq-list { max-width: 780px; margin: 50px auto 0; display: flex; flex-direction: column; gap: 14px; }
+    .faq-item {
+      background: var(--white); border-radius: 14px; overflow: hidden;
+      border: 1px solid rgba(14,165,233,0.12); box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+    }
+    .faq-question {
+      width: 100%; padding: 20px 24px; text-align: left; background: none; border: none;
+      font-family: inherit; font-size: 0.97rem; font-weight: 600; color: var(--navy);
+      cursor: pointer; display: flex; justify-content: space-between; align-items: center;
+      transition: background .15s;
+    }
+    .faq-question:hover { background: var(--light); }
+    .faq-question .arrow { transition: transform .3s; font-size: 0.8rem; color: var(--cyan2); }
+    .faq-item.open .faq-question .arrow { transform: rotate(180deg); }
+    .faq-answer {
+      max-height: 0; overflow: hidden; transition: max-height .35s ease, padding .35s ease;
+      padding: 0 24px; color: var(--gray); font-size: 0.92rem; line-height: 1.7;
+    }
+    .faq-item.open .faq-answer { max-height: 300px; padding: 0 24px 20px; }
+
+    /* ── CONTACT ── */
+    #contact {
+      background: linear-gradient(135deg, var(--dark) 0%, var(--navy) 100%);
+      text-align: center; padding: 100px 5%;
+    }
+    #contact .section-title { color: var(--white); }
+    #contact .section-subtitle { color: rgba(255,255,255,0.65); margin: 0 auto 48px; }
+    .contact-form {
+      max-width: 560px; margin: 0 auto;
+      display: flex; flex-direction: column; gap: 16px;
+    }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .contact-form input,
+    .contact-form select,
+    .contact-form textarea {
+      width: 100%; padding: 16px 20px;
+      background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 10px; color: var(--white); font-family: inherit; font-size: 0.95rem;
+      outline: none; transition: border-color .2s;
+    }
+    .contact-form input::placeholder,
+    .contact-form textarea::placeholder { color: rgba(255,255,255,0.4); }
+    .contact-form input:focus,
+    .contact-form select:focus,
+    .contact-form textarea:focus { border-color: var(--cyan); }
+    .contact-form select option { background: var(--navy); color: var(--white); }
+    .contact-form textarea { resize: vertical; min-height: 120px; }
+    .contact-form .btn-primary { width: 100%; justify-content: center; font-size: 1.05rem; padding: 18px; border: none; cursor: pointer; }
+    .contact-info {
+      margin-top: 48px; display: flex; justify-content: center; gap: 48px; flex-wrap: wrap;
+    }
+    .contact-info-item { display: flex; align-items: center; gap: 12px; color: rgba(255,255,255,0.7); }
+    .contact-info-item .ci-icon { font-size: 1.4rem; }
+    .contact-info-item span { font-size: 0.9rem; }
+    .contact-info-item strong { color: var(--white); font-size: 1rem; }
+
+    /* ── FOOTER ── */
+    footer {
+      background: var(--dark); padding: 40px 5%;
+      text-align: center; color: rgba(255,255,255,0.4);
+      border-top: 1px solid rgba(255,255,255,0.06);
+    }
+    footer p { font-size: 0.85rem; margin-bottom: 8px; }
+    footer a { color: var(--cyan); text-decoration: none; }
+    footer .social { margin-top: 14px; font-size: 1.4rem; display: flex; justify-content: center; gap: 16px; }
+    footer .social a { color: rgba(255,255,255,0.4); transition: color .2s; }
+    footer .social a:hover { color: var(--cyan); }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 768px) {
+      .nav-links { display: none; }
+      .about-grid { grid-template-columns: 1fr; }
+      .form-row { grid-template-columns: 1fr; }
+      .hero-stats { gap: 24px; }
+      .contact-info { gap: 24px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav>
+  <a href="#hero" class="nav-logo">
+    <div class="nav-logo-icon">🏠</div>
+    <div class="nav-logo-text">Paula's <span>Cleaning Squad</span></div>
+  </a>
+  <ul class="nav-links">
+    <li><a href="#about">About</a></li>
+    <li><a href="#services">Services</a></li>
+    <li><a href="#gallery">Gallery</a></li>
+    <li><a href="#testimonials">Feedback</a></li>
+    <li><a href="#faq">FAQ</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ul>
+  <a href="tel:3219784978" class="nav-cta">📞 (321) 978-4978</a>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="hero-content">
+    <div class="hero-badge">Space Coast, Florida</div>
+    <h1>Your Home Deserves a <span>Spotless Clean</span></h1>
+    <p>Paula's Cleaning Squad provides professional commercial and residential cleaning services across the entire Florida coast. Give your space the care it deserves.</p>
+    <div class="hero-actions">
+      <a href="#contact" class="btn-primary">✨ Get Your Free Estimate</a>
+      <a href="#services" class="btn-secondary">Our Services →</a>
+    </div>
+    <div class="hero-phone">
+      <span>📞 Call us now:</span>
+      <strong>(321) 978-4978</strong>
+    </div>
+    <div class="hero-stats">
+      <div class="stat-item">
+        <div class="stat-number">181+</div>
+        <div class="stat-label">Jobs Completed</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-number">100%</div>
+        <div class="stat-label">Satisfaction</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-number">8</div>
+        <div class="stat-label">Service Types</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-number">FL</div>
+        <div class="stat-label">Entire Coast</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ABOUT -->
+<section id="about">
+  <div class="about-grid">
+    <div class="about-image-wrap">
+      <div>
+        <div class="about-logo-large">🏠✨</div>
+        <div class="about-logo-text">
+          <h3>Paula's Cleaning Squad</h3>
+          <p>Space Coast, Florida</p>
+        </div>
+      </div>
+    </div>
+    <div class="about-text">
+      <span class="section-tag">About Us</span>
+      <h2 class="section-title">We Care About <span>Every Detail</span></h2>
+      <p>At Paula's Cleaning Squad, we believe a clean home begins with careful attention. We are a professional commercial and residential cleaning company proudly serving the entire Space Coast of Florida.</p>
+      <p>From your first call to the final sweep, our team delivers thorough, reliable and stress-free cleaning — so you can come home to a spotless, organized space without lifting a finger.</p>
+      <div class="about-highlights">
+        <div class="about-highlight-item">
+          <span class="icon">💎</span>
+          <div>
+            <strong>Commercial &amp; Residential</strong>
+            <span>We serve homes, offices, schools, Airbnbs and more.</span>
+          </div>
+        </div>
+        <div class="about-highlight-item">
+          <span class="icon">📍</span>
+          <div>
+            <strong>Space Coast, Florida</strong>
+            <span>Serving the entire Florida coast with pride.</span>
+          </div>
+        </div>
+        <div class="about-highlight-item">
+          <span class="icon">📲</span>
+          <div>
+            <strong>Free Estimates</strong>
+            <span>Call (321) 978-4978 to get your quote today.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SERVICES -->
+<section id="services">
+  <div class="center">
+    <span class="section-tag">What We Offer</span>
+    <h2 class="section-title">Our <span>Cleaning Services</span></h2>
+    <p class="section-subtitle">From quick touch-ups to deep cleans, we have the perfect service for every space and schedule.</p>
+  </div>
+  <div class="services-grid">
+    <div class="service-card">
+      <div class="service-icon">🏠</div>
+      <h3>Residential Cleaning</h3>
+      <p>Transform your home into a spotless sanctuary. We focus on every corner, from the kitchen to the bedroom, giving your home the care it deserves.</p>
+      <span class="service-tag">Most Popular</span>
+    </div>
+    <div class="service-card">
+      <div class="service-icon">🏢</div>
+      <h3>Commercial Cleaning</h3>
+      <p>A clean office is a productive office. Impress your clients with a pristine workspace — we keep your business spotless so you can focus on what matters.</p>
+      <span class="service-tag">Offices & Business</span>
+    </div>
+    <div class="service-card">
+      <div class="service-icon">🧹</div>
+      <h3>Deep Cleaning</h3>
+      <p>Perfect for seasonal cleaning or before/after big events. Our deep clean service reaches every nook, leaving your space completely refreshed.</p>
+      <span class="service-tag">Seasonal</span>
+    </div>
+    <div class="service-card">
+      <div class="service-icon">📦</div>
+      <h3>Move-In / Move-Out</h3>
+      <p>Moving is stressful enough — let us handle the cleaning. We ensure your new home is spotless on arrival and your old one is ready for handover.</p>
+      <span class="service-tag">Relocation</span>
+    </div>
+    <div class="service-card">
+      <div class="service-icon">🛏️</div>
+      <h3>Airbnb Turnover</h3>
+      <p>For hosts who value five-star reviews. We offer seamless, stress-free cleaning between guests so your property always earns top marks.</p>
+      <span class="service-tag">Short-Term Rental</span>
+    </div>
+    <div class="service-card">
+      <div class="service-icon">🏫</div>
+      <h3>School Cleaning</h3>
+      <p>Spotless classrooms, bright futures. We provide specialized cleaning services tailored for educational environments — clean, safe and hygienic.</p>
+      <span class="service-tag">Educational</span>
+    </div>
+    <div class="service-card">
+      <div class="service-icon">✅</div>
+      <h3>Daily Touch-Up</h3>
+      <p>Imagine the feeling of a clean and organized home every single day. Our touch-up service keeps your home fresh and organized with convenience.</p>
+      <span class="service-tag">Recurring</span>
+    </div>
+    <div class="service-card">
+      <div class="service-icon">🎃</div>
+      <h3>Post-Event Cleaning</h3>
+      <p>After all the fun, who's going to clean? Paula's Cleaning Squad is ready to make your home spotless again after any event or celebration.</p>
+      <span class="service-tag">Events</span>
+    </div>
+  </div>
+</section>
+
+<!-- GALLERY -->
+<section id="gallery">
+  <div class="center">
+    <span class="section-tag" style="color:var(--cyan)">Our Work</span>
+    <h2 class="section-title">Before &amp; After</h2>
+    <p class="section-subtitle">See the difference a professional cleaning makes. Real results from real homes.</p>
+  </div>
+  <div class="gallery-grid">
+    <div class="gallery-card">
+      <div class="gallery-placeholder">
+        <div class="gallery-icon">🛁</div>
+        <p>Bathroom Deep Clean<br/><small>Before &amp; After</small></p>
+      </div>
+      <span class="gallery-label">Before / After</span>
+    </div>
+    <div class="gallery-card">
+      <div class="gallery-placeholder">
+        <div class="gallery-icon">🛏️</div>
+        <p>Bedroom Transformation<br/><small>Residential Clean</small></p>
+      </div>
+      <span class="gallery-label">Residential</span>
+    </div>
+    <div class="gallery-card">
+      <div class="gallery-placeholder">
+        <div class="gallery-icon">🏢</div>
+        <p>Office Space<br/><small>Commercial Clean</small></p>
+      </div>
+      <span class="gallery-label">Commercial</span>
+    </div>
+    <div class="gallery-card">
+      <div class="gallery-placeholder">
+        <div class="gallery-icon">🍽️</div>
+        <p>Dining &amp; Kitchen<br/><small>Full House Clean</small></p>
+      </div>
+      <span class="gallery-label">Residential</span>
+    </div>
+    <div class="gallery-card">
+      <div class="gallery-placeholder">
+        <div class="gallery-icon">🛏️</div>
+        <p>Airbnb Room Turnover<br/><small>Guest-Ready</small></p>
+      </div>
+      <span class="gallery-label">Airbnb</span>
+    </div>
+    <div class="gallery-card">
+      <div class="gallery-placeholder">
+        <div class="gallery-icon">🏫</div>
+        <p>Classroom Cleaning<br/><small>Educational Space</small></p>
+      </div>
+      <span class="gallery-label">School</span>
+    </div>
+  </div>
+</section>
+
+<!-- WHY US -->
+<section id="why">
+  <div class="center">
+    <span class="section-tag">Why Choose Us</span>
+    <h2 class="section-title">The Paula's Cleaning Squad <span>Difference</span></h2>
+    <p class="section-subtitle">We don't just clean — we deliver peace of mind with every visit.</p>
+  </div>
+  <div class="why-grid">
+    <div class="why-card">
+      <div class="why-icon">🔍</div>
+      <h3>Attention to Detail</h3>
+      <p>A clean home begins with careful attention. We focus on every corner, surface and detail others miss.</p>
+    </div>
+    <div class="why-card">
+      <div class="why-icon">⚡</div>
+      <h3>Reliable & Punctual</h3>
+      <p>We show up on time, every time. Count on us for consistent, professional service you can schedule around your life.</p>
+    </div>
+    <div class="why-card">
+      <div class="why-icon">💰</div>
+      <h3>Free Estimates</h3>
+      <p>No surprise costs. Get a transparent, free quote before we begin — tailored to your space and needs.</p>
+    </div>
+    <div class="why-card">
+      <div class="why-icon">🌊</div>
+      <h3>Full Florida Coast</h3>
+      <p>We serve the entire Florida coast from our base on the Space Coast — residential and commercial.</p>
+    </div>
+    <div class="why-card">
+      <div class="why-icon">🌱</div>
+      <h3>Safe Products</h3>
+      <p>We use effective, safe cleaning products that are kind to your family, pets and the environment.</p>
+    </div>
+    <div class="why-card">
+      <div class="why-icon">⭐</div>
+      <h3>5-Star Results</h3>
+      <p>Our clients keep coming back. From Airbnb hosts to families and businesses — we deliver results you can see.</p>
+    </div>
+  </div>
+</section>
+
+<!-- COVERAGE -->
+<section id="coverage">
+  <span class="section-tag" style="color:var(--cyan)">Service Area</span>
+  <div class="coverage-map">🗺️</div>
+  <h2 class="section-title" style="color:var(--white)">We Serve the <span style="color:var(--cyan)">Entire Florida Coast</span></h2>
+  <p class="section-subtitle">Based on the Space Coast, Florida — we travel to bring professional cleaning wherever you need it.</p>
+  <div class="coverage-highlight">📍 Space Coast, Florida &nbsp;|&nbsp; Entire FL Coast Coverage</div>
+</section>
+
+<!-- TESTIMONIALS -->
+<section id="testimonials">
+  <div class="center">
+    <span class="section-tag">Feedback</span>
+    <h2 class="section-title">What Our <span>Clients Say</span></h2>
+    <p class="section-subtitle">Real feedback from happy homeowners, Airbnb hosts and business owners across Florida.</p>
+  </div>
+  <div class="testimonials-grid">
+    <div class="testimonial-card">
+      <div class="stars">★★★★★</div>
+      <p>"Paula's Cleaning Squad did an amazing job on our Airbnb. The place was spotless and our guests immediately noticed the difference. Highly recommended!"</p>
+      <div class="testimonial-author">
+        <div class="author-avatar">S</div>
+        <div class="author-info">
+          <strong>Sarah M.</strong>
+          <span>Airbnb Host — Space Coast</span>
+        </div>
+      </div>
+    </div>
+    <div class="testimonial-card">
+      <div class="stars">★★★★★</div>
+      <p>"Imagine coming home to a perfectly clean house without lifting a finger! That's exactly what Paula's team delivers every single time. Worth every penny."</p>
+      <div class="testimonial-author">
+        <div class="author-avatar">J</div>
+        <div class="author-info">
+          <strong>James R.</strong>
+          <span>Residential Client — Florida</span>
+        </div>
+      </div>
+    </div>
+    <div class="testimonial-card">
+      <div class="stars">★★★★★</div>
+      <p>"Our office has never looked better. Clients keep commenting on how clean and professional everything looks. Paula's Cleaning Squad is a true partner for our business."</p>
+      <div class="testimonial-author">
+        <div class="author-avatar">L</div>
+        <div class="author-info">
+          <strong>Linda T.</strong>
+          <span>Business Owner — Florida Coast</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section id="faq">
+  <div class="center">
+    <span class="section-tag">FAQ</span>
+    <h2 class="section-title">Frequently Asked <span>Questions</span></h2>
+    <p class="section-subtitle">Everything you need to know before booking your first clean.</p>
+  </div>
+  <div class="faq-list">
+    <div class="faq-item">
+      <button class="faq-question">
+        What areas do you serve?
+        <span class="arrow">▼</span>
+      </button>
+      <div class="faq-answer">We are based on the Space Coast of Florida and serve the entire Florida coast — including residential homes, offices, schools and Airbnb properties.</div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-question">
+        How do I get a quote?
+        <span class="arrow">▼</span>
+      </button>
+      <div class="faq-answer">Simply call us at (321) 978-4978 or fill out the contact form below. We offer free, no-obligation estimates tailored to your space and cleaning needs.</div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-question">
+        Do I need to be home during the cleaning?
+        <span class="arrow">▼</span>
+      </button>
+      <div class="faq-answer">Not at all! Many of our clients provide us access and go about their day. We are fully trusted and professional — you'll come home to a spotless space.</div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-question">
+        What cleaning products do you use?
+        <span class="arrow">▼</span>
+      </button>
+      <div class="faq-answer">We use effective, safe cleaning products that are kind to your family, pets and the environment. If you have specific preferences or allergies, just let us know.</div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-question">
+        Do you offer recurring cleaning services?
+        <span class="arrow">▼</span>
+      </button>
+      <div class="faq-answer">Yes! We offer daily touch-up plans, weekly, bi-weekly and monthly recurring cleans. Regular clients enjoy a consistently clean home without any hassle.</div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-question">
+        What is included in a deep clean?
+        <span class="arrow">▼</span>
+      </button>
+      <div class="faq-answer">Our deep clean covers every nook and cranny — inside appliances, baseboards, window sills, ceiling fans, grout lines and more. It's a full reset for your space.</div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-question">
+        Do you clean Airbnb properties between guests?
+        <span class="arrow">▼</span>
+      </button>
+      <div class="faq-answer">Absolutely! We specialize in Airbnb turnover cleaning. We make your property guest-ready quickly and thoroughly so you can maintain those 5-star reviews.</div>
+    </div>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section id="contact">
+  <span class="section-tag" style="color:var(--cyan)">Get In Touch</span>
+  <h2 class="section-title">Get Your <span style="color:var(--cyan)">Free Estimate</span></h2>
+  <p class="section-subtitle">Ready for a spotless space? Fill out the form below and we'll get back to you with a custom quote — no strings attached.</p>
+  <form class="contact-form" onsubmit="handleSubmit(event)">
+    <div class="form-row">
+      <input type="text" placeholder="First Name" required />
+      <input type="text" placeholder="Last Name" required />
+    </div>
+    <input type="email" placeholder="Email Address" required />
+    <input type="tel" placeholder="Phone Number" />
+    <select required>
+      <option value="" disabled selected>Select a Service</option>
+      <option>Residential Cleaning</option>
+      <option>Commercial Cleaning</option>
+      <option>Deep Cleaning</option>
+      <option>Move-In / Move-Out</option>
+      <option>Airbnb Turnover</option>
+      <option>School Cleaning</option>
+      <option>Daily Touch-Up</option>
+      <option>Post-Event Cleaning</option>
+    </select>
+    <textarea placeholder="Tell us about your space and any special requests..."></textarea>
+    <button type="submit" class="btn-primary">✨ Send My Free Estimate Request</button>
+  </form>
+  <div class="contact-info">
+    <div class="contact-info-item">
+      <span class="ci-icon">📞</span>
+      <div>
+        <span>Call or Text</span>
+        <strong>(321) 978-4978</strong>
+      </div>
+    </div>
+    <div class="contact-info-item">
+      <span class="ci-icon">📍</span>
+      <div>
+        <span>Based in</span>
+        <strong>Space Coast, Florida</strong>
+      </div>
+    </div>
+    <div class="contact-info-item">
+      <span class="ci-icon">🕐</span>
+      <div>
+        <span>Available</span>
+        <strong>7 Days a Week</strong>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <p><strong style="color:rgba(255,255,255,0.7)">Paula's Cleaning Squad</strong> — Space Coast, Florida</p>
+  <p>📞 <a href="tel:3219784978">(321) 978-4978</a> &nbsp;|&nbsp; Serving the Entire Florida Coast</p>
+  <p style="margin-top:12px">© 2025 Paula's Cleaning Squad. All rights reserved.</p>
+  <div class="social">
+    <a href="#" title="Facebook">📘</a>
+    <a href="#" title="Instagram">📸</a>
+    <a href="#" title="WhatsApp">💬</a>
+  </div>
+  <p style="margin-top:20px">
+    <a href="https://www.paulascleaningsquad.com" style="color:var(--cyan); font-weight:600;">← Back to Portal</a>
+  </p>
+</footer>
+
+<script>
+  // FAQ accordion
+  document.querySelectorAll('.faq-question').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const item = btn.parentElement;
+      const isOpen = item.classList.contains('open');
+      document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
+      if (!isOpen) item.classList.add('open');
+    });
+  });
+
+  // Contact form
+  function handleSubmit(e) {
+    e.preventDefault();
+    const btn = e.target.querySelector('button[type="submit"]');
+    btn.textContent = '✅ Request Sent! We\'ll be in touch soon.';
+    btn.style.background = '#22c55e';
+    btn.disabled = true;
+  }
+</script>
+
+</body>
+</html>
