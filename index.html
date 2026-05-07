@@ -443,12 +443,12 @@
   <p class="section-subtitle">Fill out the form and we'll get back to you with a custom quote — no strings attached.</p>
   <form class="contact-form" action="https://formspree.io/f/mgodlwyv" method="POST">
     <div class="form-row">
-      <input type="text" placeholder="First Name" required />
-      <input type="text" placeholder="Last Name" required />
+      <input type="text" name="first_name" placeholder="First Name" required />
+      <input type="text" name="last_name" placeholder="Last Name" required />
     </div>
-    <input type="email" placeholder="Email Address" required />
-    <input type="tel" placeholder="Phone Number" />
-    <select required>
+    <input type="email" name="email" placeholder="Email Address" required />
+    <input type="tel" name="phone" placeholder="Phone Number" />
+    <select name="service" required>
       <option value="" disabled selected>Select a Service</option>
       <option>Residential Cleaning</option>
       <option>Commercial Cleaning</option>
@@ -459,7 +459,7 @@
       <option>Daily Touch-Up</option>
       <option>Post-Event Cleaning</option>
     </select>
-    <textarea placeholder="Tell us about your space and any special requests..."></textarea>
+    <textarea name="message" placeholder="Tell us about your space and any special requests..."></textarea>
     <button type="submit" class="btn-primary">✨ Send My Free Estimate Request</button>
   </form>
   <div class="contact-info">
