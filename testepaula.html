@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>U.S. Citizenship Quiz</title>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #F5F2EC; --surface: #FDFBF7; --text: #1A1814; --muted: #7A776E;
+    --border: #DDD9CF; --accent: #2B4A8C; --accent-light: #E8EDF7;
+    --correct: #1A5C3A; --correct-bg: #EAF5EE; --correct-border: #6ABD8E;
+    --wrong: #8C2B2B; --wrong-bg: #F5EAEA; --wrong-border: #D98080;
+  }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; align-items: flex-start; justify-content: center; padding: 2rem 1rem 4rem; }
+  .container { width: 100%; max-width: 640px; }
+  header { margin-bottom: 2.5rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--border); }
+  .flag { display: flex; gap: 4px; margin-bottom: 1rem; }
+  .flag span { display: block; height: 6px; border-radius: 2px; flex: 1; }
+  .flag .r { background: #B22234; } .flag .w { background: #fff; border: 1px solid #ddd; } .flag .b { background: #3C3B6E; }
+  h1 { font-family: 'Instrument Serif', serif; font-size: clamp(28px, 5vw, 38px); font-weight: 400; line-height: 1.15; letter-spacing: -0.5px; margin-bottom: 0.4rem; }
+  h1 em { font-style: italic; color: var(--accent); }
+  .subtitle { font-size: 14px; color: var(--muted); font-weight: 300; }
+  .meta-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; }
+  .meta-bar span { font-size: 13px; color: var(--muted); font-weight: 300; }
+  .score-pill { background: var(--accent); color: #fff; font-size: 12px; font-weight: 500; padding: 4px 12px; border-radius: 20px; }
+  .progress-track { height: 3px; background: var(--border); border-radius: 2px; margin-bottom: 2rem; overflow: hidden; }
+  .progress-fill { height: 100%; background: var(--accent); border-radius: 2px; transition: width 0.4s ease; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 2rem; }
+  .q-number { font-size: 11px; font-weight: 500; letter-spacing: 1.5px; text-transform: uppercase; color: var(--accent); margin-bottom: 0.75rem; }
+  .question { font-family: 'Instrument Serif', serif; font-size: clamp(18px, 3.5vw, 22px); font-weight: 400; line-height: 1.45; margin-bottom: 1.75rem; }
+  .options { display: flex; flex-direction: column; gap: 10px; }
+  .opt { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 13px 16px; font-size: 15px; font-family: 'DM Sans', sans-serif; color: var(--text); text-align: left; cursor: pointer; transition: background 0.15s, border-color 0.15s, transform 0.1s; font-weight: 300; }
+  .opt:hover:not(:disabled) { background: var(--accent-light); border-color: var(--accent); transform: translateX(3px); }
+  .opt:disabled { cursor: default; transform: none; }
+  .opt.correct { background: var(--correct-bg); border-color: var(--correct-border); color: var(--correct); font-weight: 400; }
+  .opt.wrong { background: var(--wrong-bg); border-color: var(--wrong-border); color: var(--wrong); font-weight: 400; }
+  .feedback { margin-top: 1.25rem; padding: 12px 16px; border-radius: 10px; font-size: 14px; line-height: 1.6; font-weight: 300; }
+  .feedback.correct { background: var(--correct-bg); color: var(--correct); border: 1px solid var(--correct-border); }
+  .feedback.wrong { background: var(--wrong-bg); color: var(--wrong); border: 1px solid var(--wrong-border); }
+  .next-wrap { margin-top: 1.5rem; display: flex; justify-content: flex-end; }
+  .next-btn { background: var(--accent); color: #fff; border: none; border-radius: 8px; padding: 11px 22px; font-size: 14px; font-family: 'DM Sans', sans-serif; font-weight: 500; cursor: pointer; transition: opacity 0.15s, transform 0.1s; }
+  .next-btn:hover { opacity: 0.88; transform: translateY(-1px); }
+  .result-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 3rem 2rem; text-align: center; }
+  .stars { font-size: 28px; letter-spacing: 4px; margin-bottom: 1.5rem; }
+  .result-label { font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); margin-bottom: 0.5rem; }
+  .result-score { font-family: 'Instrument Serif', serif; font-size: 72px; font-weight: 400; color: var(--accent); line-height: 1; margin-bottom: 0.25rem; }
+  .result-total { font-size: 14px; color: var(--muted); margin-bottom: 1.5rem; }
+  .result-msg { font-family: 'Instrument Serif', serif; font-size: 20px; font-weight: 400; font-style: italic; margin-bottom: 2rem; line-height: 1.5; }
+  .restart-btn { background: transparent; color: var(--accent); border: 1px solid var(--accent); border-radius: 8px; padding: 11px 28px; font-size: 14px; font-family: 'DM Sans', sans-serif; font-weight: 500; cursor: pointer; transition: background 0.15s, color 0.15s; }
+  .restart-btn:hover { background: var(--accent); color: #fff; }
+  @media (max-width: 480px) { .card, .result-card { padding: 1.5rem; } }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <div class="flag">
+      <span class="r"></span><span class="w"></span><span class="r"></span>
+      <span class="w"></span><span class="r"></span><span class="w"></span>
+      <span class="b"></span><span class="r"></span><span class="w"></span>
+      <span class="r"></span><span class="w"></span><span class="r"></span><span class="w"></span>
+    </div>
+    <h1>U.S. <em>Citizenship</em><br>Practice Quiz</h1>
+    <p class="subtitle">20 questions · answer out loud, just like the real interview</p>
+  </header>
+  <div id="app"></div>
+</div>
+<script>
+const questions = [
+  { q: "What is the supreme law of the land?", opts: ["The Declaration of Independence", "The Constitution", "The Bill of Rights", "An act of Congress"], ans: 1, exp: "The Constitution is the supreme law of the United States. No other law can contradict it." },
+  { q: "How many amendments does the U.S. Constitution have?", opts: ["10", "15", "27", "50"], ans: 2, exp: "The Constitution has 27 amendments. The first 10 are known as the Bill of Rights." },
+  { q: "What are the three branches of the U.S. government?", opts: ["Federal, State, Local", "Legislative, Executive, Judicial", "Senate, House, Supreme Court", "President, Congress, Army"], ans: 1, exp: "The three branches are: Legislative (Congress), Executive (President), and Judicial (Supreme Court)." },
+  { q: "How many U.S. Senators are there in total?", opts: ["50", "100", "435", "538"], ans: 1, exp: "There are 100 Senators — 2 per state, and the U.S. has 50 states." },
+  { q: "When was the Declaration of Independence adopted?", opts: ["July 4, 1776", "July 4, 1812", "September 17, 1787", "January 1, 1800"], ans: 0, exp: "The Declaration of Independence was adopted on July 4, 1776." },
+  { q: "Who wrote the Declaration of Independence?", opts: ["George Washington", "Abraham Lincoln", "Thomas Jefferson", "Benjamin Franklin"], ans: 2, exp: "Thomas Jefferson was the primary author of the Declaration of Independence." },
+  { q: "Why does the American flag have 13 stripes?", opts: ["For the 13 original presidents", "For the 13 original colonies", "For the 13 founding states", "For 13 wars won"], ans: 1, exp: "The 13 stripes represent the 13 original colonies that became the first states." },
+  { q: "Why does the American flag have 50 stars?", opts: ["For 50 wars won", "For 50 capital cities", "Because there are 50 states", "For 50 presidents"], ans: 2, exp: "Each star represents one state. The United States has 50 states." },
+  { q: "What was the main cause of the Civil War?", opts: ["Taxation", "Slavery", "Religion", "Territory"], ans: 1, exp: "Slavery was the main cause of the Civil War (1861–1865)." },
+  { q: "Who was president during the Civil War?", opts: ["George Washington", "Thomas Jefferson", "Abraham Lincoln", "Franklin Roosevelt"], ans: 2, exp: "Abraham Lincoln was president during the Civil War (1861–1865)." },
+  { q: "What is the name of the national anthem?", opts: ["America the Beautiful", "God Bless America", "The Star-Spangled Banner", "My Country, 'Tis of Thee"], ans: 2, exp: "The Star-Spangled Banner has been the national anthem since 1931." },
+  { q: "When do we celebrate Independence Day?", opts: ["January 1", "July 4", "November 4", "December 25"], ans: 1, exp: "Independence Day is celebrated on July 4th, the date the Declaration of Independence was adopted." },
+  { q: "What does the First Amendment protect?", opts: ["The right to bear arms", "Freedom of speech, religion, and press", "The abolition of slavery", "The right to vote"], ans: 1, exp: "The First Amendment protects freedom of speech, religion, press, assembly, and petition." },
+  { q: "How many voting members are in the House of Representatives?", opts: ["50", "100", "270", "435"], ans: 3, exp: "The House of Representatives has 435 voting members, distributed by state population." },
+  { q: "Who was the first President of the United States?", opts: ["John Adams", "Thomas Jefferson", "George Washington", "Benjamin Franklin"], ans: 2, exp: "George Washington was the 1st President (1789–1797), known as the 'father of the nation.'" },
+  { q: "Who leads the executive branch of the U.S. government?", opts: ["Congress", "The President", "The Supreme Court", "The Senate"], ans: 1, exp: "The President leads the executive branch and is also the commander-in-chief of the armed forces." },
+  { q: "What does 'We the People' mean in the Constitution?", opts: ["Only citizens born in the U.S.", "The government is accountable to the people", "Leaders are above the people", "The military protects the people"], ans: 1, exp: "'We the People' means the government derives its power from the citizens and is accountable to them." },
+  { q: "What is the economic system of the United States?", opts: ["Socialism", "Communism", "Capitalism", "Feudalism"], ans: 2, exp: "The U.S. has a capitalist (free market) economy based on private ownership and free enterprise." },
+  { q: "How long is a U.S. Senator's term?", opts: ["2 years", "4 years", "6 years", "8 years"], ans: 2, exp: "Senators serve 6-year terms. There are no term limits for Senators." },
+  { q: "What does Congress do?", opts: ["Interprets the laws", "Makes federal laws", "Enforces the laws", "Appoints judges"], ans: 1, exp: "Congress (Senate + House) is the legislative branch: it debates and passes federal laws." },
+];
+
+let shuffled = [], current = 0, score = 0, answered = false;
+function shuffle(arr) { return [...arr].sort(() => Math.random() - 0.5); }
+
+function init() {
+  shuffled = shuffle(questions); current = 0; score = 0; answered = false; render();
+}
+
+function render() {
+  const app = document.getElementById('app');
+  if (current >= shuffled.length) { showResult(); return; }
+  const q = shuffled[current];
+  const pct = Math.round(current / shuffled.length * 100);
+  app.innerHTML = `
+    <div class="meta-bar">
+      <span>Question ${current + 1} of ${shuffled.length}</span>
+      <span class="score-pill">${score} correct</span>
+    </div>
+    <div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div>
+    <div class="card">
+      <div class="q-number">Question ${String(current + 1).padStart(2,'0')}</div>
+      <p class="question">${q.q}</p>
+      <div class="options" id="opts">
+        ${q.opts.map((o, i) => `<button class="opt" onclick="pick(${i})">${o}</button>`).join('')}
+      </div>
+      <div id="feedback"></div>
+      <div id="next-wrap"></div>
+    </div>`;
+}
+
+function pick(i) {
+  if (answered) return;
+  answered = true;
+  const q = shuffled[current];
+  const opts = document.querySelectorAll('.opt');
+  opts.forEach(o => o.disabled = true);
+  const ok = i === q.ans;
+  opts[i].classList.add(ok ? 'correct' : 'wrong');
+  if (!ok) opts[q.ans].classList.add('correct');
+  if (ok) score++;
+  document.getElementById('feedback').innerHTML =
+    `<div class="feedback ${ok ? 'correct' : 'wrong'}">${ok ? '✓ Correct! ' : '✗ Incorrect. '}${q.exp}</div>`;
+  document.getElementById('next-wrap').innerHTML =
+    `<div class="next-wrap"><button class="next-btn" onclick="next()">${current + 1 < shuffled.length ? 'Next →' : 'See result →'}</button></div>`;
+}
+
+function next() { current++; answered = false; render(); }
+
+function showResult() {
+  const pct = Math.round(score / shuffled.length * 100);
+  const stars = pct >= 80 ? '🌟🌟🌟' : pct >= 60 ? '⭐⭐' : '⭐';
+  const msg = pct >= 80 ? 'Excellent! You\'re ready for the real interview.'
+            : pct >= 60 ? 'Good progress — keep studying!'
+            : 'Keep practicing. You\'ll get there!';
+  document.getElementById('app').innerHTML = `
+    <div class="result-card">
+      <div class="stars">${stars}</div>
+      <div class="result-label">Final score</div>
+      <div class="result-score">${score}</div>
+      <div class="result-total">out of ${shuffled.length} questions · ${pct}% correct</div>
+      <p class="result-msg">${msg}</p>
+      <button class="restart-btn" onclick="init()">↺ Try again</button>
+    </div>`;
+}
+
+init();
+</script>
+</body>
+</html>
