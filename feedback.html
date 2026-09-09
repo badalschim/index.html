@@ -88,6 +88,20 @@ body { font-family: Arial, sans-serif; background: #f0f2f5; color: #222; font-si
     <button class="login-btn" id="login-btn" onclick="doLogin()">Entrar</button>
     <div class="login-err" id="login-err"></div>
     <div class="login-loading" id="login-loading">Verificando...</div>
+  <div style="text-align:center;margin-top:12px">
+    <button onclick="showForgot()" style="background:none;border:none;color:#1a3a8f;font-size:12px;cursor:pointer;text-decoration:underline;font-family:Arial">Esqueceu a senha?</button>
+  </div>
+
+  <!-- Forgot password modal -->
+  <div id="forgot-modal" style="display:none;margin-top:16px;padding:14px;background:#f8f9ff;border-radius:8px;border:1px solid #d0d8f0">
+    <div style="font-size:12px;color:#555;margin-bottom:8px">Digite seu email (usuário) e enviaremos sua senha:</div>
+    <input type="email" id="forgot-email" placeholder="seu@email.com" style="width:100%;padding:8px 10px;border:1px solid #ccc;border-radius:6px;font-size:13px;font-family:Arial;outline:none;margin-bottom:8px" />
+    <div style="display:flex;gap:8px">
+      <button onclick="sendForgot()" style="flex:1;padding:8px;background:#1a3a8f;color:#fff;border:none;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;font-family:Arial">Enviar</button>
+      <button onclick="hideForgot()" style="padding:8px 12px;background:none;border:1px solid #ccc;border-radius:6px;font-size:13px;color:#888;cursor:pointer;font-family:Arial">Cancelar</button>
+    </div>
+    <div id="forgot-msg" style="font-size:12px;margin-top:8px;min-height:16px;text-align:center"></div>
+  </div>
   </div>
 </div>
 
@@ -197,7 +211,7 @@ async function doLogin() {
   loadEl.style.display = 'block';
 
   try {
-    const url = `${SCRIPT_URL}?usuario=${encodeURIComponent(user)}&senha=${encodeURIComponent(pass)}&pagina=feedback`;
+    const url = `${SCRIPT_URL}?usuario=${encodeURIComponent(user)}&senha=${encodeURIComponent(pass)}`;
     const res = await fetch(url);
     const json = await res.json();
 
@@ -261,32 +275,23 @@ let allFeedbacks = [];
 
 function formatDate(dateStr) {
   if (!dateStr) return '';
-  const parsed = parseDate(dateStr);
-  if (!parsed || isNaN(parsed)) return (dateStr+'').split(' ')[0];
-  const d = String(parsed.getDate()).padStart(2,'0');
-  const m = String(parsed.getMonth()+1).padStart(2,'0');
-  const y = parsed.getFullYear();
-  return d+'/'+m+'/'+y;
+  const d = (dateStr + '').split(' ')[0].split('T')[0];
+  const parts = d.split(/[-\/]/);
+  if (parts.length === 3) {
+    // Could be yyyy-mm-dd or dd/mm/yyyy
+    if (parts[0].length === 4) return parts[2]+'/'+parts[1]+'/'+parts[0];
+    return parts[0]+'/'+parts[1]+'/'+parts[2];
+  }
+  return d;
 }
 
 function parseDate(dateStr) {
   if (!dateStr) return null;
-  const d = (dateStr + '').trim().split(' ')[0].split('T')[0];
+  const d = (dateStr + '').split(' ')[0].split('T')[0];
   const parts = d.split(/[-\/]/);
   if (parts.length === 3) {
-    let y, m, day;
-    if (parts[0].length === 4) {
-      // yyyy-mm-dd
-      y = parseInt(parts[0]); m = parseInt(parts[1])-1; day = parseInt(parts[2]);
-    } else if (parseInt(parts[2]) > 31) {
-      // dd/mm/yyyy
-      y = parseInt(parts[2]); m = parseInt(parts[1])-1; day = parseInt(parts[0]);
-    } else {
-      // mm/dd/yy or mm/dd/yyyy (American format)
-      y = parseInt(parts[2]); m = parseInt(parts[0])-1; day = parseInt(parts[1]);
-      if (y < 100) y += 2000;
-    }
-    return new Date(y, m, day);
+    if (parts[0].length === 4) return new Date(parts[0], parts[1]-1, parts[2]);
+    return new Date(parts[2], parts[1]-1, parts[0]);
   }
   return new Date(d);
 }
@@ -372,6 +377,35 @@ function renderFeedbacks(feedbacks) {
       <div class="feedback-comment">${f.comentario ? '"'+f.comentario+'"' : '<span style="color:#ccc;font-style:normal">Sem comentário</span>'}</div>
     </div>`).join('');
 }
+
+function showForgot() {
+  document.getElementById('forgot-modal').style.display = 'block';
+  document.getElementById('forgot-email').focus();
+}
+function hideForgot() {
+  document.getElementById('forgot-modal').style.display = 'none';
+  document.getElementById('forgot-email').value = '';
+  document.getElementById('forgot-msg').textContent = '';
+}
+async function sendForgot() {
+  const email = document.getElementById('forgot-email').value.trim();
+  const msgEl = document.getElementById('forgot-msg');
+  if (!email) { msgEl.style.color='#c00'; msgEl.textContent='Digite seu email.'; return; }
+  msgEl.style.color='#888'; msgEl.textContent='Enviando...';
+  try {
+    const url = `${SCRIPT_URL}?action=forgot&usuario=${encodeURIComponent(email)}`;
+    const res = await fetch(url);
+    const json = await res.json();
+    if (json.ok) {
+      msgEl.style.color='#2d7a4f'; msgEl.textContent='Senha enviada para seu email!';
+    } else {
+      msgEl.style.color='#c00'; msgEl.textContent='Email não encontrado.';
+    }
+  } catch(e) {
+    msgEl.style.color='#c00'; msgEl.textContent='Erro de conexão.';
+  }
+}
+
 </script>
 </body>
 </html>
