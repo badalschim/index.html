@@ -289,8 +289,12 @@ async function sendRequest() {
 
   try {
     const now = new Date().toLocaleDateString('pt-BR');
-    const url = `${SCRIPT_URL}?action=supplies&usuario=${encodeURIComponent(currentUser)}&nome=${encodeURIComponent(currentNome)}&data=${encodeURIComponent(now)}&items=${encodeURIComponent(JSON.stringify(items))}&note=${encodeURIComponent(note)}`;
-    const res = await fetch(url);
+    const payload = { action: 'supplies', usuario: currentUser, nome: currentNome, data: now, items: items, note: note };
+    const res = await fetch(SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify(payload)
+    });
     const json = await res.json();
 
     if (json.ok) {
