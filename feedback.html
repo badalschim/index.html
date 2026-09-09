@@ -378,6 +378,51 @@ function renderFeedbacks(feedbacks) {
     </div>`).join('');
 }
 
+  msgEl.style.color='#888'; msgEl.textContent='Enviando...';
+  try {
+    const url = `${SCRIPT_URL}?action=forgot&usuario=${encodeURIComponent(email)}`;
+    const res = await fetch(url);
+    const json = await res.json();
+    if (json.ok) {
+      msgEl.style.color='#2d7a4f'; msgEl.textContent='Senha enviada para seu email!';
+    } else {
+      msgEl.style.color='#c00'; msgEl.textContent='Email não encontrado.';
+    }
+  } catch(e) {
+    msgEl.style.color='#c00'; msgEl.textContent='Erro de conexão.';
+  }
+}
+
+
+function showForgot() {
+  document.getElementById('forgot-modal').style.display = 'block';
+  document.getElementById('forgot-email').focus();
+}
+function hideForgot() {
+  document.getElementById('forgot-modal').style.display = 'none';
+  document.getElementById('forgot-email').value = '';
+  document.getElementById('forgot-msg').textContent = '';
+}
+async function sendForgot() {
+  const email = document.getElementById('forgot-email').value.trim();
+  const msgEl = document.getElementById('forgot-msg');
+  if (!email) { msgEl.style.color='#c00'; msgEl.textContent='Digite seu email.'; return; }
+  msgEl.style.color='#888'; msgEl.textContent='Enviando...';
+  try {
+    const url = `${SCRIPT_URL}?action=forgot&usuario=${encodeURIComponent(email)}`;
+    const res = await fetch(url);
+    const json = await res.json();
+    if (json.ok) {
+      msgEl.style.color='#2d7a4f'; msgEl.textContent='Senha enviada para seu email!';
+    } else {
+      msgEl.style.color='#c00'; msgEl.textContent='Email não encontrado.';
+    }
+  } catch(e) {
+    msgEl.style.color='#c00'; msgEl.textContent='Erro de conexão.';
+  }
+}
+
+
 function showForgot() {
   document.getElementById('forgot-modal').style.display = 'block';
   document.getElementById('forgot-email').focus();
