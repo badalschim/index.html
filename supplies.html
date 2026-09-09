@@ -38,11 +38,11 @@ input, textarea { width: 100%; font-family: Arial; font-size: 13px; padding: 7px
 input:focus, textarea:focus { border-color: #555; }
 textarea { resize: vertical; }
 
-.item-row { display: grid; grid-template-columns: 1fr 100px 36px; gap: 8px; margin-bottom: 8px; align-items: center; }
+.item-row { display: grid; grid-template-columns: 1fr 130px 36px; gap: 8px; margin-bottom: 8px; align-items: center; }
 .item-row input { font-size: 13px; padding: 7px 9px; }
 .remove-btn { background: none; border: 1px solid #eee; border-radius: 6px; width: 36px; height: 36px; font-size: 18px; color: #bbb; cursor: pointer; display: flex; align-items: center; justify-content: center; font-family: Arial; }
 .remove-btn:hover { background: #fff0f0; color: #c00; border-color: #fcc; }
-.col-heads { display: grid; grid-template-columns: 1fr 100px 36px; gap: 8px; margin-bottom: 4px; }
+.col-heads { display: grid; grid-template-columns: 1fr 130px 36px; gap: 8px; margin-bottom: 4px; }
 .col-heads span { font-size: 10px; color: #aaa; font-weight: 600; text-transform: uppercase; }
 .add-item-btn { background: none; border: 1.5px dashed #ccc; border-radius: 6px; padding: 8px; font-size: 13px; color: #888; cursor: pointer; width: 100%; margin-top: 4px; font-family: Arial; }
 .add-item-btn:hover { background: #f5f5f5; }
@@ -68,8 +68,8 @@ textarea { resize: vertical; }
 .err-msg { color: #c00; font-size: 12px; margin-bottom: 10px; display: none; padding: 8px 12px; background: #fff0f0; border-radius: 6px; border: 1px solid #fcc; }
 
 @media (max-width: 480px) {
-  .item-row { grid-template-columns: 1fr 80px 36px; }
-  .col-heads { grid-template-columns: 1fr 80px 36px; }
+  .item-row { grid-template-columns: 1fr 110px 36px; }
+  .col-heads { grid-template-columns: 1fr 110px 36px; }
 }
 </style>
 </head>
@@ -118,7 +118,7 @@ textarea { resize: vertical; }
       <div class="sec-title">Itens solicitados</div>
       <div class="col-heads">
         <span>Item / Produto</span>
-        <span>Quantidade</span>
+        <span>Data que acabou</span>
         <span></span>
       </div>
       <div id="items-container"></div>
@@ -130,10 +130,14 @@ textarea { resize: vertical; }
       <textarea id="note" rows="3" placeholder="Ex: Preciso com urgência, pode ser outra marca..."></textarea>
     </div>
 
-    <button class="send-btn" id="send-btn" onclick="sendRequest()">📧 Enviar pedido para Paula</button>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <button class="send-btn" id="send-btn" onclick="sendRequest()">📧 Enviar para Paula</button>
+      <button class="send-btn" style="background:#2c7a7a" onclick="savePDF()">💾 Salvar minha cópia</button>
+    </div>
   </div>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script>
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyGtMi4dY_1_eewqbyU8w05JNk9IqPOKFHkwzLGEP1tICwpZSyyswetMA8VA_ZwkI83-A/exec";
 
@@ -248,7 +252,7 @@ function addItem() {
   row.className = 'item-row';
   row.innerHTML = `
     <input type="text" placeholder="Nome do produto" />
-    <input type="text" placeholder="Ex: 2 caixas" />
+    <input type="date" style="font-size:12px;padding:6px 8px" />
     <button class="remove-btn" onclick="removeItem(this)" title="Remover">×</button>`;
   c.appendChild(row);
 }
@@ -264,8 +268,8 @@ function getItems() {
   rows.forEach(r => {
     const inputs = r.querySelectorAll('input');
     const name = inputs[0].value.trim();
-    const qty = inputs[1].value.trim();
-    if (name) items.push({ name, qty: qty || '—' });
+    const date = inputs[1].value.trim();
+    if (name) items.push({ name, date: date || '—' });
   });
   return items;
 }
@@ -307,6 +311,99 @@ function newRequest() {
   document.getElementById('note').value = '';
   buildItems();
 }
+
+function savePDF() {
+  const items = getItems();
+  if (!items.length) {
+    document.getElementById('err-msg').style.display = 'block';
+    return;
+  }
+  document.getElementById('err-msg').style.display = 'none';
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+  const W = 595, M = 50;
+  const now = new Date().toLocaleDateString('pt-BR');
+  let y = 50;
+
+  // Header
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(22);
+  doc.setTextColor(44, 95, 138);
+  doc.text("Paula's Cleaning Squad", M, y);
+  y += 22;
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(11);
+  doc.setTextColor(120, 120, 120);
+  doc.text("Supplies Request", M, y);
+
+  // INVOICE-style right side
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9);
+  doc.setTextColor(40, 40, 40);
+  doc.text("Cleaner:", W - 180, 50);
+  doc.text("Data:", W - 180, 64);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(80, 80, 80);
+  doc.text(currentNome, W - M, 50, { align: 'right' });
+  doc.text(now, W - M, 64, { align: 'right' });
+
+  y += 24;
+  doc.setDrawColor(180, 180, 180);
+  doc.line(M, y, W - M, y);
+  y += 16;
+
+  // Table header
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8);
+  doc.setTextColor(40, 40, 40);
+  doc.text("PRODUTO", M, y);
+  doc.text("DATA QUE ACABOU", W - M, y, { align: 'right' });
+  y += 6;
+  doc.line(M, y, W - M, y);
+  y += 14;
+
+  // Items
+  const note = document.getElementById('note').value.trim();
+  items.forEach(i => {
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.setTextColor(30, 30, 30);
+    doc.text(i.name || '—', M, y);
+    doc.setTextColor(80, 80, 80);
+    doc.text(i.date && i.date !== '—' ? formatDisplayDate(i.date) : '—', W - M, y, { align: 'right' });
+    y += 18;
+    if (y > 760) { doc.addPage(); y = 50; }
+  });
+
+  y += 6;
+  doc.setDrawColor(180, 180, 180);
+  doc.line(M, y, W - M, y);
+
+  if (note) {
+    y += 18;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.setTextColor(40, 40, 40);
+    doc.text("Observação:", M, y);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(80, 80, 80);
+    y += 14;
+    const lines = doc.splitTextToSize(note, W - M * 2);
+    lines.forEach(l => { doc.text(l, M, y); y += 13; });
+  }
+
+  const fname = 'supplies-' + currentNome.replace(/\s+/g, '-') + '-' + now.replace(/\//g, '-') + '.pdf';
+  doc.save(fname);
+}
+
+function formatDisplayDate(dateStr) {
+  if (!dateStr) return '—';
+  const parts = dateStr.split('-');
+  if (parts.length === 3) return parts[2] + '/' + parts[1] + '/' + parts[0];
+  return dateStr;
+}
+
 </script>
 </body>
 </html>
