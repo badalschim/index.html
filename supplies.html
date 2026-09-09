@@ -282,7 +282,7 @@ async function sendRequest() {
   if (!items.length) { errEl.style.display = 'block'; return; }
   errEl.style.display = 'none';
 
-  const note = noteOverride !== null ? noteOverride : document.getElementById('note').value.trim();
+  const note = document.getElementById('note').value.trim();
   const btn = document.getElementById('send-btn');
   btn.disabled = true;
   btn.textContent = 'Enviando...';
