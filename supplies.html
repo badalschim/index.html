@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>PCS - Supplies Request</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: Arial, sans-serif; background: #f0f2f5; color: #222; font-size: 14px; min-height: 100vh; }
+
+#screen-login { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+.login-card { background: #fff; border-radius: 14px; padding: 2.5rem 2rem; width: 100%; max-width: 380px; box-shadow: 0 4px 24px rgba(0,0,0,0.10); }
+.login-logo { text-align: center; margin-bottom: 1.5rem; }
+.login-logo .logo-title { font-size: 20px; font-weight: 700; color: #1a3a8f; }
+.login-logo .logo-sub { font-size: 12px; color: #888; margin-top: 2px; }
+.login-card h2 { font-size: 16px; font-weight: 700; color: #222; margin-bottom: 1.25rem; text-align: center; }
+.field { margin-bottom: 14px; }
+.field label { font-size: 12px; color: #555; display: block; margin-bottom: 4px; font-weight: 600; }
+.field input { width: 100%; padding: 10px 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 14px; font-family: Arial; outline: none; }
+.field input:focus { border-color: #1a3a8f; }
+.login-btn { width: 100%; padding: 12px; background: #1a3a8f; color: #fff; border: none; border-radius: 8px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: Arial; margin-top: 6px; }
+.login-btn:hover { background: #153070; }
+.login-btn:disabled { background: #aaa; cursor: not-allowed; }
+.login-err { color: #c00; font-size: 13px; text-align: center; margin-top: 10px; min-height: 18px; }
+.login-loading { color: #888; font-size: 13px; text-align: center; margin-top: 10px; display: none; }
+
+#screen-app { display: none; padding: 20px; max-width: 700px; margin: 0 auto; }
+.app-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+.app-header .welcome { font-size: 15px; color: #555; }
+.app-header .welcome strong { color: #1a3a8f; }
+.logout-btn { background: none; border: 1px solid #ccc; border-radius: 6px; padding: 5px 12px; font-size: 12px; color: #555; cursor: pointer; font-family: Arial; }
+.logout-btn:hover { background: #f5f5f5; }
+
+.section { background: #fff; border: 1px solid #e0e0e0; border-radius: 10px; padding: 1.25rem; margin-bottom: 1rem; }
+.sec-title { font-size: 11px; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 1rem; }
+label { font-size: 11px; color: #666; display: block; margin-bottom: 3px; }
+input, textarea { width: 100%; font-family: Arial; font-size: 13px; padding: 7px 9px; border: 1px solid #ccc; border-radius: 6px; background: #fff; color: #222; outline: none; }
+input:focus, textarea:focus { border-color: #555; }
+textarea { resize: vertical; }
+
+.item-row { display: grid; grid-template-columns: 1fr 130px 36px; gap: 8px; margin-bottom: 8px; align-items: center; }
+.item-row input { font-size: 13px; padding: 7px 9px; }
+.remove-btn { background: none; border: 1px solid #eee; border-radius: 6px; width: 36px; height: 36px; font-size: 18px; color: #bbb; cursor: pointer; display: flex; align-items: center; justify-content: center; font-family: Arial; }
+.remove-btn:hover { background: #fff0f0; color: #c00; border-color: #fcc; }
+.col-heads { display: grid; grid-template-columns: 1fr 130px 36px; gap: 8px; margin-bottom: 4px; }
+.col-heads span { font-size: 10px; color: #aaa; font-weight: 600; text-transform: uppercase; }
+.add-item-btn { background: none; border: 1.5px dashed #ccc; border-radius: 6px; padding: 8px; font-size: 13px; color: #888; cursor: pointer; width: 100%; margin-top: 4px; font-family: Arial; }
+.add-item-btn:hover { background: #f5f5f5; }
+
+.note-section { background: #fff; border: 1px solid #e0e0e0; border-radius: 10px; padding: 1.25rem; margin-bottom: 1rem; }
+
+.items-list { margin-bottom: 1rem; }
+.item-preview { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f5f5f5; font-size: 13px; }
+.item-preview:last-child { border-bottom: none; }
+.item-preview .item-name { color: #222; }
+.item-preview .item-qty { color: #1a3a8f; font-weight: 700; }
+
+.send-btn { width: 100%; padding: 13px; background: #1a3a8f; color: #fff; border: none; border-radius: 8px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: Arial; }
+.send-btn:hover { background: #153070; }
+.send-btn:disabled { background: #aaa; cursor: not-allowed; }
+
+.success-card { background: #f0fff4; border: 1px solid #b7ebc8; border-radius: 10px; padding: 2rem; text-align: center; margin-bottom: 1rem; display: none; }
+.success-card .check { font-size: 40px; margin-bottom: 10px; }
+.success-card p { color: #2d7a4f; font-size: 14px; font-weight: 600; }
+.success-card .sub { color: #888; font-size: 12px; margin-top: 4px; font-weight: 400; }
+.new-btn { margin-top: 1rem; background: #2d7a4f; color: #fff; border: none; border-radius: 8px; padding: 10px 20px; font-size: 14px; font-weight: 700; cursor: pointer; font-family: Arial; }
+
+.err-msg { color: #c00; font-size: 12px; margin-bottom: 10px; display: none; padding: 8px 12px; background: #fff0f0; border-radius: 6px; border: 1px solid #fcc; }
+
+@media (max-width: 480px) {
+  .item-row { grid-template-columns: 1fr 110px 36px; }
+  .col-heads { grid-template-columns: 1fr 110px 36px; }
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="screen-login">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="logo-title">Paula's Cleaning Squad</div>
+      <div class="logo-sub">Supplies Request</div>
+    </div>
+    <h2>Entrar</h2>
+    <div class="field">
+      <label>Usuário</label>
+      <input type="text" id="login-user" placeholder="Seu usuário" autocomplete="username" />
+    </div>
+    <div class="field">
+      <label>Senha</label>
+      <input type="password" id="login-pass" placeholder="Sua senha" autocomplete="current-password" onkeydown="if(event.key==='Enter') doLogin()" />
+    </div>
+    <button class="login-btn" id="login-btn" onclick="doLogin()">Entrar</button>
+    <div class="login-err" id="login-err"></div>
+    <div class="login-loading" id="login-loading">Verificando...</div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="screen-app">
+  <div class="app-header">
+    <span class="welcome">Olá, <strong id="user-name"></strong></span>
+    <button class="logout-btn" onclick="doLogout()">Sair</button>
+  </div>
+
+  <div id="err-msg" class="err-msg">Adicione pelo menos um item antes de enviar.</div>
+
+  <div id="success-card" class="success-card">
+    <div class="check">✅</div>
+    <p>Pedido enviado com sucesso!</p>
+    <div class="sub">A Paula receberá o email com sua lista de supplies.</div>
+    <div style="display:flex;gap:10px;justify-content:center;margin-top:1rem;flex-wrap:wrap">
+      <button class="new-btn" style="background:#2c7a7a" onclick="savePDF()">💾 Salvar minha cópia em PDF</button>
+      <button class="new-btn" onclick="newRequest()">➕ Novo pedido</button>
+    </div>
+  </div>
+
+  <div id="form-area">
+    <div class="section">
+      <div class="sec-title">Itens solicitados</div>
+      <div class="col-heads">
+        <span>Item / Produto</span>
+        <span>Data que acabou</span>
+        <span></span>
+      </div>
+      <div id="items-container"></div>
+      <button class="add-item-btn" onclick="addItem()">+ Adicionar item</button>
+    </div>
+
+    <div class="note-section">
+      <div class="sec-title">Observação (opcional)</div>
+      <textarea id="note" rows="3" placeholder="Ex: Preciso com urgência, pode ser outra marca..."></textarea>
+    </div>
+
+    <button class="send-btn" id="send-btn" onclick="sendRequest()">📧 Enviar pedido para Paula</button>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyGtMi4dY_1_eewqbyU8w05JNk9IqPOKFHkwzLGEP1tICwpZSyyswetMA8VA_ZwkI83-A/exec";
+
+let currentUser = '';
+let currentNome = '';
+let lastItems = [];
+let lastNote = '';
+
+// ── SESSION (30 min) ──
+const SESSION_KEY = 'pcs_session';
+const SESSION_DURATION = 30 * 60 * 1000;
+
+function saveSession(user, nome, modelo) {
+  const s = { user, nome, modelo, expires: Date.now() + SESSION_DURATION };
+  localStorage.setItem(SESSION_KEY, JSON.stringify(s));
+  try { location.hash = btoa(JSON.stringify({user, nome, modelo})); } catch(e) {}
+}
+
+function loadSession() {
+  try {
+    const s = JSON.parse(localStorage.getItem(SESSION_KEY));
+    if (s && s.expires > Date.now()) return s;
+    localStorage.removeItem(SESSION_KEY);
+  } catch(e) {}
+  try {
+    if (location.hash && location.hash.length > 1) {
+      const s = JSON.parse(atob(location.hash.slice(1)));
+      if (s && s.user) { s.expires = Date.now() + SESSION_DURATION; localStorage.setItem(SESSION_KEY, JSON.stringify(s)); return s; }
+    }
+  } catch(e) {}
+  return null;
+}
+
+function clearSession() { localStorage.removeItem(SESSION_KEY); location.hash = ''; }
+
+function renewSession() {
+  try {
+    const s = JSON.parse(localStorage.getItem(SESSION_KEY));
+    if (s) { s.expires = Date.now() + SESSION_DURATION; localStorage.setItem(SESSION_KEY, JSON.stringify(s)); }
+  } catch(e) {}
+}
+
+document.addEventListener('click', renewSession);
+document.addEventListener('keydown', renewSession);
+window.addEventListener('load', function() {
+  const s = loadSession();
+  if (s) {
+    currentUser = s.user;
+    currentNome = s.nome || s.user;
+    document.getElementById('screen-login').style.display = 'none';
+    document.getElementById('screen-app').style.display = 'block';
+    document.getElementById('user-name').textContent = currentNome;
+    buildItems();
+    renewSession();
+  }
+});
+// ── END SESSION ──
+
+async function doLogin() {
+  const user = document.getElementById('login-user').value.trim();
+  const pass = document.getElementById('login-pass').value.trim();
+  const errEl = document.getElementById('login-err');
+  const loadEl = document.getElementById('login-loading');
+  const btn = document.getElementById('login-btn');
+
+  errEl.textContent = '';
+  if (!user || !pass) { errEl.textContent = 'Preencha usuário e senha.'; return; }
+
+  btn.disabled = true;
+  loadEl.style.display = 'block';
+
+  try {
+    const url = `${SCRIPT_URL}?usuario=${encodeURIComponent(user)}&senha=${encodeURIComponent(pass)}&pagina=supplies`;
+    const res = await fetch(url);
+    const json = await res.json();
+
+    if (json.ok) {
+      currentUser = user;
+      currentNome = json.nome || user;
+      saveSession(user, currentNome, json.modelo);
+      document.getElementById('screen-login').style.display = 'none';
+      document.getElementById('screen-app').style.display = 'block';
+      document.getElementById('user-name').textContent = currentNome;
+      buildItems();
+    } else {
+      errEl.textContent = 'Usuário ou senha incorretos.';
+    }
+  } catch(e) {
+    errEl.textContent = 'Erro de conexão. Tente novamente.';
+  }
+
+  btn.disabled = false;
+  loadEl.style.display = 'none';
+}
+
+function doLogout() {
+  clearSession();
+  document.getElementById('screen-login').style.display = 'flex';
+  document.getElementById('screen-app').style.display = 'none';
+  document.getElementById('login-user').value = '';
+  document.getElementById('login-pass').value = '';
+  document.getElementById('login-err').textContent = '';
+}
+
+// ── ITEMS ──
+function buildItems() {
+  document.getElementById('items-container').innerHTML = '';
+  addItem();
+}
+
+function addItem() {
+  const c = document.getElementById('items-container');
+  const row = document.createElement('div');
+  row.className = 'item-row';
+  row.innerHTML = `
+    <input type="text" placeholder="Nome do produto" />
+    <input type="date" style="font-size:12px;padding:6px 8px" />
+    <button class="remove-btn" onclick="removeItem(this)" title="Remover">×</button>`;
+  c.appendChild(row);
+}
+
+function removeItem(btn) {
+  const rows = document.querySelectorAll('.item-row');
+  if (rows.length > 1) btn.closest('.item-row').remove();
+}
+
+function getItems() {
+  const rows = document.querySelectorAll('.item-row');
+  const items = [];
+  rows.forEach(r => {
+    const inputs = r.querySelectorAll('input');
+    const name = inputs[0].value.trim();
+    const date = inputs[1].value.trim();
+    if (name) items.push({ name, date: date || '—' });
+  });
+  return items;
+}
+
+async function sendRequest() {
+  const items = getItems();
+  const errEl = document.getElementById('err-msg');
+  if (!items.length) { errEl.style.display = 'block'; return; }
+  errEl.style.display = 'none';
+
+  const note = noteOverride !== null ? noteOverride : document.getElementById('note').value.trim();
+  const btn = document.getElementById('send-btn');
+  btn.disabled = true;
+  btn.textContent = 'Enviando...';
+
+  try {
+    const now = new Date().toLocaleDateString('pt-BR');
+    const url = `${SCRIPT_URL}?action=supplies&usuario=${encodeURIComponent(currentUser)}&nome=${encodeURIComponent(currentNome)}&data=${encodeURIComponent(now)}&items=${encodeURIComponent(JSON.stringify(items))}&note=${encodeURIComponent(note)}`;
+    const res = await fetch(url);
+    const json = await res.json();
+
+    if (json.ok) {
+      lastItems = items;
+      lastNote = note;
+      document.getElementById('form-area').style.display = 'none';
+      document.getElementById('success-card').style.display = 'block';
+    } else {
+      alert('Erro ao enviar. Tente novamente.');
+    }
+  } catch(e) {
+    alert('Erro de conexão. Tente novamente.');
+  }
+
+  btn.disabled = false;
+  btn.textContent = '📧 Enviar pedido para Paula';
+}
+
+function newRequest() {
+  document.getElementById('success-card').style.display = 'none';
+  document.getElementById('form-area').style.display = 'block';
+  document.getElementById('note').value = '';
+  buildItems();
+}
+
+function savePDF() {
+  // Use last sent items if available (called from success screen)
+  const items = lastItems.length ? lastItems : getItems();
+  const noteOverride = lastItems.length ? lastNote : null;
+  if (!items.length) {
+    document.getElementById('err-msg').style.display = 'block';
+    return;
+  }
+  document.getElementById('err-msg').style.display = 'none';
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+  const W = 595, M = 50;
+  const now = new Date().toLocaleDateString('pt-BR');
+  let y = 50;
+
+  // Header
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(22);
+  doc.setTextColor(44, 95, 138);
+  doc.text("Paula's Cleaning Squad", M, y);
+  y += 22;
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(11);
+  doc.setTextColor(120, 120, 120);
+  doc.text("Supplies Request", M, y);
+
+  // INVOICE-style right side
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9);
+  doc.setTextColor(40, 40, 40);
+  doc.text("Cleaner:", W - 180, 50);
+  doc.text("Data:", W - 180, 64);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(80, 80, 80);
+  doc.text(currentNome, W - M, 50, { align: 'right' });
+  doc.text(now, W - M, 64, { align: 'right' });
+
+  y += 24;
+  doc.setDrawColor(180, 180, 180);
+  doc.line(M, y, W - M, y);
+  y += 16;
+
+  // Table header
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8);
+  doc.setTextColor(40, 40, 40);
+  doc.text("PRODUTO", M, y);
+  doc.text("DATA QUE ACABOU", W - M, y, { align: 'right' });
+  y += 6;
+  doc.line(M, y, W - M, y);
+  y += 14;
+
+  // Items
+  const note = noteOverride !== null ? noteOverride : document.getElementById('note').value.trim();
+  items.forEach(i => {
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.setTextColor(30, 30, 30);
+    doc.text(i.name || '—', M, y);
+    doc.setTextColor(80, 80, 80);
+    doc.text(i.date && i.date !== '—' ? formatDisplayDate(i.date) : '—', W - M, y, { align: 'right' });
+    y += 18;
+    if (y > 760) { doc.addPage(); y = 50; }
+  });
+
+  y += 6;
+  doc.setDrawColor(180, 180, 180);
+  doc.line(M, y, W - M, y);
+
+  if (note) {
+    y += 18;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.setTextColor(40, 40, 40);
+    doc.text("Observação:", M, y);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(80, 80, 80);
+    y += 14;
+    const lines = doc.splitTextToSize(note, W - M * 2);
+    lines.forEach(l => { doc.text(l, M, y); y += 13; });
+  }
+
+  const fname = 'supplies-' + currentNome.replace(/\s+/g, '-') + '-' + now.replace(/\//g, '-') + '.pdf';
+  doc.save(fname);
+}
+
+function formatDisplayDate(dateStr) {
+  if (!dateStr) return '—';
+  const parts = dateStr.split('-');
+  if (parts.length === 3) return parts[2] + '/' + parts[1] + '/' + parts[0];
+  return dateStr;
+}
+
+</script>
+</body>
+</html>
