@@ -110,7 +110,10 @@ textarea { resize: vertical; }
     <div class="check">✅</div>
     <p>Pedido enviado com sucesso!</p>
     <div class="sub">A Paula receberá o email com sua lista de supplies.</div>
-    <button class="new-btn" onclick="newRequest()">Novo pedido</button>
+    <div style="display:flex;gap:10px;justify-content:center;margin-top:1rem;flex-wrap:wrap">
+      <button class="new-btn" style="background:#2c7a7a" onclick="savePDF()">💾 Salvar minha cópia em PDF</button>
+      <button class="new-btn" onclick="newRequest()">➕ Novo pedido</button>
+    </div>
   </div>
 
   <div id="form-area">
@@ -130,10 +133,7 @@ textarea { resize: vertical; }
       <textarea id="note" rows="3" placeholder="Ex: Preciso com urgência, pode ser outra marca..."></textarea>
     </div>
 
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-      <button class="send-btn" id="send-btn" onclick="sendRequest()">📧 Enviar para Paula</button>
-      <button class="send-btn" style="background:#2c7a7a" onclick="savePDF()">💾 Salvar minha cópia</button>
-    </div>
+    <button class="send-btn" id="send-btn" onclick="sendRequest()">📧 Enviar pedido para Paula</button>
   </div>
 </div>
 
@@ -143,6 +143,8 @@ const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyGtMi4dY_1_eewqbyU8
 
 let currentUser = '';
 let currentNome = '';
+let lastItems = [];
+let lastNote = '';
 
 // ── SESSION (30 min) ──
 const SESSION_KEY = 'pcs_session';
@@ -280,7 +282,7 @@ async function sendRequest() {
   if (!items.length) { errEl.style.display = 'block'; return; }
   errEl.style.display = 'none';
 
-  const note = document.getElementById('note').value.trim();
+  const note = noteOverride !== null ? noteOverride : document.getElementById('note').value.trim();
   const btn = document.getElementById('send-btn');
   btn.disabled = true;
   btn.textContent = 'Enviando...';
@@ -292,6 +294,8 @@ async function sendRequest() {
     const json = await res.json();
 
     if (json.ok) {
+      lastItems = items;
+      lastNote = note;
       document.getElementById('form-area').style.display = 'none';
       document.getElementById('success-card').style.display = 'block';
     } else {
@@ -313,7 +317,9 @@ function newRequest() {
 }
 
 function savePDF() {
-  const items = getItems();
+  // Use last sent items if available (called from success screen)
+  const items = lastItems.length ? lastItems : getItems();
+  const noteOverride = lastItems.length ? lastNote : null;
   if (!items.length) {
     document.getElementById('err-msg').style.display = 'block';
     return;
@@ -364,7 +370,7 @@ function savePDF() {
   y += 14;
 
   // Items
-  const note = document.getElementById('note').value.trim();
+  const note = noteOverride !== null ? noteOverride : document.getElementById('note').value.trim();
   items.forEach(i => {
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(10);
