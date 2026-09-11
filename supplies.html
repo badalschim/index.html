@@ -47,6 +47,11 @@ textarea { resize: vertical; }
 .add-item-btn { background: none; border: 1.5px dashed #ccc; border-radius: 6px; padding: 8px; font-size: 13px; color: #888; cursor: pointer; width: 100%; margin-top: 4px; font-family: Arial; }
 .add-item-btn:hover { background: #f5f5f5; }
 
+.common-item { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid #f5f5f5; }
+.common-item:last-child { border-bottom: none; }
+.common-item input[type="checkbox"] { width: 18px; height: 18px; flex-shrink: 0; }
+.common-item label { font-size: 14px; color: #222; margin: 0; cursor: pointer; }
+
 .note-section { background: #fff; border: 1px solid #e0e0e0; border-radius: 10px; padding: 1.25rem; margin-bottom: 1rem; }
 
 .items-list { margin-bottom: 1rem; }
@@ -132,7 +137,12 @@ textarea { resize: vertical; }
 
   <div id="form-area">
     <div class="section">
-      <div class="sec-title">Itens solicitados</div>
+      <div class="sec-title">Itens comuns</div>
+      <div id="common-items"></div>
+    </div>
+
+    <div class="section">
+      <div class="sec-title">Outros itens</div>
       <div class="col-heads">
         <span>Item / Produto</span>
         <span>Data que acabou</span>
@@ -301,8 +311,60 @@ function doLogout() {
   document.getElementById('login-err').textContent = '';
 }
 
+// ── COMMON ITEMS CHECKLIST ──
+const ICONS = {
+  bottle: `<svg viewBox="0 0 40 40" width="32" height="32"><rect x="14" y="6" width="6" height="4" rx="1" fill="#7a8ba3"/><path d="M12 12 L12 34 Q12 36 14 36 L26 36 Q28 36 28 34 L28 12 Q28 10 26 10 L14 10 Q12 10 12 12 Z" fill="#4fa3d1"/><rect x="13" y="16" width="14" height="10" fill="#fff" opacity="0.9"/></svg>`,
+  spray: `<svg viewBox="0 0 40 40" width="32" height="32"><rect x="16" y="18" width="10" height="18" rx="2" fill="#5ec27a"/><rect x="18" y="8" width="4" height="10" fill="#888"/><rect x="14" y="6" width="12" height="4" rx="1" fill="#555"/><path d="M26 10 L34 6" stroke="#555" stroke-width="2"/></svg>`,
+  mop: `<svg viewBox="0 0 40 40" width="32" height="32"><rect x="18" y="4" width="3" height="24" fill="#8a5a2b"/><path d="M12 28 Q20 24 28 28 L27 36 Q20 39 13 36 Z" fill="#e8c04a"/></svg>`,
+  broom: `<svg viewBox="0 0 40 40" width="32" height="32"><rect x="18" y="4" width="3" height="22" fill="#8a5a2b"/><path d="M10 26 L30 26 L26 37 L14 37 Z" fill="#d9a441"/></svg>`,
+  sponge: `<svg viewBox="0 0 40 40" width="32" height="32"><rect x="6" y="14" width="28" height="14" rx="4" fill="#f2c14e"/><rect x="6" y="14" width="28" height="5" rx="2" fill="#5ec2a0"/></svg>`,
+  bomb: `<svg viewBox="0 0 40 40" width="32" height="32"><circle cx="20" cy="24" r="12" fill="#444"/><path d="M26 14 L30 8" stroke="#888" stroke-width="2"/><circle cx="30" cy="7" r="2" fill="#e8622c"/></svg>`,
+  squeegee: `<svg viewBox="0 0 40 40" width="32" height="32"><rect x="18" y="4" width="3" height="22" fill="#8a5a2b"/><rect x="8" y="26" width="24" height="8" rx="2" fill="#4fa3d1"/></svg>`,
+  sparkle: `<svg viewBox="0 0 40 40" width="32" height="32"><path d="M20 4 L23 17 L36 20 L23 23 L20 36 L17 23 L4 20 L17 17 Z" fill="#f2c14e"/></svg>`,
+  cloth: `<svg viewBox="0 0 40 40" width="32" height="32"><path d="M8 10 Q20 6 32 10 L30 32 Q20 36 10 32 Z" fill="#7fc4e8"/></svg>`
+};
+
+const COMMON_ITEMS = [
+  { name: 'Fabuloso', us: 'Fabuloso', icon: 'bottle' },
+  { name: 'Cheirinho / Pato', us: 'Pine-Sol', icon: 'spray' },
+  { name: 'Swiffer', us: 'Swiffer', icon: 'mop' },
+  { name: 'Bomba', us: 'Drain Bomb', icon: 'bomb' },
+  { name: 'Bucha p/ banheiro e cozinha', us: 'Scrub Sponge', icon: 'sponge' },
+  { name: 'Detergente', us: 'Dawn / Palmolive', icon: 'bottle' },
+  { name: 'Rodinho', us: 'Squeegee', icon: 'squeegee' },
+  { name: 'Desengordurante', us: 'Fantastik / 409', icon: 'spray' },
+  { name: 'Produto de brilho p/ inox', us: 'Bar Keepers Friend', icon: 'sparkle' },
+  { name: 'Vassoura', us: 'Broom', icon: 'broom' },
+  { name: 'Pano de chão', us: 'Floor Cloth', icon: 'cloth' },
+  { name: 'Pano de limpeza', us: 'Cleaning Cloth', icon: 'cloth' }
+];
+
+function buildCommonItems() {
+  const c = document.getElementById('common-items');
+  c.innerHTML = '';
+  COMMON_ITEMS.forEach((item, i) => {
+    const row = document.createElement('div');
+    row.className = 'common-item';
+    row.innerHTML = `
+      <input type="checkbox" id="common-${i}" />
+      <span style="display:flex;align-items:center;justify-content:center;width:36px;height:36px;background:#f5f7fa;border-radius:8px">${ICONS[item.icon]}</span>
+      <label for="common-${i}">${item.name} <span style="color:#999;font-weight:400">(${item.us})</span></label>`;
+    c.appendChild(row);
+  });
+}
+
+function getCommonItems() {
+  const items = [];
+  COMMON_ITEMS.forEach((item, i) => {
+    const cb = document.getElementById('common-' + i);
+    if (cb && cb.checked) items.push({ name: item.name + ' (' + item.us + ')', date: '—' });
+  });
+  return items;
+}
+
 // ── ITEMS ──
 function buildItems() {
+  buildCommonItems();
   document.getElementById('items-container').innerHTML = '';
   addItem();
 }
@@ -325,7 +387,7 @@ function removeItem(btn) {
 
 function getItems() {
   const rows = document.querySelectorAll('.item-row');
-  const items = [];
+  const items = getCommonItems();
   rows.forEach(r => {
     const inputs = r.querySelectorAll('input');
     const name = inputs[0].value.trim();
@@ -378,6 +440,10 @@ function newRequest() {
   document.getElementById('note').value = '';
   buildItems();
 }
+
+document.addEventListener('DOMContentLoaded', () => {
+  if (!document.getElementById('common-items').innerHTML) buildCommonItems();
+});
 
 function savePDF() {
   // Use last sent items if available (called from success screen)
