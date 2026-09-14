@@ -80,36 +80,43 @@ textarea { resize: vertical; }
 </head>
 <body>
 
+<!-- LANGUAGE SWITCHER -->
+<div id="lang-switcher" style="position:fixed;top:8px;right:8px;z-index:999;display:flex;gap:4px;background:#fff;border:1px solid #ddd;border-radius:8px;padding:4px;box-shadow:0 1px 4px rgba(0,0,0,0.08)">
+  <button onclick="setLang('pt')" data-lang-btn="pt" style="border:none;background:none;padding:4px 8px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:700;font-family:Arial">PT</button>
+  <button onclick="setLang('en')" data-lang-btn="en" style="border:none;background:none;padding:4px 8px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:700;font-family:Arial">EN</button>
+  <button onclick="setLang('es')" data-lang-btn="es" style="border:none;background:none;padding:4px 8px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:700;font-family:Arial">ES</button>
+</div>
+
 <!-- LOGIN -->
 <div id="screen-login">
   <div class="login-card">
     <div class="login-logo">
       <div class="logo-title">Paula's Cleaning Squad</div>
-      <div class="logo-sub">Supplies Request</div>
+      <div class="logo-sub" data-i18n="supplies_request">Supplies Request</div>
     </div>
-    <h2>Entrar</h2>
+    <h2 data-i18n="login_title">Entrar</h2>
     <div class="field">
-      <label>Usuário</label>
-      <input type="text" id="login-user" placeholder="Seu usuário" autocomplete="username" />
+      <label data-i18n="username_label">Usuário</label>
+      <input type="text" id="login-user" data-i18n-placeholder="username_placeholder" placeholder="Seu usuário" autocomplete="username" />
     </div>
     <div class="field">
-      <label>Senha</label>
-      <input type="password" id="login-pass" placeholder="Sua senha" autocomplete="current-password" onkeydown="if(event.key==='Enter') doLogin()" />
+      <label data-i18n="password_label">Senha</label>
+      <input type="password" id="login-pass" data-i18n-placeholder="password_placeholder" placeholder="Sua senha" autocomplete="current-password" onkeydown="if(event.key==='Enter') doLogin()" />
     </div>
-    <button class="login-btn" id="login-btn" onclick="doLogin()">Entrar</button>
+    <button class="login-btn" id="login-btn" onclick="doLogin()" data-i18n="login_btn">Entrar</button>
     <div class="login-err" id="login-err"></div>
-    <div class="login-loading" id="login-loading">Verificando...</div>
+    <div class="login-loading" id="login-loading" data-i18n="verifying">Verificando...</div>
   <div style="text-align:center;margin-top:12px">
-    <button onclick="showForgot()" style="background:none;border:none;color:#1a3a8f;font-size:12px;cursor:pointer;text-decoration:underline;font-family:Arial">Esqueceu a senha?</button>
+    <button onclick="showForgot()" style="background:none;border:none;color:#1a3a8f;font-size:12px;cursor:pointer;text-decoration:underline;font-family:Arial" data-i18n="forgot_pass">Esqueceu a senha?</button>
   </div>
 
   <!-- Forgot password modal -->
   <div id="forgot-modal" style="display:none;margin-top:16px;padding:14px;background:#f8f9ff;border-radius:8px;border:1px solid #d0d8f0">
-    <div style="font-size:12px;color:#555;margin-bottom:8px">Digite seu email (usuário) e enviaremos sua senha:</div>
-    <input type="email" id="forgot-email" placeholder="seu@email.com" style="width:100%;padding:8px 10px;border:1px solid #ccc;border-radius:6px;font-size:13px;font-family:Arial;outline:none;margin-bottom:8px" />
+    <div style="font-size:12px;color:#555;margin-bottom:8px" data-i18n="forgot_instructions">Digite seu email (usuário) e enviaremos sua senha:</div>
+    <input type="email" id="forgot-email" data-i18n-placeholder="email_placeholder" placeholder="seu@email.com" style="width:100%;padding:8px 10px;border:1px solid #ccc;border-radius:6px;font-size:13px;font-family:Arial;outline:none;margin-bottom:8px" />
     <div style="display:flex;gap:8px">
-      <button onclick="sendForgot()" style="flex:1;padding:8px;background:#1a3a8f;color:#fff;border:none;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;font-family:Arial">Enviar</button>
-      <button onclick="hideForgot()" style="padding:8px 12px;background:none;border:1px solid #ccc;border-radius:6px;font-size:13px;color:#888;cursor:pointer;font-family:Arial">Cancelar</button>
+      <button onclick="sendForgot()" style="flex:1;padding:8px;background:#1a3a8f;color:#fff;border:none;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;font-family:Arial" data-i18n="send_btn">Enviar</button>
+      <button onclick="hideForgot()" style="padding:8px 12px;background:none;border:1px solid #ccc;border-radius:6px;font-size:13px;color:#888;cursor:pointer;font-family:Arial" data-i18n="cancel_btn">Cancelar</button>
     </div>
     <div id="forgot-msg" style="font-size:12px;margin-top:8px;min-height:16px;text-align:center"></div>
   </div>
@@ -119,47 +126,48 @@ textarea { resize: vertical; }
 <!-- APP -->
 <div id="screen-app">
   <div class="app-header">
-    <span class="welcome">Olá, <strong id="user-name"></strong></span>
-    <button class="logout-btn" onclick="doLogout()">Sair</button>
+    <span class="welcome"><span data-i18n="hello">Olá,</span> <strong id="user-name"></strong></span>
+    <button class="logout-btn" onclick="doLogout()" data-i18n="logout_btn">Sair</button>
   </div>
 
-  <div id="err-msg" class="err-msg">Adicione pelo menos um item antes de enviar.</div>
+  <div id="err-msg" class="err-msg" data-i18n="err_no_items">Adicione pelo menos um item antes de enviar.</div>
 
   <div id="success-card" class="success-card">
     <div class="check">✅</div>
-    <p>Pedido enviado com sucesso!</p>
-    <div class="sub">Recebemos a lista de materiais. Pedidos feitos dentro do prazo (sábado) serão repostos, e até terça você receberá aviso para retirar.</div>
+    <p data-i18n="success_title">Pedido enviado com sucesso!</p>
+    <div class="sub" data-i18n="success_sub">Recebemos a lista de materiais. Pedidos feitos dentro do prazo (sábado) serão repostos, e até terça você receberá aviso para retirar.</div>
     <div style="display:flex;gap:10px;justify-content:center;margin-top:1rem;flex-wrap:wrap">
-      <button class="new-btn" style="background:#2c7a7a" onclick="savePDF()">💾 Salvar minha cópia em PDF</button>
-      <button class="new-btn" onclick="newRequest()">➕ Novo pedido</button>
+      <button class="new-btn" style="background:#2c7a7a" onclick="savePDF()">💾 <span data-i18n="save_pdf">Salvar minha cópia em PDF</span></button>
+      <button class="new-btn" onclick="newRequest()">➕ <span data-i18n="new_request">Novo pedido</span></button>
     </div>
   </div>
 
   <div id="form-area">
     <div class="section">
-      <div class="sec-title">Itens comuns</div>
+      <div class="sec-title" data-i18n="common_items">Itens comuns</div>
       <div id="common-items"></div>
     </div>
 
     <div class="section">
-      <div class="sec-title">Outros itens</div>
+      <div class="sec-title" data-i18n="other_items">Outros itens</div>
       <div class="col-heads">
-        <span>Item / Produto</span>
-        <span>Data que acabou</span>
+        <span data-i18n="item_product">Item / Produto</span>
+        <span data-i18n="date_finished">Data que acabou</span>
         <span></span>
       </div>
       <div id="items-container"></div>
-      <button class="add-item-btn" onclick="addItem()">+ Adicionar item</button>
+      <button class="add-item-btn" onclick="addItem()">+ <span data-i18n="add_item">Adicionar item</span></button>
     </div>
 
     <div class="note-section">
-      <div class="sec-title">Observação (opcional)</div>
-      <textarea id="note" rows="3" placeholder="Ex: Preciso com urgência, pode ser outra marca..."></textarea>
+      <div class="sec-title" data-i18n="note_optional">Observação (opcional)</div>
+      <textarea id="note" rows="3" data-i18n-placeholder="note_placeholder" placeholder="Ex: Preciso com urgência, pode ser outra marca..."></textarea>
     </div>
 
-    <button class="send-btn" id="send-btn" onclick="sendRequest()">📧 Enviar pedido para Paula</button>
+    <button class="send-btn" id="send-btn" onclick="sendRequest()">📧 <span data-i18n="send_request">Enviar pedido para Paula</span></button>
   </div>
 </div>
+
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js">
   msgEl.style.color='#888'; msgEl.textContent='Enviando...';
@@ -209,6 +217,189 @@ async function sendForgot() {
 </script>
 <script>
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyGtMi4dY_1_eewqbyU8w05JNk9IqPOKFHkwzLGEP1tICwpZSyyswetMA8VA_ZwkI83-A/exec";
+
+// ── I18N ──
+const TRANSLATIONS = {
+  pt: {
+    supplies_request: 'Supplies Request',
+    login_title: 'Entrar',
+    username_label: 'Usuário',
+    username_placeholder: 'Seu usuário',
+    password_label: 'Senha',
+    password_placeholder: 'Sua senha',
+    login_btn: 'Entrar',
+    verifying: 'Verificando...',
+    forgot_pass: 'Esqueceu a senha?',
+    forgot_instructions: 'Digite seu email (usuário) e enviaremos sua senha:',
+    email_placeholder: 'seu@email.com',
+    send_btn: 'Enviar',
+    cancel_btn: 'Cancelar',
+    hello: 'Olá,',
+    logout_btn: 'Sair',
+    err_no_items: 'Adicione pelo menos um item antes de enviar.',
+    success_title: 'Pedido enviado com sucesso!',
+    success_sub: 'Recebemos a lista de materiais. Pedidos feitos dentro do prazo (sábado) serão repostos, e até terça você receberá aviso para retirar.',
+    save_pdf: 'Salvar minha cópia em PDF',
+    new_request: 'Novo pedido',
+    common_items: 'Itens comuns',
+    other_items: 'Outros itens',
+    item_product: 'Item / Produto',
+    date_finished: 'Data que acabou',
+    add_item: 'Adicionar item',
+    note_optional: 'Observação (opcional)',
+    note_placeholder: 'Ex: Preciso com urgência, pode ser outra marca...',
+    send_request: 'Enviar pedido para Paula',
+    product_name_placeholder: 'Nome do produto',
+    remove: 'Remover',
+    fill_user_pass: 'Preencha usuário e senha.',
+    wrong_credentials: 'Usuário ou senha incorretos.',
+    connection_error_retry: 'Erro de conexão. Tente novamente.',
+    sending: 'Enviando...',
+    send_error_retry: 'Erro ao enviar. Tente novamente.',
+    enter_email: 'Digite seu email.',
+    password_sent: 'Senha enviada para seu email!',
+    email_not_found: 'Email não encontrado.',
+    connection_error: 'Erro de conexão.'
+  },
+  en: {
+    supplies_request: 'Supplies Request',
+    login_title: 'Log In',
+    username_label: 'Username',
+    username_placeholder: 'Your username',
+    password_label: 'Password',
+    password_placeholder: 'Your password',
+    login_btn: 'Log In',
+    verifying: 'Verifying...',
+    forgot_pass: 'Forgot your password?',
+    forgot_instructions: 'Enter your email (username) and we will send your password:',
+    email_placeholder: 'you@email.com',
+    send_btn: 'Send',
+    cancel_btn: 'Cancel',
+    hello: 'Hi,',
+    logout_btn: 'Log Out',
+    err_no_items: 'Add at least one item before submitting.',
+    success_title: 'Request sent successfully!',
+    success_sub: 'We received the supply list. Requests made within the deadline (Saturday) will be restocked, and by Tuesday you will get a notice to pick them up.',
+    save_pdf: 'Save my copy as PDF',
+    new_request: 'New request',
+    common_items: 'Common items',
+    other_items: 'Other items',
+    item_product: 'Item / Product',
+    date_finished: 'Date it ran out',
+    add_item: 'Add item',
+    note_optional: 'Note (optional)',
+    note_placeholder: 'Ex: I need it urgently, another brand is fine...',
+    send_request: 'Send request to Paula',
+    product_name_placeholder: 'Product name',
+    remove: 'Remove',
+    fill_user_pass: 'Fill in username and password.',
+    wrong_credentials: 'Incorrect username or password.',
+    connection_error_retry: 'Connection error. Please try again.',
+    sending: 'Sending...',
+    send_error_retry: 'Error sending. Please try again.',
+    enter_email: 'Enter your email.',
+    password_sent: 'Password sent to your email!',
+    email_not_found: 'Email not found.',
+    connection_error: 'Connection error.'
+  },
+  es: {
+    supplies_request: 'Solicitud de Suministros',
+    login_title: 'Iniciar sesión',
+    username_label: 'Usuario',
+    username_placeholder: 'Tu usuario',
+    password_label: 'Contraseña',
+    password_placeholder: 'Tu contraseña',
+    login_btn: 'Iniciar sesión',
+    verifying: 'Verificando...',
+    forgot_pass: '¿Olvidaste tu contraseña?',
+    forgot_instructions: 'Ingresa tu email (usuario) y te enviaremos tu contraseña:',
+    email_placeholder: 'tu@email.com',
+    send_btn: 'Enviar',
+    cancel_btn: 'Cancelar',
+    hello: 'Hola,',
+    logout_btn: 'Salir',
+    err_no_items: 'Agrega al menos un artículo antes de enviar.',
+    success_title: '¡Pedido enviado con éxito!',
+    success_sub: 'Recibimos la lista de materiales. Los pedidos hechos dentro del plazo (sábado) serán repuestos, y hasta el martes recibirás aviso para retirarlos.',
+    save_pdf: 'Guardar mi copia en PDF',
+    new_request: 'Nuevo pedido',
+    common_items: 'Artículos comunes',
+    other_items: 'Otros artículos',
+    item_product: 'Artículo / Producto',
+    date_finished: 'Fecha en que se acabó',
+    add_item: 'Agregar artículo',
+    note_optional: 'Observación (opcional)',
+    note_placeholder: 'Ej: Lo necesito con urgencia, puede ser otra marca...',
+    send_request: 'Enviar pedido a Paula',
+    product_name_placeholder: 'Nombre del producto',
+    remove: 'Eliminar',
+    fill_user_pass: 'Completa usuario y contraseña.',
+    wrong_credentials: 'Usuario o contraseña incorrectos.',
+    connection_error_retry: 'Error de conexión. Inténtalo de nuevo.',
+    sending: 'Enviando...',
+    send_error_retry: 'Error al enviar. Inténtalo de nuevo.',
+    enter_email: 'Ingresa tu email.',
+    password_sent: '¡Contraseña enviada a tu email!',
+    email_not_found: 'Email no encontrado.',
+    connection_error: 'Error de conexión.'
+  }
+};
+
+let currentLang = localStorage.getItem('pcs_lang') || 'pt';
+
+function t(key) {
+  return (TRANSLATIONS[currentLang] && TRANSLATIONS[currentLang][key]) || TRANSLATIONS.pt[key] || key;
+}
+
+function applyLanguage() {
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    el.textContent = t(key);
+  });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+    const key = el.getAttribute('data-i18n-placeholder');
+    el.placeholder = t(key);
+  });
+  document.querySelectorAll('[data-lang-btn]').forEach(btn => {
+    const isActive = btn.getAttribute('data-lang-btn') === currentLang;
+    btn.style.background = isActive ? '#1a3a8f' : 'none';
+    btn.style.color = isActive ? '#fff' : '#333';
+  });
+  const sendBtn = document.getElementById('send-btn');
+  if (sendBtn && !sendBtn.disabled) sendBtn.innerHTML = '📧 ' + t('send_request');
+  refreshDynamicLabels();
+}
+
+function refreshDynamicLabels() {
+  // Update common-items checklist labels without losing checked state
+  if (typeof COMMON_ITEMS !== 'undefined' && document.getElementById('common-items')) {
+    const checkedState = COMMON_ITEMS.map((item, i) => {
+      const cb = document.getElementById('common-' + i);
+      return cb ? cb.checked : false;
+    });
+    buildCommonItems();
+    COMMON_ITEMS.forEach((item, i) => {
+      const cb = document.getElementById('common-' + i);
+      if (cb) cb.checked = checkedState[i];
+    });
+  }
+  // Update manual item row placeholders and remove-btn titles without losing values
+  document.querySelectorAll('.item-row').forEach(row => {
+    const nameInput = row.querySelector('.item-name-input');
+    if (nameInput) nameInput.placeholder = t('product_name_placeholder');
+    const removeBtn = row.querySelector('.remove-btn');
+    if (removeBtn) removeBtn.title = t('remove');
+  });
+}
+
+function setLang(lang) {
+  currentLang = lang;
+  localStorage.setItem('pcs_lang', lang);
+  applyLanguage();
+}
+
+document.addEventListener('DOMContentLoaded', applyLanguage);
+
 
 let currentUser = '';
 let currentNome = '';
@@ -275,7 +466,7 @@ async function doLogin() {
   const btn = document.getElementById('login-btn');
 
   errEl.textContent = '';
-  if (!user || !pass) { errEl.textContent = 'Preencha usuário e senha.'; return; }
+  if (!user || !pass) { errEl.textContent = t('fill_user_pass'); return; }
 
   btn.disabled = true;
   loadEl.style.display = 'block';
@@ -295,10 +486,10 @@ async function doLogin() {
       document.getElementById('user-name').textContent = currentNome;
       buildItems();
     } else {
-      errEl.textContent = 'Usuário ou senha incorretos.';
+      errEl.textContent = t('wrong_credentials');
     }
   } catch(e) {
-    errEl.textContent = 'Erro de conexão. Tente novamente.';
+    errEl.textContent = t('connection_error_retry');
   }
 
   btn.disabled = false;
@@ -408,9 +599,9 @@ function addItem() {
   const row = document.createElement('div');
   row.className = 'item-row';
   row.innerHTML = `
-    <input type="text" placeholder="Nome do produto" />
+    <input type="text" class="item-name-input" placeholder="${t('product_name_placeholder')}" />
     <input type="date" style="font-size:12px;padding:6px 8px" />
-    <button class="remove-btn" onclick="removeItem(this)" title="Remover">×</button>`;
+    <button class="remove-btn" onclick="removeItem(this)" title="${t('remove')}">×</button>`;
   c.appendChild(row);
 }
 
@@ -440,7 +631,7 @@ async function sendRequest() {
   const note = document.getElementById('note').value.trim();
   const btn = document.getElementById('send-btn');
   btn.disabled = true;
-  btn.textContent = 'Enviando...';
+  btn.textContent = t('sending');
 
   try {
     const now = new Date().toLocaleDateString('pt-BR');
@@ -458,14 +649,14 @@ async function sendRequest() {
       document.getElementById('form-area').style.display = 'none';
       document.getElementById('success-card').style.display = 'block';
     } else {
-      alert('Erro ao enviar. Tente novamente.');
+      alert(t('send_error_retry'));
     }
   } catch(e) {
-    alert('Erro de conexão. Tente novamente.');
+    alert(t('connection_error_retry'));
   }
 
   btn.disabled = false;
-  btn.textContent = '📧 Enviar pedido para Paula';
+  btn.textContent = '📧 ' + t('send_request');
 }
 
 function newRequest() {
@@ -586,19 +777,19 @@ function hideForgot() {
 async function sendForgot() {
   const email = document.getElementById('forgot-email').value.trim();
   const msgEl = document.getElementById('forgot-msg');
-  if (!email) { msgEl.style.color='#c00'; msgEl.textContent='Digite seu email.'; return; }
-  msgEl.style.color='#888'; msgEl.textContent='Enviando...';
+  if (!email) { msgEl.style.color='#c00'; msgEl.textContent=t('enter_email'); return; }
+  msgEl.style.color='#888'; msgEl.textContent=t('sending');
   try {
     const url = `${SCRIPT_URL}?action=forgot&usuario=${encodeURIComponent(email)}`;
     const res = await fetch(url);
     const json = await res.json();
     if (json.ok) {
-      msgEl.style.color='#2d7a4f'; msgEl.textContent='Senha enviada para seu email!';
+      msgEl.style.color='#2d7a4f'; msgEl.textContent=t('password_sent');
     } else {
-      msgEl.style.color='#c00'; msgEl.textContent='Email não encontrado.';
+      msgEl.style.color='#c00'; msgEl.textContent=t('email_not_found');
     }
   } catch(e) {
-    msgEl.style.color='#c00'; msgEl.textContent='Erro de conexão.';
+    msgEl.style.color='#c00'; msgEl.textContent=t('connection_error');
   }
 }
 
