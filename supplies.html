@@ -152,7 +152,7 @@ textarea { resize: vertical; }
       <div class="sec-title" data-i18n="other_items">Outros itens</div>
       <div class="col-heads">
         <span data-i18n="item_product">Item / Produto</span>
-        <span data-i18n="date_finished">Data que acabou</span>
+        <span data-i18n="date_finished">Finalidade do produto</span>
         <span></span>
       </div>
       <div id="items-container"></div>
@@ -244,12 +244,13 @@ const TRANSLATIONS = {
     common_items: 'Itens comuns',
     other_items: 'Outros itens',
     item_product: 'Item / Produto',
-    date_finished: 'Data que acabou',
+    date_finished: 'Finalidade do produto',
     add_item: 'Adicionar item',
     note_optional: 'Observação (opcional)',
     note_placeholder: 'Ex: Preciso com urgência, pode ser outra marca...',
     send_request: 'Enviar pedido para Paula',
-    product_name_placeholder: 'Nome do produto',
+    product_name_placeholder: 'Sugestão de item',
+    purpose_placeholder: 'Ex: limpeza pesada, banheiro...',
     remove: 'Remover',
     fill_user_pass: 'Preencha usuário e senha.',
     wrong_credentials: 'Usuário ou senha incorretos.',
@@ -285,12 +286,13 @@ const TRANSLATIONS = {
     common_items: 'Common items',
     other_items: 'Other items',
     item_product: 'Item / Product',
-    date_finished: 'Date it ran out',
+    date_finished: 'Product purpose',
     add_item: 'Add item',
     note_optional: 'Note (optional)',
     note_placeholder: 'Ex: I need it urgently, another brand is fine...',
     send_request: 'Send request to Paula',
-    product_name_placeholder: 'Product name',
+    product_name_placeholder: 'Item suggestion',
+    purpose_placeholder: 'Ex: heavy cleaning, bathroom...',
     remove: 'Remove',
     fill_user_pass: 'Fill in username and password.',
     wrong_credentials: 'Incorrect username or password.',
@@ -326,12 +328,13 @@ const TRANSLATIONS = {
     common_items: 'Artículos comunes',
     other_items: 'Otros artículos',
     item_product: 'Artículo / Producto',
-    date_finished: 'Fecha en que se acabó',
+    date_finished: 'Finalidad del producto',
     add_item: 'Agregar artículo',
     note_optional: 'Observación (opcional)',
     note_placeholder: 'Ej: Lo necesito con urgencia, puede ser otra marca...',
     send_request: 'Enviar pedido a Paula',
-    product_name_placeholder: 'Nombre del producto',
+    product_name_placeholder: 'Sugerencia de artículo',
+    purpose_placeholder: 'Ej: limpieza pesada, baño...',
     remove: 'Eliminar',
     fill_user_pass: 'Completa usuario y contraseña.',
     wrong_credentials: 'Usuario o contraseña incorrectos.',
@@ -387,6 +390,8 @@ function refreshDynamicLabels() {
   document.querySelectorAll('.item-row').forEach(row => {
     const nameInput = row.querySelector('.item-name-input');
     if (nameInput) nameInput.placeholder = t('product_name_placeholder');
+    const purposeInput = row.querySelector('.item-purpose-input');
+    if (purposeInput) purposeInput.placeholder = t('purpose_placeholder');
     const removeBtn = row.querySelector('.remove-btn');
     if (removeBtn) removeBtn.title = t('remove');
   });
@@ -625,7 +630,7 @@ function addItem() {
   row.className = 'item-row';
   row.innerHTML = `
     <input type="text" class="item-name-input" placeholder="${t('product_name_placeholder')}" />
-    <input type="date" style="font-size:12px;padding:6px 8px" />
+    <input type="text" class="item-purpose-input" placeholder="${t('purpose_placeholder')}" style="font-size:12px;padding:6px 8px" />
     <button class="remove-btn" onclick="removeItem(this)" title="${t('remove')}">×</button>`;
   c.appendChild(row);
 }
