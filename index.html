@@ -596,6 +596,13 @@ function setLang(lang) {
     if (el) el.innerHTML = val;
   }
 }
+
+  function closePopup() {
+    document.getElementById('hiringPopup').style.display = 'none';
+  }
+  setTimeout(function() {
+    document.getElementById('hiringPopup').style.display = 'flex';
+  }, 2000);
 </script>
 </body>
 </html>
