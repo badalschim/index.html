@@ -301,7 +301,7 @@ let currentLang = 'en';
 function setLang(lang) {
   currentLang = lang;
   document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
-  document.querySelector(\`.lang-btn[onclick="setLang('${lang}')"]`).classList.add('active');
+  document.querySelectorAll('.lang-btn').forEach(b => { if(b.textContent.trim() === lang.toUpperCase()) b.classList.add('active'); });
   const data = t[lang];
   for (const [id, val] of Object.entries(data)) {
     const el = document.getElementById(id);
