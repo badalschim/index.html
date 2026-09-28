@@ -579,7 +579,7 @@ const COMMON_ITEMS = [
   { name: 'Esponja mágica', us: 'Mr. Clean Magic Eraser', icon: 'magiceraser' },
   { name: 'Limpador concentrado', us: 'MelaMagic', icon: 'melamagic' },
   { name: 'Tira-manchas', us: 'Tide Pure Clean Stain Remover', icon: 'tide_stain' },
-  { name: 'Amaciante', us: 'MelaSoft', icon: 'melasoft' },
+  { name: 'Amaciante', us: 'MelaSoft', icon: 'melasoft', hidden: true },
   { name: 'Raspador de lâmina', us: 'Razor Scraper', icon: 'scraper' },
   { name: 'Detergente de roupa', us: 'Great Value Premium Clean Pacs', icon: 'greatvalue_pacs' },
   { name: 'Alvejante perfumado', us: 'Clorox Scentiva Bleach', icon: 'scentivableach' },
@@ -605,7 +605,7 @@ function buildCommonItems() {
     row.innerHTML = `
       <input type="checkbox" id="common-${i}" />
       <span class="item-icon-wrap" style="display:flex;align-items:center;justify-content:center;width:52px;height:52px;background:#f5f7fa;border-radius:8px;flex-shrink:0">${ICONS[item.icon]}</span>
-      <label for="common-${i}" style="flex:1">${item.name} <span style="color:#999;font-weight:400">(${item.us})</span></label>`;
+      <label for="common-${i}" style="flex:1">${item.hidden ? `${item.us}` : `${item.name} <span style="color:#999;font-weight:400">(${item.us})</span>`}</label>`;
     c.appendChild(row);
   });
 }
