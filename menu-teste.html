@@ -156,6 +156,7 @@ const TRANSLATIONS = {
     supplies_t: 'Pedido de materiais', supplies_s: 'Lista de supplies',
     invoice_t: 'Invoice', invoice_s: 'Gerar e salvar invoice',
     avail_t: 'Disponibilidade', avail_s: 'Dias que você pode trabalhar',
+    dash_t: 'Painel', dash_s: 'Escala, materiais e feedbacks',
     report_t: 'Relatório semanal', report_s: 'Pedidos de materiais da semana',
     fill_user_pass: 'Preencha usuário e senha.', wrong_credentials: 'Usuário ou senha incorretos.',
     connection_error_retry: 'Erro de conexão. Tente novamente.'
@@ -168,6 +169,7 @@ const TRANSLATIONS = {
     supplies_t: 'Supplies request', supplies_s: 'Supply list',
     invoice_t: 'Invoice', invoice_s: 'Create and save invoice',
     avail_t: 'Availability', avail_s: 'Days you can work',
+    dash_t: 'Dashboard', dash_s: 'Schedule, supplies and feedback',
     report_t: 'Weekly report', report_s: "This week's supply requests",
     fill_user_pass: 'Fill in username and password.', wrong_credentials: 'Incorrect username or password.',
     connection_error_retry: 'Connection error. Please try again.'
@@ -180,6 +182,7 @@ const TRANSLATIONS = {
     supplies_t: 'Pedido de materiales', supplies_s: 'Lista de suministros',
     invoice_t: 'Invoice', invoice_s: 'Crear y guardar invoice',
     avail_t: 'Disponibilidad', avail_s: 'Días que puedes trabajar',
+    dash_t: 'Panel', dash_s: 'Escala, materiales y comentarios',
     report_t: 'Informe semanal', report_s: 'Pedidos de materiales de la semana',
     fill_user_pass: 'Completa usuario y contraseña.', wrong_credentials: 'Usuario o contraseña incorrectos.',
     connection_error_retry: 'Error de conexión. Inténtalo de nuevo.'
@@ -190,6 +193,7 @@ let currentLang = localStorage.getItem('pcs_lang') || 'pt';
 let currentUser = '';
 let currentNome = '';
 let currentAcessoRelatorio = false;
+let currentAcessoDash = false;
 let currentModelo = '';
 let currentBloq = [];
 
@@ -199,7 +203,7 @@ function t(key) {
 
 function hashFor() {
   try {
-    const j = JSON.stringify({ user: currentUser, nome: currentNome, modelo: currentModelo, bloqueados: currentBloq, acessoRelatorio: currentAcessoRelatorio })
+    const j = JSON.stringify({ user: currentUser, nome: currentNome, modelo: currentModelo, bloqueados: currentBloq, acessoRelatorio: currentAcessoRelatorio, acessoDashboard: currentAcessoDash })
       .replace(/[\u0080-\uffff]/g, c => '\\u' + c.charCodeAt(0).toString(16).padStart(4, '0'));
     return '#' + btoa(j);
   } catch(e) { return ''; }
@@ -212,8 +216,11 @@ function buildMenu() {
     { href: 'invoice.html',  icon: '🧾', bg: '#fff4d6', t: 'invoice_t',  s: 'invoice_s' },
     { href: 'disponibilidade.html', icon: '📅', bg: '#ffe9e4', t: 'avail_t', s: 'avail_s' }
   ];
+  if (currentAcessoDash) {
+    items.push({ href: 'dashboard.html', icon: '📊', bg: '#e4f4ff', t: 'dash_t', s: 'dash_s', wide: !currentAcessoRelatorio });
+  }
   if (currentAcessoRelatorio) {
-    items.push({ href: 'relatorio.html', icon: '📦', bg: '#f1e8ff', t: 'report_t', s: 'report_s', wide: true });
+    items.push({ href: 'relatorio.html', icon: '📦', bg: '#f1e8ff', t: 'report_t', s: 'report_s', wide: !currentAcessoDash });
   }
   document.getElementById('menu-grid').innerHTML = items.map((i, n) => `
     <a class="tile${i.wide ? ' wide' : ''}" href="${i.href}${hashFor()}" style="animation-delay:${n * 70}ms">
@@ -272,10 +279,10 @@ function setLang(lang) {
   applyLanguage();
 }
 
-function saveSession(user, nome, acessoRelatorio, modelo, bloqueados) {
+function saveSession(user, nome, acessoRelatorio, modelo, bloqueados, acessoDash) {
   try {
     const exp = Date.now() + SESSION_DURATION;
-    localStorage.setItem(SESSION_KEY, JSON.stringify({ user, nome, acessoRelatorio, modelo, bloqueados: bloqueados || [], expires: exp }));
+    localStorage.setItem(SESSION_KEY, JSON.stringify({ user, nome, acessoRelatorio, acessoDash: !!acessoDash, modelo, bloqueados: bloqueados || [], expires: exp }));
     localStorage.setItem('pcs_session', JSON.stringify({ user, nome, modelo, bloqueados: bloqueados || [], expires: exp }));
     if (acessoRelatorio) localStorage.setItem('pcs_relatorio_session', JSON.stringify({ user, nome, expires: exp }));
     else localStorage.removeItem('pcs_relatorio_session');
@@ -305,6 +312,7 @@ window.addEventListener('DOMContentLoaded', () => {
     currentUser = s.user;
     currentNome = s.nome || s.user;
     currentAcessoRelatorio = !!s.acessoRelatorio;
+    currentAcessoDash = !!s.acessoDash;
     currentModelo = s.modelo || '';
     currentBloq = s.bloqueados || [];
     showApp();
@@ -334,9 +342,10 @@ async function doLogin() {
       currentUser = user;
       currentNome = json.nome || user;
       currentAcessoRelatorio = !!json.acessoRelatorio;
+      currentAcessoDash = !!json.acessoDashboard;
       currentModelo = json.modelo || '';
       currentBloq = json.bloqueados || [];
-      saveSession(user, currentNome, currentAcessoRelatorio, json.modelo, json.bloqueados);
+      saveSession(user, currentNome, currentAcessoRelatorio, json.modelo, json.bloqueados, currentAcessoDash);
       showApp();
     } else {
       errEl.textContent = t('wrong_credentials');
@@ -352,6 +361,7 @@ async function doLogin() {
 function doLogout() {
   clearSession();
   currentAcessoRelatorio = false;
+  currentAcessoDash = false;
   document.getElementById('screen-app').style.display = 'none';
   document.getElementById('screen-login').style.display = 'flex';
   document.getElementById('login-user').value = '';
