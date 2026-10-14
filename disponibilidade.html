@@ -53,6 +53,17 @@ textarea:focus { border-color: var(--blue2); background: #fff; }
 .p-act { display: flex; gap: 6px; margin-top: 8px; }
 .p-act button { border: 1px solid #d5dbea; background: #fff; border-radius: 999px; padding: 6px 12px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; color: var(--blue); }
 .p-act button.red { color: #b22; }
+.req-box { border-radius: 14px; padding: 12px 14px; font-size: 13px; margin-bottom: 12px; line-height: 1.5; }
+.req-box.pend { background: #fff4d6; color: #7a5a00; }
+.req-box.deny { background: #fdecec; color: #a11; }
+.req-box.ok { background: #e9f8ef; color: #17683a; }
+.req-box b { display: block; }
+.req-item { border-top: 1px solid #eef0f6; padding: 12px 0; font-size: 13px; line-height: 1.5; }
+.req-item:first-of-type { border-top: none; }
+.req-item .lbl { color: var(--mut); font-weight: 600; }
+.req-item .mot { background: #f8f9fd; border-radius: 10px; padding: 8px 10px; margin: 6px 0; }
+.btn.green { background: var(--ok); } .btn.red2 { background: #fff; color: #b22; border: 1.5px solid #f0c4c4; }
+.row2 { display: flex; gap: 8px; margin-top: 8px; } .row2 .btn { margin-top: 0; padding: 11px; font-size: 14px; }
 .center { text-align: center; padding: 60px 24px; }
 .center p { color: var(--mut); margin: 10px 0 18px; }
 body { padding-top: env(safe-area-inset-top); }
@@ -85,15 +96,25 @@ body::before { content: ''; position: fixed; top: 0; left: 0; right: 0; height: 
 
   <div class="card first" id="my-card">
     <div id="sent-box"></div>
+    <div id="req-box"></div>
     <div id="editing-box"></div>
     <h2 data-i18n="pick_days">Quais dias você pode trabalhar?</h2>
     <div class="days" id="days"></div>
     <label class="none" id="none-wrap"><input type="checkbox" id="none-check" onchange="onNone()"> <span data-i18n="none_days">Não posso trabalhar nessa semana</span></label>
+    <textarea id="motivo" data-i18n-placeholder="motivo_ph" placeholder="Motivo da alteração (obrigatório)" maxlength="500" style="display:none"></textarea>
     <textarea id="obs" data-i18n-placeholder="obs_ph" placeholder="Observação (opcional)" maxlength="500"></textarea>
     <button class="btn" id="send-btn" onclick="sendDays()" data-i18n="send">Enviar</button>
+    <button class="btn" id="req-btn" style="display:none" onclick="startRequest()" data-i18n="req_btn">Solicitar alteração</button>
+    <button class="btn sec" id="cancel-req" style="display:none" onclick="cancelRequest()" data-i18n="cancel_req">Cancelar solicitação</button>
     <button class="btn sec" id="cancel-edit" style="display:none" onclick="cancelEdit()" data-i18n="cancel">Cancelar edição</button>
     <div class="msg" id="msg"></div>
     <div class="note" id="lock-note" data-i18n="lock_note">Depois de enviar, não é possível alterar. Fale com a responsável.</div>
+  </div>
+
+  <div class="card" id="req-card" style="display:none">
+    <h2 data-i18n="requests">Solicitações de alteração</h2>
+    <div id="reqs"></div>
+    <div class="msg" id="req-msg"></div>
   </div>
 
   <div class="card" id="admin-card" style="display:none">
@@ -114,20 +135,20 @@ body::before { content: ''; position: fixed; top: 0; left: 0; right: 0; height: 
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyGtMi4dY_1_eewqbyU8w05JNk9IqPOKFHkwzLGEP1tICwpZSyyswetMA8VA_ZwkI83-A/exec";
 
 const TR = {
-  pt: { back:'‹ Menu', title:'Disponibilidade', week:'Semana de', to:'a', pick_days:'Quais dias você pode trabalhar?', none_days:'Não posso trabalhar nessa semana',
-    obs_ph:'Observação (opcional)', send:'Enviar', sending:'Enviando...', cancel:'Cancelar edição', lock_note:'Depois de enviar, não é possível alterar. Fale com a responsável.',
+  pt: { req_btn:'Solicitar alteração', req_send:'Enviar solicitação', cancel_req:'Cancelar solicitação', motivo_ph:'Motivo da alteração (obrigatório)', motivo_need:'Informe o motivo da alteração.', req_pending:'⏳ Solicitação enviada, aguardando aprovação.', req_denied:'Sua última solicitação foi recusada.', req_approved:'Sua última solicitação foi aprovada.', req_sent:'Solicitação enviada!', req_dup:'Você já tem uma solicitação pendente.', requests:'Solicitações de alteração', approve:'Aprovar', deny:'Recusar', current_:'Atual:', new_:'Novo:', reason:'Motivo:', decided:'Feito!', confirm_deny:'Recusar esta solicitação?', back:'‹ Menu', title:'Disponibilidade', week:'Semana de', to:'a', pick_days:'Quais dias você pode trabalhar?', none_days:'Não posso trabalhar nessa semana',
+    obs_ph:'Observação (opcional)', send:'Enviar', sending:'Enviando...', cancel:'Cancelar edição', lock_note:'Depois de enviar, para alterar é preciso pedir aprovação, com o motivo.',
     sent_ok:'✓ Enviado! Seus dias:', sent_none:'✓ Enviado: sem disponibilidade nessa semana', pick_one:'Escolha pelo menos um dia (ou marque que não pode).',
     locked:'Você já enviou. Fale com a responsável para alterar.', conn:'Erro de conexão. Tente novamente.', team:'Equipe', answered:'Enviou', pending:'Pendente',
     edit:'Editar', unlock:'Liberar', send_report:'Enviar relatório agora', report_sent:'Relatório enviado!', editing:'Editando:', saved:'Salvo!',
     need_login:'Entre pelo menu primeiro', need_login_s:'Faça login para informar sua disponibilidade.', go_menu:'Ir ao menu', no_days:'sem disponibilidade', confirm_unlock:'Liberar para essa pessoa enviar de novo? (apaga a resposta atual)', confirm_report:'Enviar o relatório agora?', locale:'pt-BR' },
-  en: { back:'‹ Menu', title:'Availability', week:'Week of', to:'to', pick_days:'Which days can you work?', none_days:"I can't work this week",
-    obs_ph:'Note (optional)', send:'Send', sending:'Sending...', cancel:'Cancel editing', lock_note:"Once sent, it can't be changed. Talk to the person in charge.",
+  en: { req_btn:'Request change', req_send:'Send request', cancel_req:'Cancel request', motivo_ph:'Reason for the change (required)', motivo_need:'Please give the reason for the change.', req_pending:'⏳ Request sent, waiting for approval.', req_denied:'Your last request was declined.', req_approved:'Your last request was approved.', req_sent:'Request sent!', req_dup:'You already have a pending request.', requests:'Change requests', approve:'Approve', deny:'Decline', current_:'Current:', new_:'New:', reason:'Reason:', decided:'Done!', confirm_deny:'Decline this request?', back:'‹ Menu', title:'Availability', week:'Week of', to:'to', pick_days:'Which days can you work?', none_days:"I can't work this week",
+    obs_ph:'Note (optional)', send:'Send', sending:'Sending...', cancel:'Cancel editing', lock_note:'Once sent, changes need approval and a reason.',
     sent_ok:'✓ Sent! Your days:', sent_none:'✓ Sent: not available this week', pick_one:"Pick at least one day (or check that you can't work).",
     locked:'Already sent. Ask the person in charge to change it.', conn:'Connection error. Please try again.', team:'Team', answered:'Sent', pending:'Pending',
     edit:'Edit', unlock:'Unlock', send_report:'Send report now', report_sent:'Report sent!', editing:'Editing:', saved:'Saved!',
     need_login:'Log in from the menu first', need_login_s:'Log in to set your availability.', go_menu:'Go to menu', no_days:'not available', confirm_unlock:'Unlock so this person can submit again? (deletes current answer)', confirm_report:'Send the report now?', locale:'en-US' },
-  es: { back:'‹ Menú', title:'Disponibilidad', week:'Semana del', to:'al', pick_days:'¿Qué días puedes trabajar?', none_days:'No puedo trabajar esta semana',
-    obs_ph:'Observación (opcional)', send:'Enviar', sending:'Enviando...', cancel:'Cancelar edición', lock_note:'Después de enviar, no se puede cambiar. Habla con la responsable.',
+  es: { req_btn:'Solicitar cambio', req_send:'Enviar solicitud', cancel_req:'Cancelar solicitud', motivo_ph:'Motivo del cambio (obligatorio)', motivo_need:'Indica el motivo del cambio.', req_pending:'⏳ Solicitud enviada, esperando aprobación.', req_denied:'Tu última solicitud fue rechazada.', req_approved:'Tu última solicitud fue aprobada.', req_sent:'¡Solicitud enviada!', req_dup:'Ya tienes una solicitud pendiente.', requests:'Solicitudes de cambio', approve:'Aprobar', deny:'Rechazar', current_:'Actual:', new_:'Nuevo:', reason:'Motivo:', decided:'¡Hecho!', confirm_deny:'¿Rechazar esta solicitud?', back:'‹ Menú', title:'Disponibilidad', week:'Semana del', to:'al', pick_days:'¿Qué días puedes trabajar?', none_days:'No puedo trabajar esta semana',
+    obs_ph:'Observación (opcional)', send:'Enviar', sending:'Enviando...', cancel:'Cancelar edición', lock_note:'Después de enviar, para cambiar se necesita aprobación y un motivo.',
     sent_ok:'✓ ¡Enviado! Tus días:', sent_none:'✓ Enviado: sin disponibilidad esta semana', pick_one:'Elige al menos un día (o marca que no puedes).',
     locked:'Ya enviaste. Habla con la responsable para cambiar.', conn:'Error de conexión. Inténtalo de nuevo.', team:'Equipo', answered:'Envió', pending:'Pendiente',
     edit:'Editar', unlock:'Liberar', send_report:'Enviar informe ahora', report_sent:'¡Informe enviado!', editing:'Editando:', saved:'¡Guardado!',
@@ -138,6 +159,7 @@ let lang = 'pt'; try { lang = localStorage.getItem('pcs_lang') || 'pt'; } catch(
 let me = null;          // {user, nome}
 let state = null;       // resposta de disp_get
 let selected = new Set();
+let requestMode = false;
 let editTarget = null;  // {email, nome} quando admin edita outra pessoa
 
 const t = k => (TR[lang] && TR[lang][k]) || TR.pt[k] || k;
@@ -194,12 +216,12 @@ async function refresh() {
     const r = await api({ action: 'disp_get' });
     if (!r.ok) { $('msg').className = 'msg err'; $('msg').textContent = t('conn'); return; }
     state = r;
-    if (r.minha && !editTarget) { selected = new Set(r.minha.dias); $('obs').value = r.minha.obs || ''; $('none-check').checked = r.minha.dias.length === 0; }
+    if (r.minha && !editTarget && !requestMode) { selected = new Set(r.minha.dias); $('obs').value = r.minha.obs || ''; $('none-check').checked = r.minha.dias.length === 0; }
     render();
   } catch(e) { $('msg').className = 'msg err'; $('msg').textContent = t('conn'); }
 }
 
-function isLocked() { return !!(state.minha && !editTarget); }
+function isLocked() { return !!(state.minha && !editTarget && !requestMode && !state.admin); }
 
 function render() {
   const dates = weekDates();
@@ -226,6 +248,36 @@ function render() {
   $('obs').disabled = locked;
   $('obs').style.display = locked && !$('obs').value ? 'none' : 'block';
   $('cancel-edit').style.display = editTarget ? 'block' : 'none';
+
+  // fluxo de solicitação de alteração (cleaner)
+  const hasMine = !!(state.minha && !state.admin);
+  const ped = state.pedido;
+  const pend = !!(ped && ped.status === 'pendente');
+  let rb = '';
+  if (hasMine && !requestMode) {
+    if (pend) rb = `<div class="req-box pend"><b>${t('req_pending')}</b>${esc(ped.motivo)}</div>`;
+    else if (ped && ped.status === 'recusado') rb = `<div class="req-box deny">${t('req_denied')}</div>`;
+    else if (ped && ped.status === 'aprovado') rb = `<div class="req-box ok">${t('req_approved')}</div>`;
+  }
+  $('req-box').innerHTML = rb;
+  $('req-btn').style.display = (hasMine && !requestMode && !pend) ? 'block' : 'none';
+  $('cancel-req').style.display = requestMode ? 'block' : 'none';
+  $('motivo').style.display = requestMode ? 'block' : 'none';
+  if (requestMode) {
+    $('send-btn').style.display = 'block'; $('send-btn').textContent = t('req_send');
+    $('none-wrap').style.display = 'flex'; $('obs').style.display = 'none'; $('lock-note').style.display = 'none';
+  } else { $('send-btn').textContent = t('send'); }
+
+  // solicitações pendentes (gerente)
+  $('req-card').style.display = (state.admin && (state.pedidos || []).length) ? 'block' : 'none';
+  if (state.admin) {
+    const fd = arr => arr.length ? arr.map(k => fmtDay(parseISO(k), { weekday: 'short' }).replace('.', '') + ' ' + fmtShort(parseISO(k))).join(' · ') : t('no_days') || '—';
+    $('reqs').innerHTML = (state.pedidos || []).map(x => `<div class="req-item"><b>${esc(x.nome)}</b>
+      <div><span class="lbl">${t('current_')}</span> ${fd(x.atual)}</div>
+      <div><span class="lbl">${t('new_')}</span> ${fd(x.dias)}</div>
+      <div class="mot"><span class="lbl">${t('reason')}</span> ${esc(x.motivo)}</div>
+      <div class="row2"><button class="btn green" onclick="decide('${x.id}','aprovar')">${t('approve')}</button><button class="btn red2" onclick="decide('${x.id}','recusar')">${t('deny')}</button></div></div>`).join('');
+  }
 
   // admin
   $('admin-card').style.display = state.admin ? 'block' : 'none';
@@ -257,6 +309,17 @@ async function sendDays() {
   const nenhum = $('none-check').checked;
   if (!selected.size && !nenhum) { msg.className = 'msg err'; msg.textContent = t('pick_one'); return; }
   const btn = $('send-btn'); btn.disabled = true; btn.textContent = t('sending');
+  if (requestMode) {
+    const motivo = $('motivo').value.trim();
+    if (!motivo) { msg.className = 'msg err'; msg.textContent = t('motivo_need'); btn.disabled = false; btn.textContent = t('req_send'); return; }
+    try {
+      const rr = await api({ action: 'disp_request', dias: [...selected].sort().join(','), nenhum: nenhum ? '1' : '0', motivo });
+      if (rr.ok) { requestMode = false; $('motivo').value = ''; await refresh(); msg.className = 'msg ok'; msg.textContent = t('req_sent'); }
+      else { msg.className = 'msg err'; msg.textContent = rr.erro === 'pendente' ? t('req_dup') : (rr.erro === 'motivo' ? t('motivo_need') : t('conn')); if (rr.erro === 'pendente') { requestMode = false; await refresh(); } }
+    } catch(e) { msg.className = 'msg err'; msg.textContent = t('conn'); }
+    btn.disabled = false; render();
+    return;
+  }
   try {
     const p = { action: 'disp_save', dias: [...selected].sort().join(','), obs: $('obs').value.trim(), nenhum: nenhum ? '1' : '0' };
     if (editTarget) p.alvo = editTarget.email;
@@ -281,6 +344,22 @@ function editPerson(email) {
   editTarget = { email, nome: p.nome };
   selected = new Set(p.dias); $('obs').value = p.obs || ''; $('none-check').checked = p.enviado && !p.dias.length;
   render(); window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+function startRequest() {
+  requestMode = true; $('msg').textContent = '';
+  selected = new Set(state.minha ? state.minha.dias : []); $('none-check').checked = !!(state.minha && !state.minha.dias.length);
+  render(); $('motivo').focus();
+}
+function cancelRequest() {
+  requestMode = false; $('motivo').value = '';
+  selected = new Set(state.minha ? state.minha.dias : []); $('none-check').checked = !!(state.minha && !state.minha.dias.length);
+  render();
+}
+async function decide(id, decisao) {
+  if (decisao === 'recusar' && !confirm(t('confirm_deny'))) return;
+  const m = $('req-msg'); m.className = 'msg'; m.textContent = '...';
+  try { const r = await api({ action: 'disp_decide', id, decisao }); m.className = r.ok ? 'msg ok' : 'msg err'; m.textContent = r.ok ? t('decided') : t('conn'); await refresh(); }
+  catch(e) { m.className = 'msg err'; m.textContent = t('conn'); }
 }
 async function cancelEdit() {
   editTarget = null;
