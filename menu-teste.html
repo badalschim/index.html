@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Menu (teste) - Paula's Cleaning Squad</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: Arial, sans-serif; background: #f0f2f5; color: #222; font-size: 14px; min-height: 100vh; }
+
+.test-banner { background: #fff4d6; color: #7a5a00; text-align: center; font-size: 12px; padding: 6px 10px; border-bottom: 1px solid #f0dca0; }
+
+#lang-switcher { position: fixed; top: 38px; right: 8px; z-index: 999; display: flex; gap: 4px; background: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 4px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+#lang-switcher button { border: none; background: none; padding: 4px 8px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 700; font-family: Arial; color: #333; }
+#lang-switcher button.active { background: #1a3a8f; color: #fff; }
+
+#screen-login { min-height: calc(100vh - 28px); display: flex; align-items: center; justify-content: center; padding: 20px; }
+.login-card { background: #fff; border-radius: 14px; padding: 2.5rem 2rem; width: 100%; max-width: 380px; box-shadow: 0 4px 24px rgba(0,0,0,0.10); }
+.login-logo { text-align: center; margin-bottom: 1.5rem; }
+.logo-title { font-size: 20px; font-weight: 700; color: #1a3a8f; }
+.logo-sub { font-size: 12px; color: #888; margin-top: 2px; }
+.login-card h2 { font-size: 16px; font-weight: 700; margin-bottom: 1.25rem; text-align: center; }
+.field { margin-bottom: 14px; }
+.field label { font-size: 12px; color: #555; display: block; margin-bottom: 4px; font-weight: 600; }
+.field input { width: 100%; padding: 10px 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 14px; font-family: Arial; outline: none; }
+.field input:focus { border-color: #1a3a8f; }
+.login-btn { width: 100%; padding: 12px; background: #1a3a8f; color: #fff; border: none; border-radius: 8px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: Arial; margin-top: 6px; }
+.login-btn:hover { background: #153070; }
+.login-btn:disabled { background: #aaa; cursor: not-allowed; }
+.login-err { color: #c00; font-size: 13px; text-align: center; margin-top: 10px; min-height: 18px; }
+.login-loading { color: #888; font-size: 13px; text-align: center; margin-top: 10px; display: none; }
+
+#screen-app { display: none; padding: 20px; max-width: 700px; margin: 0 auto; }
+.app-header { display: flex; justify-content: space-between; align-items: center; margin: 36px 0 1.25rem; }
+.app-header .welcome { font-size: 14px; color: #555; }
+.app-header .welcome strong { color: #1a3a8f; }
+.logout-btn { background: none; border: 1px solid #ccc; border-radius: 6px; padding: 5px 12px; font-size: 12px; color: #555; cursor: pointer; font-family: Arial; }
+.logout-btn:hover { background: #f5f5f5; }
+
+.menu-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; }
+.menu-card { display: flex; align-items: center; gap: 14px; padding: 16px; background: #fff; border: 1px solid #e0e0e0; border-radius: 12px; text-decoration: none; color: inherit; transition: border-color .15s, transform .15s; }
+.menu-card:hover { border-color: #1a3a8f; transform: translateY(-1px); }
+.menu-ico { width: 46px; height: 46px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 24px; flex-shrink: 0; }
+.menu-txt { flex: 1; }
+.menu-t { font-size: 15px; font-weight: 700; color: #1a3a8f; }
+.menu-s { font-size: 12px; color: #777; margin-top: 2px; }
+.menu-arrow { color: #bbb; font-size: 18px; }
+</style>
+</head>
+<body>
+
+<div class="test-banner">Página de teste, ainda não está no ar</div>
+
+<div id="lang-switcher">
+  <button data-lang-btn="pt" onclick="setLang('pt')">PT</button>
+  <button data-lang-btn="en" onclick="setLang('en')">EN</button>
+  <button data-lang-btn="es" onclick="setLang('es')">ES</button>
+</div>
+
+<div id="screen-login">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="logo-title">Paula's Cleaning Squad</div>
+      <div class="logo-sub" data-i18n="team_access">Acesso da equipe</div>
+    </div>
+    <h2 data-i18n="login_title">Entrar</h2>
+    <div class="field">
+      <label data-i18n="username_label">Usuário</label>
+      <input type="text" id="login-user" data-i18n-placeholder="username_placeholder" placeholder="Seu usuário" autocomplete="username" />
+    </div>
+    <div class="field">
+      <label data-i18n="password_label">Senha</label>
+      <input type="password" id="login-pass" data-i18n-placeholder="password_placeholder" placeholder="Sua senha" autocomplete="current-password" onkeydown="if(event.key==='Enter') doLogin()" />
+    </div>
+    <button class="login-btn" id="login-btn" onclick="doLogin()" data-i18n="login_btn">Entrar</button>
+    <div class="login-err" id="login-err"></div>
+    <div class="login-loading" id="login-loading" data-i18n="verifying">Verificando...</div>
+  </div>
+</div>
+
+<div id="screen-app">
+  <div class="app-header">
+    <span class="welcome"><span data-i18n="hello">Olá,</span> <strong id="user-name"></strong></span>
+    <button class="logout-btn" onclick="doLogout()" data-i18n="logout_btn">Sair</button>
+  </div>
+
+  <div class="menu-grid" id="menu-grid"></div>
+</div>
+
+<script>
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyGtMi4dY_1_eewqbyU8w05JNk9IqPOKFHkwzLGEP1tICwpZSyyswetMA8VA_ZwkI83-A/exec";
+
+const SESSION_KEY = 'pcs_hub_session';
+const SESSION_DURATION = 30 * 60 * 1000;
+
+const TRANSLATIONS = {
+  pt: {
+    team_access: 'Acesso da equipe', login_title: 'Entrar', username_label: 'Usuário', username_placeholder: 'Seu usuário',
+    password_label: 'Senha', password_placeholder: 'Sua senha', login_btn: 'Entrar', verifying: 'Verificando...',
+    hello: 'Olá,', logout_btn: 'Sair',
+    feedback_t: 'Avaliações', feedback_s: 'Seus feedbacks e notas',
+    supplies_t: 'Pedido de materiais', supplies_s: 'Lista de supplies',
+    invoice_t: 'Invoice', invoice_s: 'Gerar e salvar invoice',
+    report_t: 'Relatório semanal', report_s: 'Pedidos de materiais da semana',
+    fill_user_pass: 'Preencha usuário e senha.', wrong_credentials: 'Usuário ou senha incorretos.',
+    connection_error_retry: 'Erro de conexão. Tente novamente.'
+  },
+  en: {
+    team_access: 'Team access', login_title: 'Log In', username_label: 'Username', username_placeholder: 'Your username',
+    password_label: 'Password', password_placeholder: 'Your password', login_btn: 'Log In', verifying: 'Verifying...',
+    hello: 'Hi,', logout_btn: 'Log Out',
+    feedback_t: 'Reviews', feedback_s: 'Your feedback and ratings',
+    supplies_t: 'Supplies request', supplies_s: 'Supply list',
+    invoice_t: 'Invoice', invoice_s: 'Create and save invoice',
+    report_t: 'Weekly report', report_s: "This week's supply requests",
+    fill_user_pass: 'Fill in username and password.', wrong_credentials: 'Incorrect username or password.',
+    connection_error_retry: 'Connection error. Please try again.'
+  },
+  es: {
+    team_access: 'Acceso del equipo', login_title: 'Iniciar sesión', username_label: 'Usuario', username_placeholder: 'Tu usuario',
+    password_label: 'Contraseña', password_placeholder: 'Tu contraseña', login_btn: 'Iniciar sesión', verifying: 'Verificando...',
+    hello: 'Hola,', logout_btn: 'Salir',
+    feedback_t: 'Evaluaciones', feedback_s: 'Tus comentarios y notas',
+    supplies_t: 'Pedido de materiales', supplies_s: 'Lista de suministros',
+    invoice_t: 'Invoice', invoice_s: 'Crear y guardar invoice',
+    report_t: 'Informe semanal', report_s: 'Pedidos de materiales de la semana',
+    fill_user_pass: 'Completa usuario y contraseña.', wrong_credentials: 'Usuario o contraseña incorrectos.',
+    connection_error_retry: 'Error de conexión. Inténtalo de nuevo.'
+  }
+};
+
+let currentLang = localStorage.getItem('pcs_lang') || 'pt';
+let currentUser = '';
+let currentNome = '';
+let currentAcessoRelatorio = false;
+
+function t(key) {
+  return (TRANSLATIONS[currentLang] && TRANSLATIONS[currentLang][key]) || TRANSLATIONS.pt[key] || key;
+}
+
+function buildMenu() {
+  const items = [
+    { href: 'feedback.html', icon: '⭐', bg: '#e8efff', t: 'feedback_t', s: 'feedback_s' },
+    { href: 'supplies.html', icon: '🛒', bg: '#e6f6ea', t: 'supplies_t', s: 'supplies_s' },
+    { href: 'invoice.html',  icon: '🧾', bg: '#fff4d6', t: 'invoice_t',  s: 'invoice_s' }
+  ];
+  if (currentAcessoRelatorio) {
+    items.push({ href: 'relatorio.html', icon: '📦', bg: '#f1e8ff', t: 'report_t', s: 'report_s' });
+  }
+  document.getElementById('menu-grid').innerHTML = items.map(i => `
+    <a class="menu-card" href="${i.href}">
+      <div class="menu-ico" style="background:${i.bg}">${i.icon}</div>
+      <div class="menu-txt">
+        <div class="menu-t">${t(i.t)}</div>
+        <div class="menu-s">${t(i.s)}</div>
+      </div>
+      <div class="menu-arrow">›</div>
+    </a>`).join('');
+}
+
+function applyLanguage() {
+  document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.getAttribute('data-i18n')); });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => { el.placeholder = t(el.getAttribute('data-i18n-placeholder')); });
+  document.querySelectorAll('[data-lang-btn]').forEach(b => {
+    b.classList.toggle('active', b.getAttribute('data-lang-btn') === currentLang);
+  });
+  if (document.getElementById('screen-app').style.display === 'block') buildMenu();
+}
+
+function setLang(lang) {
+  currentLang = lang;
+  localStorage.setItem('pcs_lang', lang);
+  applyLanguage();
+}
+
+function saveSession(user, nome, acessoRelatorio) {
+  try {
+    localStorage.setItem(SESSION_KEY, JSON.stringify({ user, nome, acessoRelatorio, expires: Date.now() + SESSION_DURATION }));
+  } catch(e) {}
+}
+function loadSession() {
+  try {
+    const raw = localStorage.getItem(SESSION_KEY);
+    if (!raw) return null;
+    const s = JSON.parse(raw);
+    if (Date.now() > s.expires) { localStorage.removeItem(SESSION_KEY); return null; }
+    return s;
+  } catch(e) { return null; }
+}
+function clearSession() { try { localStorage.removeItem(SESSION_KEY); } catch(e) {} }
+
+function showApp() {
+  document.getElementById('screen-login').style.display = 'none';
+  document.getElementById('screen-app').style.display = 'block';
+  document.getElementById('user-name').textContent = currentNome;
+  buildMenu();
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  const s = loadSession();
+  if (s) {
+    currentUser = s.user;
+    currentNome = s.nome || s.user;
+    currentAcessoRelatorio = !!s.acessoRelatorio;
+    showApp();
+  }
+  applyLanguage();
+});
+
+async function doLogin() {
+  const user = document.getElementById('login-user').value.trim();
+  const pass = document.getElementById('login-pass').value.trim();
+  const btn = document.getElementById('login-btn');
+  const errEl = document.getElementById('login-err');
+  const loadEl = document.getElementById('login-loading');
+
+  errEl.textContent = '';
+  if (!user || !pass) { errEl.textContent = t('fill_user_pass'); return; }
+
+  btn.disabled = true;
+  loadEl.style.display = 'block';
+
+  try {
+    const url = `${SCRIPT_URL}?usuario=${encodeURIComponent(user)}&senha=${encodeURIComponent(pass)}&pagina=menu`;
+    const res = await fetch(url);
+    const json = await res.json();
+
+    if (json.ok) {
+      currentUser = user;
+      currentNome = json.nome || user;
+      currentAcessoRelatorio = !!json.acessoRelatorio;
+      saveSession(user, currentNome, currentAcessoRelatorio);
+      showApp();
+    } else {
+      errEl.textContent = t('wrong_credentials');
+    }
+  } catch(e) {
+    errEl.textContent = t('connection_error_retry');
+  }
+
+  btn.disabled = false;
+  loadEl.style.display = 'none';
+}
+
+function doLogout() {
+  clearSession();
+  currentAcessoRelatorio = false;
+  document.getElementById('screen-app').style.display = 'none';
+  document.getElementById('screen-login').style.display = 'flex';
+  document.getElementById('login-user').value = '';
+  document.getElementById('login-pass').value = '';
+}
+</script>
+</body>
+</html>
