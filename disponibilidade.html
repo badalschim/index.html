@@ -55,6 +55,8 @@ textarea:focus { border-color: var(--blue2); background: #fff; }
 .p-act button.red { color: #b22; }
 .center { text-align: center; padding: 60px 24px; }
 .center p { color: var(--mut); margin: 10px 0 18px; }
+body { padding-top: env(safe-area-inset-top); }
+body::before { content: ''; position: fixed; top: 0; left: 0; right: 0; height: env(safe-area-inset-top); background: #1a3a8f; z-index: 1000; }
 </style>
 <link rel="manifest" href="manifest.json" />
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
