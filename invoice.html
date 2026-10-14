@@ -79,6 +79,14 @@ textarea { resize: vertical; }
   .g2, .g3 { grid-template-columns: 1fr; }
 }
 </style>
+<link rel="manifest" href="manifest.json" />
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+<link rel="icon" type="image/png" href="icons/icon-192.png" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="PCS" />
+<script>if('serviceWorker' in navigator) window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));</script>
 </head>
 <body>
 
@@ -101,6 +109,20 @@ textarea { resize: vertical; }
     <button class="login-btn" id="login-btn" onclick="doLogin()">Entrar</button>
     <div class="login-err" id="login-err"></div>
     <div class="login-loading" id="login-loading">Verificando...</div>
+  <div style="text-align:center;margin-top:12px">
+    <button onclick="showForgot()" style="background:none;border:none;color:#1a3a8f;font-size:12px;cursor:pointer;text-decoration:underline;font-family:Arial">Esqueceu a senha?</button>
+  </div>
+
+  <!-- Forgot password modal -->
+  <div id="forgot-modal" style="display:none;margin-top:16px;padding:14px;background:#f8f9ff;border-radius:8px;border:1px solid #d0d8f0">
+    <div style="font-size:12px;color:#555;margin-bottom:8px">Digite seu email (usuário) e enviaremos sua senha:</div>
+    <input type="email" id="forgot-email" placeholder="seu@email.com" style="width:100%;padding:8px 10px;border:1px solid #ccc;border-radius:6px;font-size:13px;font-family:Arial;outline:none;margin-bottom:8px" />
+    <div style="display:flex;gap:8px">
+      <button onclick="sendForgot()" style="flex:1;padding:8px;background:#1a3a8f;color:#fff;border:none;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;font-family:Arial">Enviar</button>
+      <button onclick="hideForgot()" style="padding:8px 12px;background:none;border:1px solid #ccc;border-radius:6px;font-size:13px;color:#888;cursor:pointer;font-family:Arial">Cancelar</button>
+    </div>
+    <div id="forgot-msg" style="font-size:12px;margin-top:8px;min-height:16px;text-align:center"></div>
+  </div>
   </div>
 </div>
 
@@ -108,7 +130,7 @@ textarea { resize: vertical; }
 <div id="screen-app">
   <div class="app-header">
     <span class="welcome">Olá, <strong id="user-name"></strong></span>
-    <button class="logout-btn" onclick="doLogout()">Sair</button>
+    <div style="display:flex;gap:6px"><a class="logout-btn" href="menu-teste.html" style="text-decoration:none">‹ Menu</a><button class="logout-btn" onclick="doLogout()">Sair</button></div>
   </div>
 
   <div id="model-tag-el" class="model-tag"></div>
@@ -144,7 +166,52 @@ textarea { resize: vertical; }
   <button class="gen-btn" onclick="generatePDF()">⬇ Gerar e baixar PDF</button>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js">
+  msgEl.style.color='#888'; msgEl.textContent='Enviando...';
+  try {
+    const url = `${SCRIPT_URL}?action=forgot&usuario=${encodeURIComponent(email)}`;
+    const res = await fetch(url);
+    const json = await res.json();
+    if (json.ok) {
+      msgEl.style.color='#2d7a4f'; msgEl.textContent='Senha enviada para seu email!';
+    } else {
+      msgEl.style.color='#c00'; msgEl.textContent='Email não encontrado.';
+    }
+  } catch(e) {
+    msgEl.style.color='#c00'; msgEl.textContent='Erro de conexão.';
+  }
+}
+
+
+function showForgot() {
+  document.getElementById('forgot-modal').style.display = 'block';
+  document.getElementById('forgot-email').focus();
+}
+function hideForgot() {
+  document.getElementById('forgot-modal').style.display = 'none';
+  document.getElementById('forgot-email').value = '';
+  document.getElementById('forgot-msg').textContent = '';
+}
+async function sendForgot() {
+  const email = document.getElementById('forgot-email').value.trim();
+  const msgEl = document.getElementById('forgot-msg');
+  if (!email) { msgEl.style.color='#c00'; msgEl.textContent='Digite seu email.'; return; }
+  msgEl.style.color='#888'; msgEl.textContent='Enviando...';
+  try {
+    const url = `${SCRIPT_URL}?action=forgot&usuario=${encodeURIComponent(email)}`;
+    const res = await fetch(url);
+    const json = await res.json();
+    if (json.ok) {
+      msgEl.style.color='#2d7a4f'; msgEl.textContent='Senha enviada para seu email!';
+    } else {
+      msgEl.style.color='#c00'; msgEl.textContent='Email não encontrado.';
+    }
+  } catch(e) {
+    msgEl.style.color='#c00'; msgEl.textContent='Erro de conexão.';
+  }
+}
+
+</script>
 <script>
 // ============================================================
 // SUBSTITUA A URL ABAIXO PELA URL DO SEU GOOGLE APPS SCRIPT
@@ -158,73 +225,40 @@ const DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sun
 let currentModel = 0;
 let currentUser = '';
 
-// ── LOGIN ──
 
-// ── SESSION MANAGEMENT (30 min) ──
-const SESSION_KEY = 'pcs_session';
-const SESSION_DURATION = 30 * 60 * 1000;
-
-function saveSession(user, nome, modelo) {
-  const session = { user, nome, modelo, expires: Date.now() + SESSION_DURATION };
-  localStorage.setItem(SESSION_KEY, JSON.stringify(session));
-  // Also encode in URL hash for cross-iframe sharing
-  try { location.hash = btoa(JSON.stringify({user, nome, modelo})); } catch(e) {}
-}
-
-function loadSession() {
-  // Try localStorage first
-  try {
-    const s = JSON.parse(localStorage.getItem(SESSION_KEY));
-    if (s && s.expires > Date.now()) return s;
-    localStorage.removeItem(SESSION_KEY);
-  } catch(e) {}
-  // Try URL hash
+function sessionFromHash() {
   try {
     if (location.hash && location.hash.length > 1) {
-      const s = JSON.parse(atob(location.hash.slice(1)));
-      if (s && s.user) {
-        s.expires = Date.now() + SESSION_DURATION;
-        localStorage.setItem(SESSION_KEY, JSON.stringify(s));
-        return s;
-      }
+      const h = JSON.parse(atob(location.hash.slice(1)));
+      if (h && h.user) return h;
     }
   } catch(e) {}
   return null;
 }
 
-function clearSession() {
-  localStorage.removeItem(SESSION_KEY);
-  location.hash = '';
-}
-
-function renewSession() {
-  try {
-    const s = JSON.parse(localStorage.getItem(SESSION_KEY));
-    if (s) { s.expires = Date.now() + SESSION_DURATION; localStorage.setItem(SESSION_KEY, JSON.stringify(s)); }
-  } catch(e) {}
-}
-
-function applySession(s) {
-  currentUser = s.nome || s.user;
-  const m = parseInt(s.modelo);
-  currentModel = m === 1 ? 1 : m === 3 ? 3 : 2;
-  document.getElementById('screen-login').style.display = 'none';
-  document.getElementById('screen-app').style.display = 'block';
-  document.getElementById('user-name').textContent = currentUser;
-  const labels = {1:'Modelo: 70% do valor da casa', 2:'Modelo: Diária (valor manual)', 3:'Modelo: Misto (Diária + 70%)'};
+function applyLogin(user, json) {
+      currentUser = json.nome || user;
+    const m = parseInt(json.modelo);
+currentModel = m === 1 ? 1 : m === 3 ? 3 : 2;
+    document.getElementById('screen-login').style.display = 'none';
+    document.getElementById('screen-app').style.display = 'block';
+    document.getElementById('user-name').textContent = currentUser;
+    const labels = {1:'Modelo: 70% do valor da casa', 2:'Modelo: Diária (valor manual)', 3:'Modelo: Misto (Diária + 70%)'};
   document.getElementById('model-tag-el').textContent = labels[currentModel] || '';
-  buildDays();
-  renewSession();
+    buildDays();
 }
 
-document.addEventListener('click', renewSession);
-document.addEventListener('keydown', renewSession);
-window.addEventListener('load', function() {
-  const s = loadSession();
-  if (s) applySession(s);
+window.addEventListener('DOMContentLoaded', () => {
+  try {
+    let s = null;
+    try { s = JSON.parse(localStorage.getItem('pcs_session')); if (!(s && s.user && s.expires > Date.now())) s = null; } catch(e) {}
+    if (!s) s = sessionFromHash();
+    if (s) applyLogin(s.user, {nome:s.nome, modelo:s.modelo});
+  } catch(e) {}
 });
-// ── END SESSION ──
 
+function clearAllSessions(){['pcs_session','pcs_relatorio_session','pcs_hub_session'].forEach(k=>{try{localStorage.removeItem(k)}catch(e){}});}
+// ── LOGIN ──
 async function doLogin() {
   const user = document.getElementById('login-user').value.trim();
   const pass = document.getElementById('login-pass').value.trim();
@@ -239,21 +273,13 @@ async function doLogin() {
   loadEl.style.display = 'block';
 
   try {
-    const url = `${SCRIPT_URL}?usuario=${encodeURIComponent(user)}&senha=${encodeURIComponent(pass)}&pagina=invoice`;
+    const url = `${SCRIPT_URL}?usuario=${encodeURIComponent(user)}&senha=${encodeURIComponent(pass)}`;
     const res = await fetch(url);
     const json = await res.json();
 
     if (json.ok) {
-      currentUser = json.nome || user;
-      const m = parseInt(json.modelo);
-currentModel = m === 1 ? 1 : m === 3 ? 3 : 2;
-      saveSession(user, json.nome || user, json.modelo);
-      document.getElementById('screen-login').style.display = 'none';
-      document.getElementById('screen-app').style.display = 'block';
-      document.getElementById('user-name').textContent = currentUser;
-      const labels = {1:'Modelo: 70% do valor da casa', 2:'Modelo: Diária (valor manual)', 3:'Modelo: Misto (Diária + 70%)'};
-  document.getElementById('model-tag-el').textContent = labels[currentModel] || '';
-      buildDays();
+      try{localStorage.setItem('pcs_session',JSON.stringify({user:user,nome:json.nome||user,modelo:json.modelo,bloqueados:json.bloqueados||[],expires:Date.now()+8*3600*1000}));}catch(e){}
+      applyLogin(user, json);
     } else {
       errEl.textContent = 'Usuário ou senha incorretos.';
     }
@@ -266,7 +292,8 @@ currentModel = m === 1 ? 1 : m === 3 ? 3 : 2;
 }
 
 function doLogout() {
-  clearSession();
+  clearAllSessions();
+  location.href='menu-teste.html';
   document.getElementById('screen-login').style.display = 'flex';
   document.getElementById('screen-app').style.display = 'none';
   document.getElementById('login-user').value = '';
@@ -495,35 +522,26 @@ function generatePDF() {
   y+=150;
 
   // ISSUED TO block
-  doc.setFontSize(8); doc.setFont('helvetica','bold'); doc.setTextColor(40,40,40);
-  doc.text("ISSUED TO:", M, y);
-  doc.setFont('helvetica','normal'); doc.setTextColor(80,80,80);
-  y+=13; doc.text("Paula's Cleaning Squad", M, y);
-  y+=12; doc.text("2456 Deercroft Drive, 32940", M, y);
   y+=14; doc.setFont('helvetica','bold'); doc.setTextColor(40,40,40);
-    // PAY TO
-  y+=14; doc.setFont('helvetica','bold'); doc.setTextColor(40,40,40);
-  doc.text("PAY TO:", M, y);
-  y+=13;
-
-  const bankLabel = "Bank Name.:   ";
-  const acctLabel = "Account Name.:   ";
-  const zelleLabel = "Zelle Number.:   ";
-  doc.setFontSize(8);
-  doc.setFont('helvetica','bold'); doc.setTextColor(40,40,40);
-  doc.text(bankLabel, M, y);
-  doc.setFont('helvetica','normal'); doc.setTextColor(80,80,80);
-  doc.text(document.getElementById('bank').value, M+doc.getTextWidth(bankLabel), y);
-  y+=12;
-  doc.setFont('helvetica','bold'); doc.setTextColor(40,40,40);
-  doc.text(acctLabel, M, y);
-  doc.setFont('helvetica','normal'); doc.setTextColor(80,80,80);
-  doc.text(document.getElementById('acct').value, M+doc.getTextWidth(acctLabel), y);
-  y+=12;
-  doc.setFont('helvetica','bold'); doc.setTextColor(40,40,40);
-  doc.text(zelleLabel, M, y);
-  doc.setFont('helvetica','normal'); doc.setTextColor(80,80,80);
-  doc.text(document.getElementById('zelle').value, M+doc.getTextWidth(zelleLabel), y);
+doc.text("PAY TO:", M, y);
+y+=13;
+const bankLabel = "Bank Name: ";
+const acctLabel = "Account Name: ";
+const zelleLabel = "Zelle Number.: ";
+doc.setFont('helvetica','bold'); doc.setTextColor(40,40,40);
+doc.text(bankLabel, M, y);
+doc.setFont('helvetica','normal'); doc.setTextColor(80,80,80);
+doc.text(document.getElementById('bank').value, M+doc.getTextWidth(bankLabel), y);
+y+=12;
+doc.setFont('helvetica','bold'); doc.setTextColor(40,40,40);
+doc.text(acctLabel, M, y);
+doc.setFont('helvetica','normal'); doc.setTextColor(80,80,80);
+doc.text(document.getElementById('acct').value, M+doc.getTextWidth(acctLabel), y);
+y+=12;
+doc.setFont('helvetica','bold'); doc.setTextColor(40,40,40);
+doc.text(zelleLabel, M, y);
+doc.setFont('helvetica','normal'); doc.setTextColor(80,80,80);
+doc.text(document.getElementById('zelle').value, M+doc.getTextWidth(zelleLabel), y);
 
   // Dates - right column, aligned with ISSUED TO
   const di=document.getElementById('date_issue').value;
@@ -597,6 +615,35 @@ function generatePDF() {
 
   doc.save(currentModel===1?'invoice-70pct.pdf':'invoice-diaria.pdf');
 }
+
+function showForgot() {
+  document.getElementById('forgot-modal').style.display = 'block';
+  document.getElementById('forgot-email').focus();
+}
+function hideForgot() {
+  document.getElementById('forgot-modal').style.display = 'none';
+  document.getElementById('forgot-email').value = '';
+  document.getElementById('forgot-msg').textContent = '';
+}
+async function sendForgot() {
+  const email = document.getElementById('forgot-email').value.trim();
+  const msgEl = document.getElementById('forgot-msg');
+  if (!email) { msgEl.style.color='#c00'; msgEl.textContent='Digite seu email.'; return; }
+  msgEl.style.color='#888'; msgEl.textContent='Enviando...';
+  try {
+    const url = `${SCRIPT_URL}?action=forgot&usuario=${encodeURIComponent(email)}`;
+    const res = await fetch(url);
+    const json = await res.json();
+    if (json.ok) {
+      msgEl.style.color='#2d7a4f'; msgEl.textContent='Senha enviada para seu email!';
+    } else {
+      msgEl.style.color='#c00'; msgEl.textContent='Email não encontrado.';
+    }
+  } catch(e) {
+    msgEl.style.color='#c00'; msgEl.textContent='Erro de conexão.';
+  }
+}
+
 </script>
 </body>
 </html>

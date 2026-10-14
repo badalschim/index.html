@@ -61,6 +61,14 @@ body { font-family: Arial, sans-serif; background: #f0f2f5; color: #222; font-si
 .week-body.open { display: block; }
 .week-row { display: flex; justify-content: space-between; padding: 8px 16px; border-top: 1px solid #f0f0f0; font-size: 13px; }
 </style>
+<link rel="manifest" href="manifest.json" />
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+<link rel="icon" type="image/png" href="icons/icon-192.png" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="PCS" />
+<script>if('serviceWorker' in navigator) window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));</script>
 </head>
 <body>
 
@@ -90,7 +98,7 @@ body { font-family: Arial, sans-serif; background: #f0f2f5; color: #222; font-si
 <div id="screen-app">
   <div class="app-header">
     <span class="welcome">Olá, <strong id="user-name"></strong></span>
-    <button class="logout-btn" onclick="doLogout()">Sair</button>
+    <div style="display:flex;gap:6px"><a class="logout-btn" href="menu-teste.html" style="text-decoration:none">‹ Menu</a><button class="logout-btn" onclick="doLogout()">Sair</button></div>
   </div>
 
   <div class="page-title">📦 Relatório Semanal de Supplies</div>
@@ -115,14 +123,26 @@ let currentUser = '';
 let currentNome = '';
 
 const SESSION_KEY = 'pcs_relatorio_session';
-const SESSION_DURATION = 30 * 60 * 1000;
+const SESSION_DURATION = 8 * 60 * 60 * 1000;
 
 function saveSession(user, nome) {
   const s = { user, nome, expires: Date.now() + SESSION_DURATION };
   localStorage.setItem(SESSION_KEY, JSON.stringify(s));
 }
+
+function sessionFromHash() {
+  try {
+    if (location.hash && location.hash.length > 1) {
+      const h = JSON.parse(atob(location.hash.slice(1)));
+      if (h && h.user) return h;
+    }
+  } catch(e) {}
+  return null;
+}
 function loadSession() {
   try {
+    const h = sessionFromHash();
+    if (h && h.acessoRelatorio) return h;
     const raw = localStorage.getItem(SESSION_KEY);
     if (!raw) return null;
     const s = JSON.parse(raw);
@@ -189,7 +209,10 @@ async function doLogin() {
   loadEl.style.display = 'none';
 }
 
+function clearAllSessions(){['pcs_session','pcs_relatorio_session','pcs_hub_session'].forEach(k=>{try{localStorage.removeItem(k)}catch(e){}});}
 function doLogout() {
+  clearAllSessions();
+  location.href='menu-teste.html';
   clearSession();
   document.getElementById('screen-app').style.display = 'none';
   document.getElementById('screen-login').style.display = 'block';

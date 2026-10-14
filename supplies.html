@@ -79,6 +79,14 @@ textarea { resize: vertical; }
   .col-heads { grid-template-columns: 1fr 110px 36px; }
 }
 </style>
+<link rel="manifest" href="manifest.json" />
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+<link rel="icon" type="image/png" href="icons/icon-192.png" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="PCS" />
+<script>if('serviceWorker' in navigator) window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));</script>
 </head>
 <body>
 
@@ -129,7 +137,7 @@ textarea { resize: vertical; }
 <div id="screen-app">
   <div class="app-header">
     <span class="welcome"><span data-i18n="hello">Olá,</span> <strong id="user-name"></strong></span>
-    <button class="logout-btn" onclick="doLogout()" data-i18n="logout_btn">Sair</button>
+    <div style="display:flex;gap:6px"><a class="logout-btn" href="menu-teste.html" style="text-decoration:none">‹ Menu</a><button class="logout-btn" onclick="doLogout()" data-i18n="logout_btn">Sair</button></div>
   </div>
 
   <div id="err-msg" class="err-msg" data-i18n="err_no_items">Adicione pelo menos um item antes de enviar.</div>
@@ -416,7 +424,7 @@ let lastNote = '';
 
 // ── SESSION (30 min) ──
 const SESSION_KEY = 'pcs_session';
-const SESSION_DURATION = 30 * 60 * 1000;
+const SESSION_DURATION = 8 * 60 * 60 * 1000;
 
 function saveSession(user, nome, modelo, bloqueados) {
   const s = { user, nome, modelo, bloqueados: bloqueados || [], expires: Date.now() + SESSION_DURATION };
@@ -503,7 +511,10 @@ async function doLogin() {
   loadEl.style.display = 'none';
 }
 
+function clearAllSessions(){['pcs_session','pcs_relatorio_session','pcs_hub_session'].forEach(k=>{try{localStorage.removeItem(k)}catch(e){}});}
 function doLogout() {
+  clearAllSessions();
+  location.href='menu-teste.html';
   clearSession();
   currentBloqueados = [];
   document.getElementById('screen-login').style.display = 'flex';

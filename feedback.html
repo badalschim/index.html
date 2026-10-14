@@ -67,6 +67,14 @@ body { font-family: Arial, sans-serif; background: #f0f2f5; color: #222; font-si
   .feedback-cats { grid-template-columns: 1fr; }
 }
 </style>
+<link rel="manifest" href="manifest.json" />
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+<link rel="icon" type="image/png" href="icons/icon-192.png" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="PCS" />
+<script>if('serviceWorker' in navigator) window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));</script>
 </head>
 <body>
 
@@ -108,7 +116,7 @@ body { font-family: Arial, sans-serif; background: #f0f2f5; color: #222; font-si
 <div id="screen-app">
   <div class="app-header">
     <span class="welcome">Olá, <strong id="user-name"></strong></span>
-    <button class="logout-btn" onclick="doLogout()">Sair</button>
+    <div style="display:flex;gap:6px"><a class="logout-btn" href="menu-teste.html" style="text-decoration:none">‹ Menu</a><button class="logout-btn" onclick="doLogout()">Sair</button></div>
   </div>
 
   <div id="summary-card" class="summary-card">
@@ -142,7 +150,7 @@ let currentUser = '';
 
 // ── SESSION MANAGEMENT (30 min) ──
 const SESSION_KEY = 'pcs_session';
-const SESSION_DURATION = 30 * 60 * 1000;
+const SESSION_DURATION = 8 * 60 * 60 * 1000;
 
 function saveSession(user, nome, modelo) {
   const session = { user, nome, modelo, expires: Date.now() + SESSION_DURATION };
@@ -233,7 +241,10 @@ async function doLogin() {
   loadEl.style.display = 'none';
 }
 
+function clearAllSessions(){['pcs_session','pcs_relatorio_session','pcs_hub_session'].forEach(k=>{try{localStorage.removeItem(k)}catch(e){}});}
 function doLogout() {
+  clearAllSessions();
+  location.href='menu-teste.html';
   clearSession();
   document.getElementById('screen-login').style.display = 'flex';
   document.getElementById('screen-app').style.display = 'none';
