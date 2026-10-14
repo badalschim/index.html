@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="theme-color" content="#1a3a8f" />
+<title>Disponibilidade - Paula's Cleaning Squad</title>
+<style>
+:root { --blue:#1a3a8f; --blue2:#2f5bd8; --bg:#f3f5fb; --card:#fff; --txt:#1b2233; --mut:#7a8399; --ok:#1f9d55; }
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+body { font-family: -apple-system, 'Segoe UI', Roboto, Arial, sans-serif; background: var(--bg); color: var(--txt); font-size: 15px; min-height: 100vh; }
+.wrap { max-width: 720px; margin: 0 auto; padding-bottom: 40px; }
+.hero { background: linear-gradient(160deg, var(--blue) 0%, var(--blue2) 100%); color: #fff; padding: 16px 18px 64px; border-radius: 0 0 30px 30px; }
+.hero-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.pill { background: rgba(255,255,255,.18); border: none; color: #fff; border-radius: 999px; padding: 7px 14px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; text-decoration: none; }
+.lang { display: flex; gap: 2px; background: rgba(255,255,255,.18); border-radius: 999px; padding: 3px; }
+.lang button { border: none; background: none; padding: 5px 10px; border-radius: 999px; cursor: pointer; font-size: 11px; font-weight: 700; color: #fff; font-family: inherit; }
+.lang button.active { background: #fff; color: var(--blue); }
+.hero h1 { font-size: 22px; font-weight: 800; margin-top: 20px; }
+.hero p { font-size: 13px; opacity: .85; margin-top: 4px; }
+
+.card { background: var(--card); border-radius: 22px; padding: 18px 16px; margin: 0 16px 14px; box-shadow: 0 6px 18px rgba(26,58,143,.08); }
+.card.first { margin-top: -42px; }
+.card h2 { font-size: 15px; font-weight: 800; margin-bottom: 12px; }
+.days { display: grid; grid-template-columns: repeat(auto-fill, minmax(86px, 1fr)); gap: 8px; }
+.day { border: 2px solid #e1e5ef; background: #f8f9fd; border-radius: 16px; padding: 12px 4px; text-align: center; cursor: pointer; font-family: inherit; color: var(--txt); transition: all .12s; }
+.day .w { font-size: 13px; font-weight: 800; text-transform: capitalize; }
+.day .d { font-size: 12px; color: var(--mut); margin-top: 2px; }
+.day.on { border-color: var(--blue2); background: var(--blue); color: #fff; transform: scale(1.03); }
+.day.on .d { color: #dbe4ff; }
+.day:disabled { cursor: default; opacity: .9; }
+textarea { width: 100%; border: 1.5px solid #e1e5ef; border-radius: 14px; padding: 12px; font-size: 15px; font-family: inherit; background: #f8f9fd; resize: vertical; min-height: 70px; outline: none; margin-top: 12px; }
+textarea:focus { border-color: var(--blue2); background: #fff; }
+.btn { width: 100%; padding: 15px; background: var(--blue); color: #fff; border: none; border-radius: 14px; font-size: 16px; font-weight: 700; cursor: pointer; font-family: inherit; margin-top: 14px; }
+.btn:active { transform: scale(.98); }
+.btn:disabled { background: #aab; }
+.btn.sec { background: #eef1fa; color: var(--blue); margin-top: 8px; }
+.none { display: flex; align-items: center; gap: 8px; margin-top: 12px; font-size: 14px; color: #555; }
+.none input { width: 18px; height: 18px; }
+.msg { text-align: center; font-size: 13px; margin-top: 10px; min-height: 18px; }
+.msg.err { color: #c00; } .msg.ok { color: var(--ok); }
+.sent { background: #e9f8ef; color: #17683a; border-radius: 14px; padding: 12px; font-size: 14px; font-weight: 600; margin-bottom: 12px; text-align: center; }
+.note { font-size: 12px; color: var(--mut); text-align: center; margin-top: 8px; }
+.editing { background: #fff4d6; color: #7a5a00; border-radius: 12px; padding: 8px 12px; font-size: 13px; margin-bottom: 10px; font-weight: 600; }
+
+.person { border-top: 1px solid #eef0f6; padding: 12px 0; }
+.person:first-of-type { border-top: none; }
+.p-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.p-name { font-weight: 700; }
+.badge { font-size: 11px; font-weight: 700; border-radius: 999px; padding: 3px 10px; }
+.badge.y { background: #e9f8ef; color: #17683a; } .badge.n { background: #fdecec; color: #a11; }
+.p-days { font-size: 13px; color: #555; margin-top: 6px; line-height: 1.5; }
+.p-act { display: flex; gap: 6px; margin-top: 8px; }
+.p-act button { border: 1px solid #d5dbea; background: #fff; border-radius: 999px; padding: 6px 12px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; color: var(--blue); }
+.p-act button.red { color: #b22; }
+.center { text-align: center; padding: 60px 24px; }
+.center p { color: var(--mut); margin: 10px 0 18px; }
+</style>
+</head>
+<body>
+<div class="wrap" id="app" style="display:none">
+  <div class="hero">
+    <div class="hero-top">
+      <a class="pill" id="back-link" href="menu-teste.html" data-i18n="back">‹ Menu</a>
+      <div class="lang">
+        <button data-lang-btn="pt" onclick="setLang('pt')">PT</button>
+        <button data-lang-btn="en" onclick="setLang('en')">EN</button>
+        <button data-lang-btn="es" onclick="setLang('es')">ES</button>
+      </div>
+    </div>
+    <h1 data-i18n="title">Disponibilidade</h1>
+    <p id="week-label"></p>
+  </div>
+
+  <div class="card first" id="my-card">
+    <div id="sent-box"></div>
+    <div id="editing-box"></div>
+    <h2 data-i18n="pick_days">Quais dias você pode trabalhar?</h2>
+    <div class="days" id="days"></div>
+    <label class="none" id="none-wrap"><input type="checkbox" id="none-check" onchange="onNone()"> <span data-i18n="none_days">Não posso trabalhar nessa semana</span></label>
+    <textarea id="obs" data-i18n-placeholder="obs_ph" placeholder="Observação (opcional)" maxlength="500"></textarea>
+    <button class="btn" id="send-btn" onclick="sendDays()" data-i18n="send">Enviar</button>
+    <button class="btn sec" id="cancel-edit" style="display:none" onclick="cancelEdit()" data-i18n="cancel">Cancelar edição</button>
+    <div class="msg" id="msg"></div>
+    <div class="note" id="lock-note" data-i18n="lock_note">Depois de enviar, não é possível alterar. Fale com a responsável.</div>
+  </div>
+
+  <div class="card" id="admin-card" style="display:none">
+    <h2 data-i18n="team">Equipe</h2>
+    <div id="people"></div>
+    <button class="btn" onclick="sendReport()" data-i18n="send_report">Enviar relatório agora</button>
+    <div class="msg" id="admin-msg"></div>
+  </div>
+</div>
+
+<div class="center" id="nosession" style="display:none">
+  <h2 data-i18n="need_login">Entre pelo menu primeiro</h2>
+  <p data-i18n="need_login_s">Faça login para informar sua disponibilidade.</p>
+  <a class="pill" style="background:#1a3a8f" href="menu-teste.html" data-i18n="go_menu">Ir ao menu</a>
+</div>
+
+<script>
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyGtMi4dY_1_eewqbyU8w05JNk9IqPOKFHkwzLGEP1tICwpZSyyswetMA8VA_ZwkI83-A/exec";
+
+const TR = {
+  pt: { back:'‹ Menu', title:'Disponibilidade', week:'Semana de', to:'a', pick_days:'Quais dias você pode trabalhar?', none_days:'Não posso trabalhar nessa semana',
+    obs_ph:'Observação (opcional)', send:'Enviar', sending:'Enviando...', cancel:'Cancelar edição', lock_note:'Depois de enviar, não é possível alterar. Fale com a responsável.',
+    sent_ok:'✓ Enviado! Seus dias:', sent_none:'✓ Enviado: sem disponibilidade nessa semana', pick_one:'Escolha pelo menos um dia (ou marque que não pode).',
+    locked:'Você já enviou. Fale com a responsável para alterar.', conn:'Erro de conexão. Tente novamente.', team:'Equipe', answered:'Enviou', pending:'Pendente',
+    edit:'Editar', unlock:'Liberar', send_report:'Enviar relatório agora', report_sent:'Relatório enviado!', editing:'Editando:', saved:'Salvo!',
+    need_login:'Entre pelo menu primeiro', need_login_s:'Faça login para informar sua disponibilidade.', go_menu:'Ir ao menu', no_days:'sem disponibilidade', confirm_unlock:'Liberar para essa pessoa enviar de novo? (apaga a resposta atual)', confirm_report:'Enviar o relatório agora?', locale:'pt-BR' },
+  en: { back:'‹ Menu', title:'Availability', week:'Week of', to:'to', pick_days:'Which days can you work?', none_days:"I can't work this week",
+    obs_ph:'Note (optional)', send:'Send', sending:'Sending...', cancel:'Cancel editing', lock_note:"Once sent, it can't be changed. Talk to the person in charge.",
+    sent_ok:'✓ Sent! Your days:', sent_none:'✓ Sent: not available this week', pick_one:"Pick at least one day (or check that you can't work).",
+    locked:'Already sent. Ask the person in charge to change it.', conn:'Connection error. Please try again.', team:'Team', answered:'Sent', pending:'Pending',
+    edit:'Edit', unlock:'Unlock', send_report:'Send report now', report_sent:'Report sent!', editing:'Editing:', saved:'Saved!',
+    need_login:'Log in from the menu first', need_login_s:'Log in to set your availability.', go_menu:'Go to menu', no_days:'not available', confirm_unlock:'Unlock so this person can submit again? (deletes current answer)', confirm_report:'Send the report now?', locale:'en-US' },
+  es: { back:'‹ Menú', title:'Disponibilidad', week:'Semana del', to:'al', pick_days:'¿Qué días puedes trabajar?', none_days:'No puedo trabajar esta semana',
+    obs_ph:'Observación (opcional)', send:'Enviar', sending:'Enviando...', cancel:'Cancelar edición', lock_note:'Después de enviar, no se puede cambiar. Habla con la responsable.',
+    sent_ok:'✓ ¡Enviado! Tus días:', sent_none:'✓ Enviado: sin disponibilidad esta semana', pick_one:'Elige al menos un día (o marca que no puedes).',
+    locked:'Ya enviaste. Habla con la responsable para cambiar.', conn:'Error de conexión. Inténtalo de nuevo.', team:'Equipo', answered:'Envió', pending:'Pendiente',
+    edit:'Editar', unlock:'Liberar', send_report:'Enviar informe ahora', report_sent:'¡Informe enviado!', editing:'Editando:', saved:'¡Guardado!',
+    need_login:'Primero entra desde el menú', need_login_s:'Inicia sesión para informar tu disponibilidad.', go_menu:'Ir al menú', no_days:'sin disponibilidad', confirm_unlock:'¿Liberar para que esta persona envíe de nuevo? (borra la respuesta actual)', confirm_report:'¿Enviar el informe ahora?', locale:'es-ES' }
+};
+
+let lang = 'pt'; try { lang = localStorage.getItem('pcs_lang') || 'pt'; } catch(e) {}
+let me = null;          // {user, nome}
+let state = null;       // resposta de disp_get
+let selected = new Set();
+let editTarget = null;  // {email, nome} quando admin edita outra pessoa
+
+const t = k => (TR[lang] && TR[lang][k]) || TR.pt[k] || k;
+const $ = id => document.getElementById(id);
+
+function getSession() {
+  try {
+    const s = JSON.parse(localStorage.getItem('pcs_session'));
+    if (s && s.user && s.expires > Date.now()) return s;
+  } catch(e) {}
+  try {
+    if (location.hash.length > 1) {
+      const h = JSON.parse(atob(location.hash.slice(1)));
+      if (h && h.user) return h;
+    }
+  } catch(e) {}
+  return null;
+}
+
+function parseISO(iso) { const [y, m, d] = iso.split('-').map(Number); return new Date(y, m - 1, d); }
+function weekDates() {
+  const base = parseISO(state.semana);
+  return Array.from({ length: 7 }, (_, i) => { const d = new Date(base); d.setDate(base.getDate() + i); return d; });
+}
+function iso(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+function fmtDay(d, opt) { return d.toLocaleDateString(t('locale'), opt); }
+function fmtShort(d) { return String(d.getDate()).padStart(2, '0') + '/' + String(d.getMonth() + 1).padStart(2, '0'); }
+
+function api(params) {
+  const q = new URLSearchParams(Object.assign({ usuario: me.user }, params)).toString();
+  return fetch(SCRIPT_URL + '?' + q).then(r => r.json());
+}
+
+function applyLang() {
+  document.querySelectorAll('[data-i18n]').forEach(el => el.textContent = t(el.getAttribute('data-i18n')));
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => el.placeholder = t(el.getAttribute('data-i18n-placeholder')));
+  document.querySelectorAll('[data-lang-btn]').forEach(b => b.classList.toggle('active', b.getAttribute('data-lang-btn') === lang));
+  document.documentElement.lang = lang;
+  if (state) render();
+}
+function setLang(l) { lang = l; try { localStorage.setItem('pcs_lang', l); } catch(e) {} applyLang(); }
+
+async function init() {
+  me = getSession();
+  if (!me) { $('nosession').style.display = 'block'; applyLang(); return; }
+  try { $('back-link').href = 'menu-teste.html' + location.hash; } catch(e) {}
+  $('app').style.display = 'block';
+  applyLang();
+  await refresh();
+}
+
+async function refresh() {
+  try {
+    const r = await api({ action: 'disp_get' });
+    if (!r.ok) { $('msg').className = 'msg err'; $('msg').textContent = t('conn'); return; }
+    state = r;
+    if (r.minha && !editTarget) { selected = new Set(r.minha.dias); $('obs').value = r.minha.obs || ''; $('none-check').checked = r.minha.dias.length === 0; }
+    render();
+  } catch(e) { $('msg').className = 'msg err'; $('msg').textContent = t('conn'); }
+}
+
+function isLocked() { return !!(state.minha && !editTarget); }
+
+function render() {
+  const dates = weekDates();
+  $('week-label').textContent = t('week') + ' ' + fmtShort(dates[0]) + ' ' + t('to') + ' ' + fmtShort(dates[6]);
+  const locked = isLocked();
+  $('days').innerHTML = dates.map(d => {
+    const k = iso(d);
+    return `<button class="day${selected.has(k) ? ' on' : ''}" ${locked ? 'disabled' : ''} onclick="toggleDay('${k}')">
+      <div class="w">${fmtDay(d, { weekday: 'short' }).replace('.', '')}</div><div class="d">${fmtShort(d)}</div></button>`;
+  }).join('');
+
+  // caixa "enviado"
+  if (state.minha && !editTarget) {
+    const lista = state.minha.dias.length
+      ? t('sent_ok') + ' ' + state.minha.dias.map(k => fmtDay(parseISO(k), { weekday: 'short' }).replace('.', '') + ' ' + fmtShort(parseISO(k))).join(', ')
+      : t('sent_none');
+    $('sent-box').innerHTML = `<div class="sent">${lista}</div>`;
+  } else $('sent-box').innerHTML = '';
+
+  $('editing-box').innerHTML = editTarget ? `<div class="editing">${t('editing')} ${editTarget.nome}</div>` : '';
+  $('send-btn').style.display = locked ? 'none' : 'block';
+  $('lock-note').style.display = locked ? 'block' : (state.admin ? 'none' : 'block');
+  $('none-wrap').style.display = locked ? 'none' : 'flex';
+  $('obs').disabled = locked;
+  $('obs').style.display = locked && !$('obs').value ? 'none' : 'block';
+  $('cancel-edit').style.display = editTarget ? 'block' : 'none';
+
+  // admin
+  $('admin-card').style.display = state.admin ? 'block' : 'none';
+  if (state.admin) {
+    $('people').innerHTML = (state.todos || []).map(p => {
+      const dias = p.enviado
+        ? (p.dias.length ? p.dias.map(k => fmtDay(parseISO(k), { weekday: 'short' }).replace('.', '') + ' ' + fmtShort(parseISO(k))).join(' · ') : t('no_days'))
+        : '';
+      return `<div class="person"><div class="p-top"><span class="p-name">${esc(p.nome)}</span>
+        <span class="badge ${p.enviado ? 'y' : 'n'}">${p.enviado ? t('answered') : t('pending')}</span></div>
+        ${dias ? `<div class="p-days">${dias}${p.obs ? '<br>💬 ' + esc(p.obs) : ''}</div>` : ''}
+        <div class="p-act"><button onclick="editPerson('${p.email}')">${t('edit')}</button>${p.enviado ? `<button class="red" onclick="unlock('${p.email}')">${t('unlock')}</button>` : ''}</div></div>`;
+    }).join('');
+  }
+}
+
+function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+
+function toggleDay(k) {
+  if (isLocked()) return;
+  selected.has(k) ? selected.delete(k) : selected.add(k);
+  if (selected.size) $('none-check').checked = false;
+  render();
+}
+function onNone() { if ($('none-check').checked) { selected.clear(); render(); } }
+
+async function sendDays() {
+  const msg = $('msg'); msg.className = 'msg'; msg.textContent = '';
+  const nenhum = $('none-check').checked;
+  if (!selected.size && !nenhum) { msg.className = 'msg err'; msg.textContent = t('pick_one'); return; }
+  const btn = $('send-btn'); btn.disabled = true; btn.textContent = t('sending');
+  try {
+    const p = { action: 'disp_save', dias: [...selected].sort().join(','), obs: $('obs').value.trim(), nenhum: nenhum ? '1' : '0' };
+    if (editTarget) p.alvo = editTarget.email;
+    const r = await api(p);
+    if (r.ok) {
+      const wasEdit = !!editTarget;
+      editTarget = null;
+      await refresh();
+      if (wasEdit) { selected = new Set(state.minha ? state.minha.dias : []); $('obs').value = state.minha ? state.minha.obs : ''; $('none-check').checked = !!(state.minha && !state.minha.dias.length); render(); }
+      msg.className = 'msg ok'; msg.textContent = t('saved');
+    } else {
+      msg.className = 'msg err'; msg.textContent = r.erro === 'locked' ? t('locked') : t('conn');
+      if (r.erro === 'locked') await refresh();
+    }
+  } catch(e) { msg.className = 'msg err'; msg.textContent = t('conn'); }
+  btn.disabled = false; btn.textContent = t('send');
+}
+
+function editPerson(email) {
+  const p = state.todos.find(x => x.email === email);
+  if (!p) return;
+  editTarget = { email, nome: p.nome };
+  selected = new Set(p.dias); $('obs').value = p.obs || ''; $('none-check').checked = p.enviado && !p.dias.length;
+  render(); window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+async function cancelEdit() {
+  editTarget = null;
+  selected = new Set(state.minha ? state.minha.dias : []); $('obs').value = state.minha ? state.minha.obs : ''; $('none-check').checked = !!(state.minha && !state.minha.dias.length);
+  render();
+}
+async function unlock(email) {
+  if (!confirm(t('confirm_unlock'))) return;
+  try { await api({ action: 'disp_unlock', alvo: email }); await refresh(); } catch(e) { $('admin-msg').className = 'msg err'; $('admin-msg').textContent = t('conn'); }
+}
+async function sendReport() {
+  if (!confirm(t('confirm_report'))) return;
+  const m = $('admin-msg'); m.className = 'msg'; m.textContent = '...';
+  try { const r = await api({ action: 'disp_send' }); m.className = r.ok ? 'msg ok' : 'msg err'; m.textContent = r.ok ? t('report_sent') : t('conn'); }
+  catch(e) { m.className = 'msg err'; m.textContent = t('conn'); }
+}
+
+window.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
