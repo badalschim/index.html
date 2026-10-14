@@ -82,6 +82,7 @@ body::before { content: ''; position: fixed; top: 0; left: 0; right: 0; height: 
 .center { text-align: center; padding: 60px 24px; }
 .center p { color: var(--mut); margin: 10px 0 18px; }
 </style>
+<script>(function(K){try{var s=JSON.parse(localStorage.getItem('pcs_session'));if(!s||!s.token||s.expires<Date.now()){location.replace('menu-teste.html');return;}if(K&&s.ocultas&&s.ocultas.indexOf(K)!==-1)location.replace('menu-teste.html');}catch(e){location.replace('menu-teste.html');}})(null);</script>
 </head>
 <body>
 <div class="wrap" id="app" style="display:none">
@@ -149,8 +150,7 @@ const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
 function getSession() {
-  try { const s = JSON.parse(localStorage.getItem('pcs_session')); if (s && s.user && s.expires > Date.now()) return s; } catch(e) {}
-  try { if (location.hash.length > 1) { const h = JSON.parse(atob(location.hash.slice(1))); if (h && h.user) return h; } } catch(e) {}
+  try { const s = JSON.parse(localStorage.getItem('pcs_session')); if (s && s.user && s.token && s.expires > Date.now()) return s; } catch(e) {}
   return null;
 }
 function parseISO(i) { const [y, m, d] = i.split('-').map(Number); return new Date(y, m - 1, d); }
@@ -188,7 +188,8 @@ function showTab(n) {
 async function load() {
   ['p-escala', 'p-mat', 'p-fb'].forEach(id => $(id).innerHTML = '<div class="skeleton"></div><div class="skeleton"></div>');
   try {
-    const r = await fetch(SCRIPT_URL + '?action=dash&usuario=' + encodeURIComponent(me.user)).then(x => x.json());
+    const r = await fetch(SCRIPT_URL + '?action=dash&token=' + encodeURIComponent(me.token)).then(x => x.json());
+    if (r.erro === 'auth') { location.replace('menu-teste.html'); return; }
     if (!r.ok) {
       $('app').style.display = 'none'; $('noperm').style.display = 'block'; return;
     }
@@ -264,7 +265,7 @@ function renderFb() {
 window.addEventListener('DOMContentLoaded', () => {
   me = getSession();
   if (!me) { $('nosession').style.display = 'block'; applyLang(); return; }
-  try { $('back-link').href = 'menu-teste.html' + location.hash; } catch(e) {}
+  
   $('app').style.display = 'block';
   applyLang();
   load();

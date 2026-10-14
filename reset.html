@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="theme-color" content="#1a3a8f" />
+<meta name="robots" content="noindex" />
+<title>Nova senha - Paula's Cleaning Squad</title>
+<link rel="icon" type="image/png" href="icons/icon-192.png" />
+<style>
+:root { --blue:#1a3a8f; --blue2:#2f5bd8; --bg:#f3f5fb; --mut:#7a8399; }
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+body { font-family: -apple-system, 'Segoe UI', Roboto, Arial, sans-serif; background: linear-gradient(160deg, var(--blue) 0%, var(--blue2) 100%); color: #1b2233; font-size: 15px; min-height: 100vh; display: flex; flex-direction: column; }
+.top { display: flex; justify-content: flex-end; padding: calc(14px + env(safe-area-inset-top)) 16px 0; }
+.lang { display: flex; gap: 2px; background: rgba(255,255,255,.18); border-radius: 999px; padding: 3px; }
+.lang button { border: none; background: none; padding: 5px 10px; border-radius: 999px; cursor: pointer; font-size: 11px; font-weight: 700; color: #fff; font-family: inherit; }
+.lang button.active { background: #fff; color: var(--blue); }
+.hero { color: #fff; text-align: center; padding: 30px 24px 24px; }
+.logo { width: 84px; height: 84px; border-radius: 22px; overflow: hidden; margin: 0 auto 12px; box-shadow: 0 8px 24px rgba(0,0,0,.25); }
+.logo img { width: 100%; height: 100%; display: block; }
+.hero h1 { font-size: 20px; font-weight: 800; }
+.card { background: #fff; border-radius: 28px 28px 0 0; padding: 28px 22px calc(28px + env(safe-area-inset-bottom)); flex: 1; width: 100%; max-width: 480px; margin: 0 auto; }
+.card h2 { font-size: 18px; margin-bottom: 6px; }
+.card p.s { font-size: 13px; color: var(--mut); margin-bottom: 18px; line-height: 1.5; }
+.field { margin-bottom: 14px; }
+.field label { font-size: 12px; color: var(--mut); display: block; margin-bottom: 5px; font-weight: 600; }
+.field input { width: 100%; padding: 14px; border: 1.5px solid #e1e5ef; border-radius: 14px; font-size: 16px; font-family: inherit; outline: none; background: #f8f9fd; }
+.field input:focus { border-color: var(--blue2); background: #fff; }
+.btn { width: 100%; padding: 15px; background: var(--blue); color: #fff; border: none; border-radius: 14px; font-size: 16px; font-weight: 700; cursor: pointer; font-family: inherit; margin-top: 4px; display: block; text-align: center; text-decoration: none; }
+.btn:disabled { background: #aab; }
+.msg { font-size: 13px; text-align: center; margin-top: 12px; min-height: 18px; }
+.msg.err { color: #c00; } .msg.ok { color: #1f9d55; font-weight: 600; }
+</style>
+</head>
+<body>
+<div class="top"><div class="lang">
+  <button data-lang-btn="pt" onclick="setLang('pt')">PT</button>
+  <button data-lang-btn="en" onclick="setLang('en')">EN</button>
+  <button data-lang-btn="es" onclick="setLang('es')">ES</button>
+</div></div>
+<div class="hero">
+  <div class="logo"><img src="icons/icon-192.png" alt="" /></div>
+  <h1>Paula's Cleaning Squad</h1>
+</div>
+<div class="card">
+  <div id="form">
+    <h2 data-i18n="title">Criar nova senha</h2>
+    <p class="s" data-i18n="sub">Escolha uma senha com pelo menos 6 caracteres.</p>
+    <div class="field"><label data-i18n="new_pw">Nova senha</label><input type="password" id="p1" autocomplete="new-password" /></div>
+    <div class="field"><label data-i18n="repeat_pw">Repita a nova senha</label><input type="password" id="p2" autocomplete="new-password" onkeydown="if(event.key==='Enter') save()" /></div>
+    <button class="btn" id="btn" onclick="save()" data-i18n="save">Salvar nova senha</button>
+    <div class="msg" id="msg"></div>
+  </div>
+  <div id="done" style="display:none">
+    <h2 data-i18n="done_t">Senha alterada!</h2>
+    <p class="s" data-i18n="done_s">Agora você já pode entrar com a nova senha.</p>
+    <a class="btn" href="menu-teste.html" data-i18n="go_login">Ir para o login</a>
+  </div>
+</div>
+
+<script>
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyGtMi4dY_1_eewqbyU8w05JNk9IqPOKFHkwzLGEP1tICwpZSyyswetMA8VA_ZwkI83-A/exec";
+const TR = {
+  pt: { title:'Criar nova senha', sub:'Escolha uma senha com pelo menos 6 caracteres.', new_pw:'Nova senha', repeat_pw:'Repita a nova senha', save:'Salvar nova senha',
+    done_t:'Senha alterada!', done_s:'Agora você já pode entrar com a nova senha.', go_login:'Ir para o login', short:'A senha precisa ter pelo menos 6 caracteres.', diff:'As senhas não são iguais.',
+    invalid:'Este link venceu ou já foi usado. Peça um novo em "Esqueceu a senha?".', conn:'Erro de conexão. Tente novamente.' },
+  en: { title:'Create a new password', sub:'Choose a password with at least 6 characters.', new_pw:'New password', repeat_pw:'Repeat new password', save:'Save new password',
+    done_t:'Password changed!', done_s:'You can now log in with your new password.', go_login:'Go to login', short:'Password must have at least 6 characters.', diff:"Passwords don't match.",
+    invalid:'This link expired or was already used. Request a new one with "Forgot your password?".', conn:'Connection error. Please try again.' },
+  es: { title:'Crear nueva contraseña', sub:'Elige una contraseña de al menos 6 caracteres.', new_pw:'Nueva contraseña', repeat_pw:'Repite la nueva contraseña', save:'Guardar nueva contraseña',
+    done_t:'¡Contraseña cambiada!', done_s:'Ya puedes entrar con tu nueva contraseña.', go_login:'Ir al inicio de sesión', short:'La contraseña debe tener al menos 6 caracteres.', diff:'Las contraseñas no coinciden.',
+    invalid:'Este enlace venció o ya fue usado. Pide uno nuevo en "¿Olvidaste tu contraseña?".', conn:'Error de conexión. Inténtalo de nuevo.' }
+};
+let lang = 'pt'; try { lang = localStorage.getItem('pcs_lang') || 'pt'; } catch(e) {}
+const t = k => (TR[lang] && TR[lang][k]) || TR.pt[k];
+const $ = id => document.getElementById(id);
+const token = new URLSearchParams(location.search).get('t') || '';
+
+function applyLang() {
+  document.querySelectorAll('[data-i18n]').forEach(el => el.textContent = t(el.getAttribute('data-i18n')));
+  document.querySelectorAll('[data-lang-btn]').forEach(b => b.classList.toggle('active', b.getAttribute('data-lang-btn') === lang));
+  document.documentElement.lang = lang;
+}
+function setLang(l) { lang = l; try { localStorage.setItem('pcs_lang', l); } catch(e) {} applyLang(); }
+
+async function save() {
+  const m = $('msg'); m.className = 'msg'; m.textContent = '';
+  const a = $('p1').value, b = $('p2').value;
+  if (a.length < 6) { m.className = 'msg err'; m.textContent = t('short'); return; }
+  if (a !== b) { m.className = 'msg err'; m.textContent = t('diff'); return; }
+  const btn = $('btn'); btn.disabled = true;
+  try {
+    const r = await fetch(SCRIPT_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({ action: 'reset_set', t: token, senha: a }) }).then(x => x.json());
+    if (r.ok) {
+      try { history.replaceState(null, '', location.pathname); } catch(e) {}
+      $('form').style.display = 'none'; $('done').style.display = 'block';
+    } else {
+      m.className = 'msg err'; m.textContent = r.erro === 'curta' ? t('short') : t('invalid');
+    }
+  } catch(e) { m.className = 'msg err'; m.textContent = t('conn'); }
+  btn.disabled = false;
+}
+window.addEventListener('DOMContentLoaded', () => {
+  applyLang();
+  if (!/^[0-9a-f]{64}$/.test(token)) { $('msg').className = 'msg err'; $('msg').textContent = t('invalid'); $('btn').disabled = true; }
+});
+</script>
+</body>
+</html>

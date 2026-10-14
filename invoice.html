@@ -87,7 +87,7 @@ textarea { resize: vertical; }
 <meta name="apple-mobile-web-app-status-bar-style" content="default" />
 <meta name="apple-mobile-web-app-title" content="PCS" />
 <script>if('serviceWorker' in navigator) window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));</script>
-<script>(function(){var K="invoice";try{var s=null;try{s=JSON.parse(localStorage.getItem('pcs_session'))}catch(e){}if(!s||!s.user){try{s=JSON.parse(atob(location.hash.slice(1)))}catch(e){}}if(s&&s.ocultas&&s.ocultas.indexOf(K)!==-1)location.replace('menu-teste.html');}catch(e){}})();</script>
+<script>(function(K){try{var s=JSON.parse(localStorage.getItem('pcs_session'));if(!s||!s.token||s.expires<Date.now()){location.replace('menu-teste.html');return;}if(K&&s.ocultas&&s.ocultas.indexOf(K)!==-1)location.replace('menu-teste.html');}catch(e){location.replace('menu-teste.html');}})("invoice");</script>
 </head>
 <body>
 
@@ -252,8 +252,7 @@ currentModel = m === 1 ? 1 : m === 3 ? 3 : 2;
 window.addEventListener('DOMContentLoaded', () => {
   try {
     let s = null;
-    try { s = JSON.parse(localStorage.getItem('pcs_session')); if (!(s && s.user && s.expires > Date.now())) s = null; } catch(e) {}
-    if (!s) s = sessionFromHash();
+    try { s = JSON.parse(localStorage.getItem('pcs_session')); if (!(s && s.user && s.token && s.expires > Date.now())) s = null; } catch(e) {}
     if (s) applyLogin(s.user, {nome:s.nome, modelo:s.modelo});
   } catch(e) {}
 });
@@ -645,6 +644,20 @@ async function sendForgot() {
   }
 }
 
+</script>
+<script>
+/* ── Segurança: sessão por token (o login só acontece no menu) ── */
+function pcsToken(){ try{ var s=JSON.parse(localStorage.getItem('pcs_session')); return s&&s.token?s.token:''; }catch(e){ return ''; } }
+function goLogin(){ location.replace('menu-teste.html'); }
+function clearAllSessions(){ ['pcs_session','pcs_relatorio_session','pcs_hub_session'].forEach(function(k){ try{ localStorage.removeItem(k); }catch(e){} }); }
+function loadSession(){ try{ var s=JSON.parse(localStorage.getItem('pcs_session')); if(s&&s.token&&s.expires>Date.now()) return s; }catch(e){} return null; }
+function sessionFromHash(){ return null; }
+function saveSession(){} function renewSession(){} function clearSession(){ clearAllSessions(); }
+function doLogin(){ goLogin(); } function showForgot(){ goLogin(); } function sendForgot(){ goLogin(); }
+function doLogout(){ var s=loadSession(); if(s){ try{ fetch(SCRIPT_URL+'?action=logout&token='+encodeURIComponent(s.token)); }catch(e){} } clearAllSessions(); goLogin(); }
+window.addEventListener('DOMContentLoaded', function(){
+  fetch(SCRIPT_URL+'?action=ping&token='+encodeURIComponent(pcsToken())).then(function(r){return r.json();}).then(function(j){ if(!j.ok){ clearAllSessions(); goLogin(); } }).catch(function(){});
+});
 </script>
 </body>
 </html>

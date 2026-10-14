@@ -75,7 +75,7 @@ body { font-family: Arial, sans-serif; background: #f0f2f5; color: #222; font-si
 <meta name="apple-mobile-web-app-status-bar-style" content="default" />
 <meta name="apple-mobile-web-app-title" content="PCS" />
 <script>if('serviceWorker' in navigator) window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));</script>
-<script>(function(){var K="avaliacoes";try{var s=null;try{s=JSON.parse(localStorage.getItem('pcs_session'))}catch(e){}if(!s||!s.user){try{s=JSON.parse(atob(location.hash.slice(1)))}catch(e){}}if(s&&s.ocultas&&s.ocultas.indexOf(K)!==-1)location.replace('menu-teste.html');}catch(e){}})();</script>
+<script>(function(K){try{var s=JSON.parse(localStorage.getItem('pcs_session'));if(!s||!s.token||s.expires<Date.now()){location.replace('menu-teste.html');return;}if(K&&s.ocultas&&s.ocultas.indexOf(K)!==-1)location.replace('menu-teste.html');}catch(e){location.replace('menu-teste.html');}})("avaliacoes");</script>
 </head>
 <body>
 
@@ -258,7 +258,7 @@ function doLogout() {
 
 async function loadFeedbacks(user) {
   try {
-    const url = `${SCRIPT_URL}?action=feedbacks&usuario=${encodeURIComponent(user)}`;
+    const url = `${SCRIPT_URL}?action=feedbacks&token=${encodeURIComponent(pcsToken())}`;
     const res = await fetch(url);
     const json = await res.json();
     if (json.erro === 'perm') { location.replace('menu-teste.html'); return; }
@@ -419,6 +419,17 @@ async function sendForgot() {
   }
 }
 
+</script>
+<script>
+/* ── Segurança: sessão por token (o login só acontece no menu) ── */
+function pcsToken(){ try{ var s=JSON.parse(localStorage.getItem('pcs_session')); return s&&s.token?s.token:''; }catch(e){ return ''; } }
+function goLogin(){ location.replace('menu-teste.html'); }
+function clearAllSessions(){ ['pcs_session','pcs_relatorio_session','pcs_hub_session'].forEach(function(k){ try{ localStorage.removeItem(k); }catch(e){} }); }
+function loadSession(){ try{ var s=JSON.parse(localStorage.getItem('pcs_session')); if(s&&s.token&&s.expires>Date.now()) return s; }catch(e){} return null; }
+function sessionFromHash(){ return null; }
+function saveSession(){} function renewSession(){} function clearSession(){ clearAllSessions(); }
+function doLogin(){ goLogin(); } function showForgot(){ goLogin(); } function sendForgot(){ goLogin(); }
+function doLogout(){ var s=loadSession(); if(s){ try{ fetch(SCRIPT_URL+'?action=logout&token='+encodeURIComponent(s.token)); }catch(e){} } clearAllSessions(); goLogin(); }
 </script>
 </body>
 </html>
