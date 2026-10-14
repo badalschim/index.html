@@ -54,6 +54,10 @@ body::before { content: ''; position: fixed; top: 0; left: 0; right: 0; height: 
 .chip.warn { background: #fff3d6; color: #8a5a00; }
 .all-ok { font-size: 12px; color: var(--ok); font-weight: 700; }
 .sec-t { font-size: 13px; font-weight: 800; color: var(--mut); text-transform: uppercase; letter-spacing: .4px; margin: 18px 4px 8px; }
+.weeks { display: flex; gap: 8px; overflow-x: auto; padding: 2px 2px 12px; margin: 0 -4px; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+.weeks::-webkit-scrollbar { display: none; }
+.wk { flex: 0 0 auto; border: 1.5px solid #dfe4f1; background: #fff; color: #4a5470; border-radius: 999px; padding: 8px 14px; font-size: 12.5px; font-weight: 700; cursor: pointer; font-family: inherit; white-space: nowrap; }
+.wk.on { background: var(--blue); border-color: var(--blue); color: #fff; }
 .empty { text-align: center; color: var(--mut); padding: 30px 10px; font-size: 14px; }
 
 .item { display: flex; align-items: center; gap: 12px; }
@@ -90,7 +94,7 @@ body::before { content: ''; position: fixed; top: 0; left: 0; right: 0; height: 
         <button data-lang-btn="es" onclick="setLang('es')">ES</button>
       </div>
     </div>
-    <h1 data-i18n="title">Painel</h1>
+    <h1 id="h-title">Escala</h1>
     <p id="sub"></p>
   </div>
 
@@ -121,17 +125,17 @@ body::before { content: ''; position: fixed; top: 0; left: 0; right: 0; height: 
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyGtMi4dY_1_eewqbyU8w05JNk9IqPOKFHkwzLGEP1tICwpZSyyswetMA8VA_ZwkI83-A/exec";
 
 const TR = {
-  pt: { back:'‹ Menu', title:'Painel', week:'Escala da semana de', to:'a', tab_sched:'Escala', tab_sup:'Materiais', tab_fb:'Feedbacks', refresh:'↻ Atualizar',
+  pt: { open_week:'Em aberto (esta semana)', closed_week:'Semana encerrada em', open_sub:'Pedidos em aberto, desta semana', last5_sub:'Últimos 5 feedbacks', back:'‹ Menu', title:'Painel', week:'Escala da semana de', to:'a', tab_sched:'Escala', tab_sup:'Materiais', tab_fb:'Feedbacks', refresh:'↻ Atualizar',
     answered:'responderam', pending:'sem resposta', cant:'não trabalham', can:'trabalham', all_can:'Todas trabalham ✓', cant_label:'Não trabalha:', no_answer:'Ainda não responderam', notes:'Observações',
     sup_items:'itens', sup_orders:'pedidos', sup_title:'Materiais pedidos na semana', asked_by:'Pedido por', no_sup:'Nenhum pedido em aberto nesta semana.', no_fb:'Nenhum feedback ainda.',
     last5:'Últimos 5 feedbacks', punct:'Pontualidade', agil:'Agilidade', qual:'Qualidade', conn:'Erro de conexão. Toque em Atualizar.', no_days:'', hello:'Olá,',
     need_login:'Entre pelo menu primeiro', need_login_s:'Faça login para ver o painel.', go_menu:'Ir ao menu', no_perm:'Sem permissão', no_perm_s:'Você não tem acesso a esta página.', locale:'pt-BR', total:'total' },
-  en: { back:'‹ Menu', title:'Dashboard', week:'Schedule for week of', to:'to', tab_sched:'Schedule', tab_sup:'Supplies', tab_fb:'Feedback', refresh:'↻ Refresh',
+  en: { open_week:'Open (this week)', closed_week:'Week closed on', open_sub:'Open requests, this week', last5_sub:'Last 5 feedbacks', back:'‹ Menu', title:'Dashboard', week:'Schedule for week of', to:'to', tab_sched:'Schedule', tab_sup:'Supplies', tab_fb:'Feedback', refresh:'↻ Refresh',
     answered:'answered', pending:'no answer', cant:"not working", can:'working', all_can:'Everyone works ✓', cant_label:'Not working:', no_answer:'Not answered yet', notes:'Notes',
     sup_items:'items', sup_orders:'requests', sup_title:"This week's supply requests", asked_by:'Requested by', no_sup:'No open requests this week.', no_fb:'No feedback yet.',
     last5:'Last 5 feedbacks', punct:'Punctuality', agil:'Speed', qual:'Quality', conn:'Connection error. Tap Refresh.', no_days:'', hello:'Hi,',
     need_login:'Log in from the menu first', need_login_s:'Log in to see the dashboard.', go_menu:'Go to menu', no_perm:'No permission', no_perm_s:"You don't have access to this page.", locale:'en-US', total:'total' },
-  es: { back:'‹ Menú', title:'Panel', week:'Escala de la semana del', to:'al', tab_sched:'Escala', tab_sup:'Materiales', tab_fb:'Comentarios', refresh:'↻ Actualizar',
+  es: { open_week:'Abierta (esta semana)', closed_week:'Semana cerrada el', open_sub:'Pedidos abiertos, esta semana', last5_sub:'Últimos 5 comentarios', back:'‹ Menú', title:'Panel', week:'Escala de la semana del', to:'al', tab_sched:'Escala', tab_sup:'Materiales', tab_fb:'Comentarios', refresh:'↻ Actualizar',
     answered:'respondieron', pending:'sin respuesta', cant:'no trabajan', can:'trabajan', all_can:'Todas trabajan ✓', cant_label:'No trabaja:', no_answer:'Aún no respondieron', notes:'Observaciones',
     sup_items:'ítems', sup_orders:'pedidos', sup_title:'Materiales pedidos en la semana', asked_by:'Pedido por', no_sup:'Ningún pedido abierto esta semana.', no_fb:'Aún no hay comentarios.',
     last5:'Últimos 5 comentarios', punct:'Puntualidad', agil:'Agilidad', qual:'Calidad', conn:'Error de conexión. Toca Actualizar.', no_days:'', hello:'Hola,',
@@ -139,7 +143,7 @@ const TR = {
 };
 
 let lang = 'pt'; try { lang = localStorage.getItem('pcs_lang') || 'pt'; } catch(e) {}
-let me = null, data = null;
+let me = null, data = null, curTab = 'escala', matSel = 'open';
 const t = k => (TR[lang] && TR[lang][k]) || TR.pt[k] || k;
 const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -157,10 +161,24 @@ function applyLang() {
   document.querySelectorAll('[data-i18n]').forEach(el => el.textContent = t(el.getAttribute('data-i18n')));
   document.querySelectorAll('[data-lang-btn]').forEach(b => b.classList.toggle('active', b.getAttribute('data-lang-btn') === lang));
   document.documentElement.lang = lang;
-  if (data) render();
+  if (data) render(); else setHero();
 }
 function setLang(l) { lang = l; try { localStorage.setItem('pcs_lang', l); } catch(e) {} applyLang(); }
+function setHero() {
+  const titles = { escala: t('tab_sched'), mat: t('tab_sup'), fb: t('tab_fb') };
+  $('h-title').textContent = titles[curTab];
+  if (!data) { $('sub').textContent = ''; return; }
+  if (curTab === 'escala') {
+    const e = data.escala, ini = parseISO(e.dias[0].iso), fim = parseISO(e.dias[6].iso);
+    $('sub').textContent = t('week') + ' ' + fmtShort(ini) + ' ' + t('to') + ' ' + fmtShort(fim);
+  } else if (curTab === 'mat') {
+    $('sub').textContent = matSel === 'open' ? t('open_sub') : t('closed_week') + ' ' + matSel.slice(0, 5).replace('-', '/');
+  } else $('sub').textContent = t('last5_sub');
+}
+
 function showTab(n) {
+  curTab = n;
+  setHero();
   document.querySelectorAll('.tab').forEach(b => b.classList.toggle('on', b.dataset.tab === n));
   document.querySelectorAll('.panel').forEach(p => p.classList.toggle('on', p.id === 'p-' + n));
   window.scrollTo({ top: 0 });
@@ -178,13 +196,12 @@ async function load() {
 }
 
 function render() {
-  renderEscala(); renderMat(); renderFb();
+  renderEscala(); renderMat(); renderFb(); setHero();
 }
 
 function renderEscala() {
   const e = data.escala;
   const ini = parseISO(e.dias[0].iso), fim = parseISO(e.dias[6].iso);
-  $('sub').textContent = t('week') + ' ' + fmtShort(ini) + ' ' + t('to') + ' ' + fmtShort(fim);
   const resp = e.total - e.semResposta.length;
   let h = `<div class="stats">
     <div class="stat"><div class="n" style="color:var(--ok)">${resp}/${e.total}</div><div class="l">${t('answered')}</div></div>
@@ -206,15 +223,21 @@ function renderEscala() {
   $('p-escala').innerHTML = h;
 }
 
+function matLabel(sm) { return sm.slice(0, 5).replace('-', '/'); }
+function selectWeek(k) { matSel = k; renderMat(); setHero(); }
+
 function renderMat() {
-  const m = data.materiais;
-  if (!m.length) { $('p-mat').innerHTML = `<div class="empty">🧺<br>${t('no_sup')}</div>`; return; }
+  const weeks = data.semanasMat || [];
+  if (matSel !== 'open' && !weeks.some(w => w.semana === matSel)) matSel = 'open';
+  const m = matSel === 'open' ? data.materiais : weeks.find(w => w.semana === matSel).itens;
+  let h = `<div class="weeks"><button class="wk${matSel === 'open' ? ' on' : ''}" onclick="selectWeek('open')">${t('open_week')}</button>` +
+    weeks.map(w => `<button class="wk${matSel === w.semana ? ' on' : ''}" onclick="selectWeek('${w.semana}')">${matLabel(w.semana)}</button>`).join('') + `</div>`;
+  if (!m.length) { $('p-mat').innerHTML = h + `<div class="empty">🧺<br>${t('no_sup')}</div>`; return; }
   const max = Math.max(...m.map(i => i.quantidade));
   const total = m.reduce((a, i) => a + i.quantidade, 0);
-  let h = `<div class="stats" style="grid-template-columns:1fr 1fr">
+  h += `<div class="stats" style="grid-template-columns:1fr 1fr">
     <div class="stat"><div class="n">${m.length}</div><div class="l">${t('sup_items')}</div></div>
-    <div class="stat"><div class="n">${total}</div><div class="l">${t('sup_orders')}</div></div></div>
-    <div class="sec-t" style="margin-top:4px">${t('sup_title')}</div>`;
+    <div class="stat"><div class="n">${total}</div><div class="l">${t('sup_orders')}</div></div></div>`;
   h += m.map(i => `<div class="card item">
     <div class="qty">${i.quantidade}x</div>
     <div class="item-main"><div class="item-name">${esc(i.nome)}</div>
@@ -228,7 +251,7 @@ function renderMat() {
 function renderFb() {
   const f = data.feedbacks;
   if (!f.length) { $('p-fb').innerHTML = `<div class="empty">💬<br>${t('no_fb')}</div>`; return; }
-  $('p-fb').innerHTML = `<div class="sec-t" style="margin-top:4px">${t('last5')}</div>` + f.map(x => `<div class="card">
+  $('p-fb').innerHTML = f.map(x => `<div class="card">
     <div class="fb-top"><div><div class="fb-client">${esc(x.cliente || '—')}</div><div class="fb-meta">${esc(x.data)}${x.quem ? ' · ' + esc(x.quem) : ''}</div></div>
     ${x.nota ? `<div class="score">★ ${esc(x.nota)}</div>` : ''}</div>
     ${(x.punctuality || x.agility || x.quality) ? `<div class="fb-sub">${x.punctuality ? `<span>⏱ ${t('punct')}: ${esc(x.punctuality)}</span>` : ''}${x.agility ? `<span>⚡ ${t('agil')}: ${esc(x.agility)}</span>` : ''}${x.quality ? `<span>✨ ${t('qual')}: ${esc(x.quality)}</span>` : ''}</div>` : ''}
