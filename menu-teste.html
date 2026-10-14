@@ -32,6 +32,8 @@ body { font-family: -apple-system, 'Segoe UI', Roboto, Arial, sans-serif; backgr
 .login-btn { width: 100%; padding: 15px; background: var(--blue); color: #fff; border: none; border-radius: 14px; font-size: 16px; font-weight: 700; cursor: pointer; font-family: inherit; margin-top: 4px; }
 .login-btn:active { transform: scale(.98); }
 .login-btn:disabled { background: #aab; }
+.forgot { display: block; width: 100%; text-align: center; background: none; border: none; color: var(--blue2); font-size: 14px; font-weight: 600; margin-top: 14px; padding: 8px; cursor: pointer; font-family: inherit; }
+.login-ok { color: #1f9d55; font-size: 13px; text-align: center; margin-top: 10px; }
 .login-err { color: #c00; font-size: 13px; text-align: center; margin-top: 12px; min-height: 18px; }
 .login-loading { color: var(--mut); font-size: 13px; text-align: center; margin-top: 8px; display: none; }
 
@@ -116,6 +118,7 @@ body::before { content: ''; position: fixed; top: 0; left: 0; right: 0; height: 
       <input type="password" id="login-pass" data-i18n-placeholder="password_placeholder" placeholder="Sua senha" autocomplete="current-password" onkeydown="if(event.key==='Enter') doLogin()" />
     </div>
     <button class="login-btn" id="login-btn" onclick="doLogin()" data-i18n="login_btn">Entrar</button>
+    <button class="forgot" id="forgot-btn" onclick="doForgot()" data-i18n="forgot">Esqueceu a senha?</button>
     <div class="login-err" id="login-err"></div>
     <div class="login-loading" id="login-loading" data-i18n="verifying">Verificando...</div>
   </div>
@@ -152,7 +155,7 @@ const TRANSLATIONS = {
   pt: {
     team_access: 'Acesso da equipe', login_title: 'Entrar', username_label: 'Usuário', username_placeholder: 'Seu usuário',
     password_label: 'Senha', password_placeholder: 'Sua senha', login_btn: 'Entrar', verifying: 'Verificando...',
-    hello: 'Olá,', sheet_t: 'Adicione à tela inicial', sheet_later: 'Agora não', install_t: 'Instalar como app', install_btn: 'Instalar', install_ios: 'iPhone: toque em Compartilhar (□↑) e depois em "Adicionar à Tela de Início".', install_and: 'Toque em Instalar para adicionar à tela inicial.', what_today: 'O que você quer fazer hoje?', logout_btn: 'Sair',
+    hello: 'Olá,', forgot: 'Esqueceu a senha?', forgot_need: 'Digite seu usuário (email) acima.', forgot_ok: 'Enviamos a senha para o seu email.', forgot_none: 'Usuário não encontrado.', sheet_t: 'Adicione à tela inicial', sheet_later: 'Agora não', install_t: 'Instalar como app', install_btn: 'Instalar', install_ios: 'iPhone: toque em Compartilhar (□↑) e depois em "Adicionar à Tela de Início".', install_and: 'Toque em Instalar para adicionar à tela inicial.', what_today: 'O que você quer fazer hoje?', logout_btn: 'Sair',
     feedback_t: 'Avaliações', feedback_s: 'Seus feedbacks e notas',
     supplies_t: 'Pedido de materiais', supplies_s: 'Lista de supplies',
     invoice_t: 'Invoice', invoice_s: 'Gerar e salvar invoice',
@@ -165,7 +168,7 @@ const TRANSLATIONS = {
   en: {
     team_access: 'Team access', login_title: 'Log In', username_label: 'Username', username_placeholder: 'Your username',
     password_label: 'Password', password_placeholder: 'Your password', login_btn: 'Log In', verifying: 'Verifying...',
-    hello: 'Hi,', sheet_t: 'Add to your home screen', sheet_later: 'Not now', install_t: 'Install as app', install_btn: 'Install', install_ios: 'iPhone: tap Share (□↑), then "Add to Home Screen".', install_and: 'Tap Install to add it to your home screen.', what_today: 'What would you like to do today?', logout_btn: 'Log Out',
+    hello: 'Hi,', forgot: 'Forgot your password?', forgot_need: 'Enter your username (email) above.', forgot_ok: 'We sent your password to your email.', forgot_none: 'User not found.', sheet_t: 'Add to your home screen', sheet_later: 'Not now', install_t: 'Install as app', install_btn: 'Install', install_ios: 'iPhone: tap Share (□↑), then "Add to Home Screen".', install_and: 'Tap Install to add it to your home screen.', what_today: 'What would you like to do today?', logout_btn: 'Log Out',
     feedback_t: 'Reviews', feedback_s: 'Your feedback and ratings',
     supplies_t: 'Supplies request', supplies_s: 'Supply list',
     invoice_t: 'Invoice', invoice_s: 'Create and save invoice',
@@ -178,7 +181,7 @@ const TRANSLATIONS = {
   es: {
     team_access: 'Acceso del equipo', login_title: 'Iniciar sesión', username_label: 'Usuario', username_placeholder: 'Tu usuario',
     password_label: 'Contraseña', password_placeholder: 'Tu contraseña', login_btn: 'Iniciar sesión', verifying: 'Verificando...',
-    hello: 'Hola,', sheet_t: 'Añade a la pantalla de inicio', sheet_later: 'Ahora no', install_t: 'Instalar como app', install_btn: 'Instalar', install_ios: 'iPhone: toca Compartir (□↑) y luego "Añadir a pantalla de inicio".', install_and: 'Toca Instalar para añadirla a la pantalla de inicio.', what_today: '¿Qué quieres hacer hoy?', logout_btn: 'Salir',
+    hello: 'Hola,', forgot: '¿Olvidaste tu contraseña?', forgot_need: 'Escribe tu usuario (email) arriba.', forgot_ok: 'Enviamos tu contraseña a tu email.', forgot_none: 'Usuario no encontrado.', sheet_t: 'Añade a la pantalla de inicio', sheet_later: 'Ahora no', install_t: 'Instalar como app', install_btn: 'Instalar', install_ios: 'iPhone: toca Compartir (□↑) y luego "Añadir a pantalla de inicio".', install_and: 'Toca Instalar para añadirla a la pantalla de inicio.', what_today: '¿Qué quieres hacer hoy?', logout_btn: 'Salir',
     feedback_t: 'Evaluaciones', feedback_s: 'Tus comentarios y notas',
     supplies_t: 'Pedido de materiales', supplies_s: 'Lista de suministros',
     invoice_t: 'Invoice', invoice_s: 'Crear y guardar invoice',
@@ -331,7 +334,7 @@ async function doLogin() {
   const errEl = document.getElementById('login-err');
   const loadEl = document.getElementById('login-loading');
 
-  errEl.textContent = '';
+  errEl.style.color = '#c00'; errEl.textContent = '';
   if (!user || !pass) { errEl.textContent = t('fill_user_pass'); return; }
 
   btn.disabled = true;
@@ -361,6 +364,19 @@ async function doLogin() {
 
   btn.disabled = false;
   loadEl.style.display = 'none';
+}
+
+async function doForgot() {
+  const user = document.getElementById('login-user').value.trim();
+  const errEl = document.getElementById('login-err');
+  errEl.style.color = '#c00'; errEl.textContent = '';
+  if (!user) { errEl.textContent = t('forgot_need'); return; }
+  try {
+    const res = await fetch(`${SCRIPT_URL}?action=forgot&usuario=${encodeURIComponent(user)}`);
+    const json = await res.json();
+    if (json.ok) { errEl.style.color = '#1f9d55'; errEl.textContent = t('forgot_ok'); }
+    else errEl.textContent = t('forgot_none');
+  } catch(e) { errEl.textContent = t('connection_error_retry'); }
 }
 
 function doLogout() {
