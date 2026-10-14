@@ -75,6 +75,7 @@ body { font-family: Arial, sans-serif; background: #f0f2f5; color: #222; font-si
 <meta name="apple-mobile-web-app-status-bar-style" content="default" />
 <meta name="apple-mobile-web-app-title" content="PCS" />
 <script>if('serviceWorker' in navigator) window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));</script>
+<script>(function(){var K="avaliacoes";try{var s=null;try{s=JSON.parse(localStorage.getItem('pcs_session'))}catch(e){}if(!s||!s.user){try{s=JSON.parse(atob(location.hash.slice(1)))}catch(e){}}if(s&&s.ocultas&&s.ocultas.indexOf(K)!==-1)location.replace('menu-teste.html');}catch(e){}})();</script>
 </head>
 <body>
 
@@ -219,7 +220,7 @@ async function doLogin() {
   loadEl.style.display = 'block';
 
   try {
-    const url = `${SCRIPT_URL}?usuario=${encodeURIComponent(user)}&senha=${encodeURIComponent(pass)}`;
+    const url = `${SCRIPT_URL}?usuario=${encodeURIComponent(user)}&senha=${encodeURIComponent(pass)}&pagina=feedback`;
     const res = await fetch(url);
     const json = await res.json();
 
@@ -260,6 +261,7 @@ async function loadFeedbacks(user) {
     const url = `${SCRIPT_URL}?action=feedbacks&usuario=${encodeURIComponent(user)}`;
     const res = await fetch(url);
     const json = await res.json();
+    if (json.erro === 'perm') { location.replace('menu-teste.html'); return; }
     allFeedbacks = json.feedbacks || [];
     renderFeedbacks(allFeedbacks);
   } catch(e) {

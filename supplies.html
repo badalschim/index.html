@@ -87,6 +87,7 @@ textarea { resize: vertical; }
 <meta name="apple-mobile-web-app-status-bar-style" content="default" />
 <meta name="apple-mobile-web-app-title" content="PCS" />
 <script>if('serviceWorker' in navigator) window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));</script>
+<script>(function(){var K="pedidos";try{var s=null;try{s=JSON.parse(localStorage.getItem('pcs_session'))}catch(e){}if(!s||!s.user){try{s=JSON.parse(atob(location.hash.slice(1)))}catch(e){}}if(s&&s.ocultas&&s.ocultas.indexOf(K)!==-1)location.replace('menu-teste.html');}catch(e){}})();</script>
 </head>
 <body>
 

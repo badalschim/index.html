@@ -194,6 +194,7 @@ let currentUser = '';
 let currentNome = '';
 let currentAcessoRelatorio = false;
 let currentAcessoDash = false;
+let currentOcultas = [];
 let currentModelo = '';
 let currentBloq = [];
 
@@ -203,19 +204,20 @@ function t(key) {
 
 function hashFor() {
   try {
-    const j = JSON.stringify({ user: currentUser, nome: currentNome, modelo: currentModelo, bloqueados: currentBloq, acessoRelatorio: currentAcessoRelatorio, acessoDashboard: currentAcessoDash })
+    const j = JSON.stringify({ user: currentUser, nome: currentNome, modelo: currentModelo, bloqueados: currentBloq, acessoRelatorio: currentAcessoRelatorio, acessoDashboard: currentAcessoDash, ocultas: currentOcultas })
       .replace(/[\u0080-\uffff]/g, c => '\\u' + c.charCodeAt(0).toString(16).padStart(4, '0'));
     return '#' + btoa(j);
   } catch(e) { return ''; }
 }
 
 function buildMenu() {
-  const items = [
-    { href: 'feedback.html', icon: '⭐', bg: '#e8efff', t: 'feedback_t', s: 'feedback_s' },
-    { href: 'supplies.html', icon: '🛒', bg: '#e6f6ea', t: 'supplies_t', s: 'supplies_s' },
-    { href: 'invoice.html',  icon: '🧾', bg: '#fff4d6', t: 'invoice_t',  s: 'invoice_s' },
-    { href: 'disponibilidade.html', icon: '📅', bg: '#ffe9e4', t: 'avail_t', s: 'avail_s' }
+  let items = [
+    { key: 'avaliacoes', href: 'feedback.html', icon: '⭐', bg: '#e8efff', t: 'feedback_t', s: 'feedback_s' },
+    { key: 'pedidos', href: 'supplies.html', icon: '🛒', bg: '#e6f6ea', t: 'supplies_t', s: 'supplies_s' },
+    { key: 'invoice', href: 'invoice.html',  icon: '🧾', bg: '#fff4d6', t: 'invoice_t',  s: 'invoice_s' },
+    { key: 'disponibilidade', href: 'disponibilidade.html', icon: '📅', bg: '#ffe9e4', t: 'avail_t', s: 'avail_s' }
   ];
+  items = items.filter(i => currentOcultas.indexOf(i.key) === -1);
   if (currentAcessoDash) {
     items.push({ href: 'dashboard.html', icon: '📊', bg: '#e4f4ff', t: 'dash_t', s: 'dash_s', wide: !currentAcessoRelatorio });
   }
@@ -279,11 +281,11 @@ function setLang(lang) {
   applyLanguage();
 }
 
-function saveSession(user, nome, acessoRelatorio, modelo, bloqueados, acessoDash) {
+function saveSession(user, nome, acessoRelatorio, modelo, bloqueados, acessoDash, ocultas) {
   try {
     const exp = Date.now() + SESSION_DURATION;
-    localStorage.setItem(SESSION_KEY, JSON.stringify({ user, nome, acessoRelatorio, acessoDash: !!acessoDash, modelo, bloqueados: bloqueados || [], expires: exp }));
-    localStorage.setItem('pcs_session', JSON.stringify({ user, nome, modelo, bloqueados: bloqueados || [], expires: exp }));
+    localStorage.setItem(SESSION_KEY, JSON.stringify({ user, nome, acessoRelatorio, acessoDash: !!acessoDash, ocultas: ocultas || [], modelo, bloqueados: bloqueados || [], expires: exp }));
+    localStorage.setItem('pcs_session', JSON.stringify({ user, nome, modelo, bloqueados: bloqueados || [], ocultas: ocultas || [], expires: exp }));
     if (acessoRelatorio) localStorage.setItem('pcs_relatorio_session', JSON.stringify({ user, nome, expires: exp }));
     else localStorage.removeItem('pcs_relatorio_session');
   } catch(e) {}
@@ -313,6 +315,7 @@ window.addEventListener('DOMContentLoaded', () => {
     currentNome = s.nome || s.user;
     currentAcessoRelatorio = !!s.acessoRelatorio;
     currentAcessoDash = !!s.acessoDash;
+    currentOcultas = s.ocultas || [];
     currentModelo = s.modelo || '';
     currentBloq = s.bloqueados || [];
     showApp();
@@ -343,9 +346,10 @@ async function doLogin() {
       currentNome = json.nome || user;
       currentAcessoRelatorio = !!json.acessoRelatorio;
       currentAcessoDash = !!json.acessoDashboard;
+      currentOcultas = json.ocultas || [];
       currentModelo = json.modelo || '';
       currentBloq = json.bloqueados || [];
-      saveSession(user, currentNome, currentAcessoRelatorio, json.modelo, json.bloqueados, currentAcessoDash);
+      saveSession(user, currentNome, currentAcessoRelatorio, json.modelo, json.bloqueados, currentAcessoDash, currentOcultas);
       showApp();
     } else {
       errEl.textContent = t('wrong_credentials');
@@ -362,6 +366,7 @@ function doLogout() {
   clearSession();
   currentAcessoRelatorio = false;
   currentAcessoDash = false;
+  currentOcultas = [];
   document.getElementById('screen-app').style.display = 'none';
   document.getElementById('screen-login').style.display = 'flex';
   document.getElementById('login-user').value = '';

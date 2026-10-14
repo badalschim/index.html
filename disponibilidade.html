@@ -66,6 +66,7 @@ body::before { content: ''; position: fixed; top: 0; left: 0; right: 0; height: 
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <meta name="apple-mobile-web-app-title" content="PCS" />
 <script>if('serviceWorker' in navigator) window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));</script>
+<script>(function(){var K="disponibilidade";try{var s=null;try{s=JSON.parse(localStorage.getItem('pcs_session'))}catch(e){}if(!s||!s.user){try{s=JSON.parse(atob(location.hash.slice(1)))}catch(e){}}if(s&&s.ocultas&&s.ocultas.indexOf(K)!==-1)location.replace('menu-teste.html');}catch(e){}})();</script>
 </head>
 <body>
 <div class="wrap" id="app" style="display:none">
