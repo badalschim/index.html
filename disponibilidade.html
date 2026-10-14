@@ -292,6 +292,12 @@ function render() {
         <div class="p-act"><button onclick="editPerson('${p.email}')">${t('edit')}</button>${p.enviado ? `<button class="red" onclick="unlock('${p.email}')">${t('unlock')}</button>` : ''}</div></div>`;
     }).join('');
   }
+
+  // gerente: não preenche a própria disponibilidade (só quando está editando outra pessoa)
+  $('my-card').style.display = (state.admin && !editTarget) ? 'none' : 'block';
+  const vis = ['my-card', 'req-card', 'admin-card'].map($).filter(el => el.style.display !== 'none');
+  ['my-card', 'req-card', 'admin-card'].forEach(id => $(id).classList.remove('first'));
+  if (vis[0]) vis[0].classList.add('first');
 }
 
 function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
