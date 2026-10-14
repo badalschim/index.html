@@ -87,7 +87,7 @@ textarea { resize: vertical; }
 <meta name="apple-mobile-web-app-status-bar-style" content="default" />
 <meta name="apple-mobile-web-app-title" content="PCS" />
 <script>if('serviceWorker' in navigator) window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));</script>
-<script>(function(K){try{var s=JSON.parse(localStorage.getItem('pcs_session'));if(!s||!s.token||s.expires<Date.now()){location.replace('menu-teste.html');return;}if(K&&s.ocultas&&s.ocultas.indexOf(K)!==-1)location.replace('menu-teste.html');}catch(e){location.replace('menu-teste.html');}})("invoice");</script>
+<script>(function(K){try{var s=JSON.parse(localStorage.getItem('pcs_session'));if(!s||!s.token||s.expires<Date.now()){location.replace('app.html');return;}if(K&&s.ocultas&&s.ocultas.indexOf(K)!==-1)location.replace('app.html');}catch(e){location.replace('app.html');}})("invoice");</script>
 </head>
 <body>
 
@@ -131,7 +131,7 @@ textarea { resize: vertical; }
 <div id="screen-app">
   <div class="app-header">
     <span class="welcome">Olá, <strong id="user-name"></strong></span>
-    <div style="display:flex;gap:6px"><a class="logout-btn" href="menu-teste.html" style="text-decoration:none">‹ Menu</a><button class="logout-btn" onclick="doLogout()">Sair</button></div>
+    <div style="display:flex;gap:6px"><a class="logout-btn" href="app.html" style="text-decoration:none">‹ Menu</a><button class="logout-btn" onclick="doLogout()">Sair</button></div>
   </div>
 
   <div id="model-tag-el" class="model-tag"></div>
@@ -293,7 +293,7 @@ async function doLogin() {
 
 function doLogout() {
   clearAllSessions();
-  location.href='menu-teste.html';
+  location.href='app.html';
   document.getElementById('screen-login').style.display = 'flex';
   document.getElementById('screen-app').style.display = 'none';
   document.getElementById('login-user').value = '';
@@ -648,7 +648,7 @@ async function sendForgot() {
 <script>
 /* ── Segurança: sessão por token (o login só acontece no menu) ── */
 function pcsToken(){ try{ var s=JSON.parse(localStorage.getItem('pcs_session')); return s&&s.token?s.token:''; }catch(e){ return ''; } }
-function goLogin(){ location.replace('menu-teste.html'); }
+function goLogin(){ location.replace('app.html'); }
 function clearAllSessions(){ ['pcs_session','pcs_relatorio_session','pcs_hub_session'].forEach(function(k){ try{ localStorage.removeItem(k); }catch(e){} }); }
 function loadSession(){ try{ var s=JSON.parse(localStorage.getItem('pcs_session')); if(s&&s.token&&s.expires>Date.now()) return s; }catch(e){} return null; }
 function sessionFromHash(){ return null; }

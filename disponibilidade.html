@@ -77,13 +77,13 @@ body::before { content: ''; position: fixed; top: 0; left: 0; right: 0; height: 
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <meta name="apple-mobile-web-app-title" content="PCS" />
 <script>if('serviceWorker' in navigator) window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));</script>
-<script>(function(K){try{var s=JSON.parse(localStorage.getItem('pcs_session'));if(!s||!s.token||s.expires<Date.now()){location.replace('menu-teste.html');return;}if(K&&s.ocultas&&s.ocultas.indexOf(K)!==-1)location.replace('menu-teste.html');}catch(e){location.replace('menu-teste.html');}})("disponibilidade");</script>
+<script>(function(K){try{var s=JSON.parse(localStorage.getItem('pcs_session'));if(!s||!s.token||s.expires<Date.now()){location.replace('app.html');return;}if(K&&s.ocultas&&s.ocultas.indexOf(K)!==-1)location.replace('app.html');}catch(e){location.replace('app.html');}})("disponibilidade");</script>
 </head>
 <body>
 <div class="wrap" id="app" style="display:none">
   <div class="hero">
     <div class="hero-top">
-      <a class="pill" id="back-link" href="menu-teste.html" data-i18n="back">‹ Menu</a>
+      <a class="pill" id="back-link" href="app.html" data-i18n="back">‹ Menu</a>
       <div class="lang">
         <button data-lang-btn="pt" onclick="setLang('pt')">PT</button>
         <button data-lang-btn="en" onclick="setLang('en')">EN</button>
@@ -128,7 +128,7 @@ body::before { content: ''; position: fixed; top: 0; left: 0; right: 0; height: 
 <div class="center" id="nosession" style="display:none">
   <h2 data-i18n="need_login">Entre pelo menu primeiro</h2>
   <p data-i18n="need_login_s">Faça login para informar sua disponibilidade.</p>
-  <a class="pill" style="background:#1a3a8f" href="menu-teste.html" data-i18n="go_menu">Ir ao menu</a>
+  <a class="pill" style="background:#1a3a8f" href="app.html" data-i18n="go_menu">Ir ao menu</a>
 </div>
 
 <script>
@@ -204,7 +204,7 @@ async function init() {
 async function refresh() {
   try {
     const r = await api({ action: 'disp_get' });
-    if (r.erro === 'auth') { location.replace('menu-teste.html'); return; }
+    if (r.erro === 'auth') { location.replace('app.html'); return; }
     if (!r.ok) { $('msg').className = 'msg err'; $('msg').textContent = t('conn'); return; }
     state = r;
     if (r.minha && !editTarget && !requestMode) { selected = new Set(r.minha.dias); $('obs').value = r.minha.obs || ''; $('none-check').checked = r.minha.dias.length === 0; }

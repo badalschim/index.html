@@ -82,13 +82,13 @@ body::before { content: ''; position: fixed; top: 0; left: 0; right: 0; height: 
 .center { text-align: center; padding: 60px 24px; }
 .center p { color: var(--mut); margin: 10px 0 18px; }
 </style>
-<script>(function(K){try{var s=JSON.parse(localStorage.getItem('pcs_session'));if(!s||!s.token||s.expires<Date.now()){location.replace('menu-teste.html');return;}if(K&&s.ocultas&&s.ocultas.indexOf(K)!==-1)location.replace('menu-teste.html');}catch(e){location.replace('menu-teste.html');}})(null);</script>
+<script>(function(K){try{var s=JSON.parse(localStorage.getItem('pcs_session'));if(!s||!s.token||s.expires<Date.now()){location.replace('app.html');return;}if(K&&s.ocultas&&s.ocultas.indexOf(K)!==-1)location.replace('app.html');}catch(e){location.replace('app.html');}})(null);</script>
 </head>
 <body>
 <div class="wrap" id="app" style="display:none">
   <div class="hero">
     <div class="hero-top">
-      <a class="pill" id="back-link" href="menu-teste.html" data-i18n="back">‹ Menu</a>
+      <a class="pill" id="back-link" href="app.html" data-i18n="back">‹ Menu</a>
       <div class="lang">
         <button data-lang-btn="pt" onclick="setLang('pt')">PT</button>
         <button data-lang-btn="en" onclick="setLang('en')">EN</button>
@@ -114,12 +114,12 @@ body::before { content: ''; position: fixed; top: 0; left: 0; right: 0; height: 
 <div class="center" id="nosession" style="display:none">
   <h2 data-i18n="need_login">Entre pelo menu primeiro</h2>
   <p data-i18n="need_login_s">Faça login para ver o painel.</p>
-  <a class="pill" style="background:#1a3a8f" href="menu-teste.html" data-i18n="go_menu">Ir ao menu</a>
+  <a class="pill" style="background:#1a3a8f" href="app.html" data-i18n="go_menu">Ir ao menu</a>
 </div>
 <div class="center" id="noperm" style="display:none">
   <h2 data-i18n="no_perm">Sem permissão</h2>
   <p data-i18n="no_perm_s">Você não tem acesso a esta página.</p>
-  <a class="pill" style="background:#1a3a8f" href="menu-teste.html" data-i18n="go_menu">Ir ao menu</a>
+  <a class="pill" style="background:#1a3a8f" href="app.html" data-i18n="go_menu">Ir ao menu</a>
 </div>
 
 <script>
@@ -189,7 +189,7 @@ async function load() {
   ['p-escala', 'p-mat', 'p-fb'].forEach(id => $(id).innerHTML = '<div class="skeleton"></div><div class="skeleton"></div>');
   try {
     const r = await fetch(SCRIPT_URL + '?action=dash&token=' + encodeURIComponent(me.token)).then(x => x.json());
-    if (r.erro === 'auth') { location.replace('menu-teste.html'); return; }
+    if (r.erro === 'auth') { location.replace('app.html'); return; }
     if (!r.ok) {
       $('app').style.display = 'none'; $('noperm').style.display = 'block'; return;
     }

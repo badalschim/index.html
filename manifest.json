@@ -2,7 +2,7 @@
   "name": "Paula's Cleaning Squad",
   "short_name": "PCS",
   "description": "Avaliações, pedidos, invoice e disponibilidade da equipe",
-  "start_url": "./menu-teste.html",
+  "start_url": "./app.html",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",

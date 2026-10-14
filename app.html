@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="theme-color" content="#1a3a8f" />
+<title>Área do funcionário - Paula's Cleaning Squad</title>
+<style>
+:root { --blue:#1a3a8f; --blue2:#2f5bd8; --bg:#f3f5fb; --card:#fff; --txt:#1b2233; --mut:#7a8399; }
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+body { font-family: -apple-system, 'Segoe UI', Roboto, Arial, sans-serif; background: var(--bg); color: var(--txt); font-size: 15px; min-height: 100vh; }
+
+.lang { display: flex; gap: 2px; background: rgba(255,255,255,.18); border-radius: 999px; padding: 3px; }
+.lang button { border: none; background: none; padding: 5px 10px; border-radius: 999px; cursor: pointer; font-size: 11px; font-weight: 700; color: #fff; font-family: inherit; }
+.lang button.active { background: #fff; color: var(--blue); }
+
+/* LOGIN */
+#screen-login { min-height: 100vh; display: flex; flex-direction: column; background: linear-gradient(160deg, var(--blue) 0%, var(--blue2) 100%); }
+.login-top { display: flex; justify-content: flex-end; padding: 14px 16px 0; }
+.login-hero { color: #fff; text-align: center; padding: 38px 24px 26px; }
+.login-hero .logo { width: 92px; height: 92px; border-radius: 24px; overflow: hidden; margin: 0 auto 14px; box-shadow: 0 8px 24px rgba(0,0,0,.25); }
+.login-hero .logo img { width: 100%; height: 100%; display: block; }
+.login-hero h1 { font-size: 22px; font-weight: 800; }
+.login-hero p { font-size: 13px; opacity: .8; margin-top: 4px; }
+.login-card { background: var(--card); border-radius: 28px 28px 0 0; padding: 28px 22px calc(28px + env(safe-area-inset-bottom)); flex: 1; width: 100%; max-width: 480px; margin: 0 auto; }
+.login-card h2 { font-size: 18px; margin-bottom: 18px; }
+.field { margin-bottom: 14px; }
+.field label { font-size: 12px; color: var(--mut); display: block; margin-bottom: 5px; font-weight: 600; }
+.field input { width: 100%; padding: 14px; border: 1.5px solid #e1e5ef; border-radius: 14px; font-size: 16px; font-family: inherit; outline: none; background: #f8f9fd; }
+.field input:focus { border-color: var(--blue2); background: #fff; }
+.login-btn { width: 100%; padding: 15px; background: var(--blue); color: #fff; border: none; border-radius: 14px; font-size: 16px; font-weight: 700; cursor: pointer; font-family: inherit; margin-top: 4px; }
+.login-btn:active { transform: scale(.98); }
+.login-btn:disabled { background: #aab; }
+.forgot { display: block; width: 100%; text-align: center; background: none; border: none; color: var(--blue2); font-size: 14px; font-weight: 600; margin-top: 14px; padding: 8px; cursor: pointer; font-family: inherit; }
+.login-ok { color: #1f9d55; font-size: 13px; text-align: center; margin-top: 10px; }
+.login-err { color: #c00; font-size: 13px; text-align: center; margin-top: 12px; min-height: 18px; }
+.login-loading { color: var(--mut); font-size: 13px; text-align: center; margin-top: 8px; display: none; }
+
+/* APP */
+#screen-app { display: none; max-width: 720px; margin: 0 auto; padding-bottom: 30px; }
+.hero { background: linear-gradient(160deg, var(--blue) 0%, var(--blue2) 100%); color: #fff; padding: 16px 18px 70px; border-radius: 0 0 30px 30px; }
+.hero-top { display: flex; justify-content: space-between; align-items: center; }
+.hero h1 { font-size: 24px; font-weight: 800; margin-top: 22px; }
+.hero p { font-size: 13px; opacity: .8; margin-top: 3px; }
+.logout-btn { background: rgba(255,255,255,.18); border: none; color: #fff; border-radius: 999px; padding: 7px 14px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; }
+
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 0 16px; margin-top: -44px; }
+.tile { background: var(--card); border-radius: 22px; padding: 18px 16px; text-decoration: none; color: inherit; display: flex; flex-direction: column; gap: 12px; min-height: 150px; box-shadow: 0 6px 18px rgba(26,58,143,.08); transition: transform .15s, box-shadow .15s; opacity: 0; animation: up .45s forwards; }
+.tile:active { transform: scale(.96); }
+.tile:hover { box-shadow: 0 10px 24px rgba(26,58,143,.15); }
+.tile .ico { width: 52px; height: 52px; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 27px; }
+.tile .t { font-size: 16px; font-weight: 800; }
+.tile .s { font-size: 12px; color: var(--mut); margin-top: 3px; line-height: 1.35; }
+.tile .go { margin-top: auto; align-self: flex-end; width: 30px; height: 30px; border-radius: 50%; background: var(--bg); display: flex; align-items: center; justify-content: center; color: var(--blue); font-size: 16px; font-weight: 700; }
+.install { margin: 14px 16px 0; background: #fff; border-radius: 22px; padding: 16px; box-shadow: 0 6px 18px rgba(26,58,143,.08); display: none; gap: 12px; align-items: center; }
+.install .ii { font-size: 28px; }
+.install .it { font-weight: 800; font-size: 14px; }
+.install .is { font-size: 12px; color: var(--mut); margin-top: 2px; line-height: 1.4; }
+.install button { margin-left: auto; background: var(--blue); color: #fff; border: none; border-radius: 999px; padding: 9px 16px; font-weight: 700; font-size: 13px; cursor: pointer; font-family: inherit; white-space: nowrap; }
+.sheet-bg { position: fixed; inset: 0; background: rgba(10,20,50,.45); z-index: 2000; display: none; align-items: flex-end; justify-content: center; }
+.sheet { background: #fff; width: 100%; max-width: 480px; border-radius: 28px 28px 0 0; padding: 24px 22px calc(24px + env(safe-area-inset-bottom)); text-align: center; animation: slide .3s ease-out; }
+.sheet img { width: 72px; height: 72px; border-radius: 18px; box-shadow: 0 4px 14px rgba(26,58,143,.25); }
+.sheet h3 { font-size: 18px; margin-top: 12px; }
+.sheet p { font-size: 14px; color: #555; margin-top: 8px; line-height: 1.5; }
+.sheet .primary { width: 100%; margin-top: 16px; padding: 14px; background: var(--blue); color: #fff; border: none; border-radius: 14px; font-size: 15px; font-weight: 700; font-family: inherit; cursor: pointer; }
+.sheet .later { background: none; border: none; color: var(--mut); font-size: 13px; margin-top: 10px; padding: 8px; cursor: pointer; font-family: inherit; }
+@keyframes slide { from { transform: translateY(100%); } to { transform: none; } }
+.tile.wide { grid-column: span 2; flex-direction: row; align-items: center; min-height: 0; }
+.tile.wide .go { margin: 0 0 0 auto; align-self: center; }
+@keyframes up { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+@media (min-width: 640px) { .grid { grid-template-columns: repeat(3, 1fr); } .tile.wide { grid-column: auto; flex-direction: column; align-items: stretch; } .tile.wide .go { margin: auto 0 0; align-self: flex-end; } }
+body { padding-top: env(safe-area-inset-top); }
+body::before { content: ''; position: fixed; top: 0; left: 0; right: 0; height: env(safe-area-inset-top); background: #1a3a8f; z-index: 1000; }
+</style>
+<link rel="manifest" href="manifest.json" />
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+<link rel="icon" type="image/png" href="icons/icon-192.png" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="PCS" />
+<script>if('serviceWorker' in navigator) window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));</script>
+</head>
+<body>
+
+
+<div class="sheet-bg" id="sheet-bg">
+  <div class="sheet">
+    <img src="icons/icon-192.png" alt="" />
+    <h3 data-i18n="sheet_t">Adicione à tela inicial</h3>
+    <p id="sheet-p"></p>
+    <button class="primary" id="sheet-install" onclick="doInstall()" data-i18n="install_btn" style="display:none">Instalar</button>
+    <button class="later" onclick="dismissSheet()" data-i18n="sheet_later">Agora não</button>
+  </div>
+</div>
+
+<div id="screen-login">
+  <div class="login-top"><div class="lang">
+    <button data-lang-btn="pt" onclick="setLang('pt')">PT</button>
+    <button data-lang-btn="en" onclick="setLang('en')">EN</button>
+    <button data-lang-btn="es" onclick="setLang('es')">ES</button>
+  </div></div>
+  <div class="login-hero">
+    <div class="logo"><img src="icons/icon-192.png" alt="Paula's Cleaning Squad" /></div>
+    <h1>Paula's Cleaning Squad</h1>
+    <p data-i18n="team_access">Acesso da equipe</p>
+  </div>
+  <div class="login-card">
+    <h2 data-i18n="login_title">Entrar</h2>
+    <div class="field">
+      <label data-i18n="username_label">Usuário</label>
+      <input type="text" id="login-user" data-i18n-placeholder="username_placeholder" placeholder="Seu usuário" autocomplete="username" autocapitalize="none" />
+    </div>
+    <div class="field">
+      <label data-i18n="password_label">Senha</label>
+      <input type="password" id="login-pass" data-i18n-placeholder="password_placeholder" placeholder="Sua senha" autocomplete="current-password" onkeydown="if(event.key==='Enter') doLogin()" />
+    </div>
+    <button class="login-btn" id="login-btn" onclick="doLogin()" data-i18n="login_btn">Entrar</button>
+    <button class="forgot" id="forgot-btn" onclick="doForgot()" data-i18n="forgot">Esqueceu a senha?</button>
+    <div class="login-err" id="login-err"></div>
+    <div class="login-loading" id="login-loading" data-i18n="verifying">Verificando...</div>
+  </div>
+</div>
+
+<div id="screen-app">
+  <div class="hero">
+    <div class="hero-top">
+      <div class="lang">
+        <button data-lang-btn="pt" onclick="setLang('pt')">PT</button>
+        <button data-lang-btn="en" onclick="setLang('en')">EN</button>
+        <button data-lang-btn="es" onclick="setLang('es')">ES</button>
+      </div>
+      <button class="logout-btn" onclick="doLogout()" data-i18n="logout_btn">Sair</button>
+    </div>
+    <h1><span data-i18n="hello">Olá,</span> <span id="user-name"></span> 👋</h1>
+    <p data-i18n="what_today">O que você quer fazer hoje?</p>
+  </div>
+  <div class="grid" id="menu-grid"></div>
+  <div class="install" id="install-card">
+    <div class="ii">📲</div>
+    <div><div class="it" data-i18n="install_t">Instalar como app</div><div class="is" id="install-s"></div></div>
+    <button id="install-btn" onclick="doInstall()" data-i18n="install_btn" style="display:none">Instalar</button>
+  </div>
+</div>
+
+<script>
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyGtMi4dY_1_eewqbyU8w05JNk9IqPOKFHkwzLGEP1tICwpZSyyswetMA8VA_ZwkI83-A/exec";
+
+const SESSION_KEY = 'pcs_session';
+const SESSION_DURATION = 5.5 * 60 * 60 * 1000; // o servidor aceita o código por 6h
+
+const TRANSLATIONS = {
+  pt: {
+    team_access: 'Acesso da equipe', login_title: 'Entrar', username_label: 'Usuário', username_placeholder: 'Seu usuário',
+    password_label: 'Senha', password_placeholder: 'Sua senha', login_btn: 'Entrar', verifying: 'Verificando...',
+    hello: 'Olá,', forgot: 'Esqueceu a senha?', forgot_need: 'Digite seu usuário (email) acima.', forgot_ok: 'Se o usuário existir, enviamos um link para o email dele.', locked_out: 'Muitas tentativas. Aguarde 15 minutos.', forgot_none: 'Usuário não encontrado.', sheet_t: 'Adicione à tela inicial', sheet_later: 'Agora não', install_t: 'Instalar como app', install_btn: 'Instalar', install_ios: 'iPhone: toque em Compartilhar (□↑) e depois em "Adicionar à Tela de Início".', install_and: 'Toque em Instalar para adicionar à tela inicial.', what_today: 'O que você quer fazer hoje?', logout_btn: 'Sair',
+    feedback_t: 'Avaliações', feedback_s: 'Seus feedbacks e notas',
+    supplies_t: 'Pedido de materiais', supplies_s: 'Lista de supplies',
+    invoice_t: 'Invoice', invoice_s: 'Gerar e salvar invoice',
+    avail_t: 'Disponibilidade', avail_s: 'Dias que você pode trabalhar',
+    dash_t: 'Painel', dash_s: 'Escala, materiais e feedbacks',
+    report_t: 'Relatório semanal', report_s: 'Pedidos de materiais da semana',
+    fill_user_pass: 'Preencha usuário e senha.', wrong_credentials: 'Usuário ou senha incorretos.',
+    connection_error_retry: 'Erro de conexão. Tente novamente.'
+  },
+  en: {
+    team_access: 'Team access', login_title: 'Log In', username_label: 'Username', username_placeholder: 'Your username',
+    password_label: 'Password', password_placeholder: 'Your password', login_btn: 'Log In', verifying: 'Verifying...',
+    hello: 'Hi,', forgot: 'Forgot your password?', forgot_need: 'Enter your username (email) above.', forgot_ok: 'If the user exists, we sent a link to their email.', locked_out: 'Too many attempts. Wait 15 minutes.', forgot_none: 'User not found.', sheet_t: 'Add to your home screen', sheet_later: 'Not now', install_t: 'Install as app', install_btn: 'Install', install_ios: 'iPhone: tap Share (□↑), then "Add to Home Screen".', install_and: 'Tap Install to add it to your home screen.', what_today: 'What would you like to do today?', logout_btn: 'Log Out',
+    feedback_t: 'Reviews', feedback_s: 'Your feedback and ratings',
+    supplies_t: 'Supplies request', supplies_s: 'Supply list',
+    invoice_t: 'Invoice', invoice_s: 'Create and save invoice',
+    avail_t: 'Availability', avail_s: 'Days you can work',
+    dash_t: 'Dashboard', dash_s: 'Schedule, supplies and feedback',
+    report_t: 'Weekly report', report_s: "This week's supply requests",
+    fill_user_pass: 'Fill in username and password.', wrong_credentials: 'Incorrect username or password.',
+    connection_error_retry: 'Connection error. Please try again.'
+  },
+  es: {
+    team_access: 'Acceso del equipo', login_title: 'Iniciar sesión', username_label: 'Usuario', username_placeholder: 'Tu usuario',
+    password_label: 'Contraseña', password_placeholder: 'Tu contraseña', login_btn: 'Iniciar sesión', verifying: 'Verificando...',
+    hello: 'Hola,', forgot: '¿Olvidaste tu contraseña?', forgot_need: 'Escribe tu usuario (email) arriba.', forgot_ok: 'Si el usuario existe, enviamos un enlace a su email.', locked_out: 'Demasiados intentos. Espera 15 minutos.', forgot_none: 'Usuario no encontrado.', sheet_t: 'Añade a la pantalla de inicio', sheet_later: 'Ahora no', install_t: 'Instalar como app', install_btn: 'Instalar', install_ios: 'iPhone: toca Compartir (□↑) y luego "Añadir a pantalla de inicio".', install_and: 'Toca Instalar para añadirla a la pantalla de inicio.', what_today: '¿Qué quieres hacer hoy?', logout_btn: 'Salir',
+    feedback_t: 'Evaluaciones', feedback_s: 'Tus comentarios y notas',
+    supplies_t: 'Pedido de materiales', supplies_s: 'Lista de suministros',
+    invoice_t: 'Invoice', invoice_s: 'Crear y guardar invoice',
+    avail_t: 'Disponibilidad', avail_s: 'Días que puedes trabajar',
+    dash_t: 'Panel', dash_s: 'Escala, materiales y comentarios',
+    report_t: 'Informe semanal', report_s: 'Pedidos de materiales de la semana',
+    fill_user_pass: 'Completa usuario y contraseña.', wrong_credentials: 'Usuario o contraseña incorrectos.',
+    connection_error_retry: 'Error de conexión. Inténtalo de nuevo.'
+  }
+};
+
+let currentLang = localStorage.getItem('pcs_lang') || 'pt';
+let currentUser = '';
+let currentNome = '';
+let currentAcessoRelatorio = false;
+let currentAcessoDash = false;
+let currentOcultas = [];
+let currentModelo = '';
+let currentBloq = [];
+
+function t(key) {
+  return (TRANSLATIONS[currentLang] && TRANSLATIONS[currentLang][key]) || TRANSLATIONS.pt[key] || key;
+}
+
+function buildMenu() {
+  let items = [
+    { key: 'avaliacoes', href: 'feedback.html', icon: '⭐', bg: '#e8efff', t: 'feedback_t', s: 'feedback_s' },
+    { key: 'pedidos', href: 'supplies.html', icon: '🛒', bg: '#e6f6ea', t: 'supplies_t', s: 'supplies_s' },
+    { key: 'invoice', href: 'invoice.html',  icon: '🧾', bg: '#fff4d6', t: 'invoice_t',  s: 'invoice_s' },
+    { key: 'disponibilidade', href: 'disponibilidade.html', icon: '📅', bg: '#ffe9e4', t: 'avail_t', s: 'avail_s' }
+  ];
+  items = items.filter(i => currentOcultas.indexOf(i.key) === -1);
+  if (currentAcessoDash) {
+    items.push({ href: 'dashboard.html', icon: '📊', bg: '#e4f4ff', t: 'dash_t', s: 'dash_s', wide: !currentAcessoRelatorio });
+  }
+  if (currentAcessoRelatorio) {
+    items.push({ href: 'relatorio.html', icon: '📦', bg: '#f1e8ff', t: 'report_t', s: 'report_s', wide: !currentAcessoDash });
+  }
+  document.getElementById('menu-grid').innerHTML = items.map((i, n) => `
+    <a class="tile${i.wide ? ' wide' : ''}" href="${i.href}" style="animation-delay:${n * 70}ms">
+      <div class="ico" style="background:${i.bg}">${i.icon}</div>
+      <div><div class="t">${t(i.t)}</div><div class="s">${t(i.s)}</div></div>
+      <div class="go">›</div>
+    </a>`).join('');
+}
+
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferredPrompt = e; updateInstall(); });
+window.addEventListener('appinstalled', () => { deferredPrompt = null; updateInstall(); });
+function sheetDismissed() { try { return localStorage.getItem('pcs_install_dismissed') === '1'; } catch(e) { return false; } }
+function dismissSheet() { try { localStorage.setItem('pcs_install_dismissed', '1'); } catch(e) {} document.getElementById('sheet-bg').style.display = 'none'; }
+function updateSheet() {
+  const standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+  const ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const show = !standalone && !sheetDismissed() && (ios || deferredPrompt);
+  document.getElementById('sheet-bg').style.display = show ? 'flex' : 'none';
+  if (!show) return;
+  document.getElementById('sheet-p').textContent = ios ? t('install_ios') : t('install_and');
+  document.getElementById('sheet-install').style.display = (!ios && deferredPrompt) ? 'block' : 'none';
+}
+function updateInstall() {
+  updateSheet();
+  const card = document.getElementById('install-card');
+  const standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+  const ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  if (standalone || (!ios && !deferredPrompt)) { card.style.display = 'none'; return; }
+  card.style.display = 'flex';
+  document.getElementById('install-s').textContent = ios ? t('install_ios') : t('install_and');
+  document.getElementById('install-btn').style.display = (!ios && deferredPrompt) ? 'block' : 'none';
+}
+async function doInstall() {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  await deferredPrompt.userChoice;
+  deferredPrompt = null;
+  document.getElementById('sheet-bg').style.display = 'none';
+  updateInstall();
+}
+
+function applyLanguage() {
+  document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.getAttribute('data-i18n')); });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => { el.placeholder = t(el.getAttribute('data-i18n-placeholder')); });
+  document.querySelectorAll('[data-lang-btn]').forEach(b => {
+    b.classList.toggle('active', b.getAttribute('data-lang-btn') === currentLang);
+  });
+  updateInstall();
+  if (document.getElementById('screen-app').style.display === 'block') buildMenu();
+}
+
+function setLang(lang) {
+  currentLang = lang;
+  localStorage.setItem('pcs_lang', lang);
+  applyLanguage();
+}
+
+function applyProfile(p) {
+  currentNome = p.nome || currentUser;
+  currentAcessoRelatorio = !!p.acessoRelatorio;
+  currentAcessoDash = !!p.acessoDashboard;
+  currentOcultas = p.ocultas || [];
+  currentModelo = p.modelo || '';
+  currentBloq = p.bloqueados || [];
+}
+function saveSession(token, expires) {
+  try {
+    localStorage.setItem(SESSION_KEY, JSON.stringify({
+      user: currentUser, token: token, nome: currentNome, acessoRelatorio: currentAcessoRelatorio, acessoDash: currentAcessoDash,
+      ocultas: currentOcultas, modelo: currentModelo, bloqueados: currentBloq, expires: expires || (Date.now() + SESSION_DURATION)
+    }));
+  } catch(e) {}
+}
+function loadSession() {
+  try {
+    const raw = localStorage.getItem(SESSION_KEY);
+    if (!raw) return null;
+    const s = JSON.parse(raw);
+    if (!s || !s.token || Date.now() > s.expires) { clearSession(); return null; }
+    return s;
+  } catch(e) { return null; }
+}
+function clearSession() { ['pcs_session','pcs_hub_session','pcs_relatorio_session'].forEach(k => { try { localStorage.removeItem(k); } catch(e) {} }); }
+
+function showLogin() {
+  document.getElementById('screen-app').style.display = 'none';
+  document.getElementById('screen-login').style.display = 'flex';
+  document.getElementById('login-user').value = '';
+  document.getElementById('login-pass').value = '';
+}
+
+function showApp() {
+  document.getElementById('screen-login').style.display = 'none';
+  document.getElementById('screen-app').style.display = 'block';
+  document.getElementById('user-name').textContent = currentNome;
+  buildMenu();
+}
+
+function post(body) {
+  return fetch(SCRIPT_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(body) }).then(r => r.json());
+}
+
+window.addEventListener('DOMContentLoaded', async () => {
+  applyLanguage();
+  const s = loadSession();
+  if (!s) return;
+  currentUser = s.user;
+  applyProfile({ nome: s.nome, acessoRelatorio: s.acessoRelatorio, acessoDashboard: s.acessoDash, ocultas: s.ocultas, modelo: s.modelo, bloqueados: s.bloqueados });
+  showApp();
+  // confere com o servidor se o acesso ainda vale (e atualiza as permissões)
+  try {
+    const j = await fetch(`${SCRIPT_URL}?action=ping&token=${encodeURIComponent(s.token)}`).then(r => r.json());
+    if (j.ok) { applyProfile(j); saveSession(s.token, s.expires); showApp(); }
+    else { clearSession(); showLogin(); }
+  } catch(e) {}
+});
+
+async function doLogin() {
+  const user = document.getElementById('login-user').value.trim().toLowerCase();
+  const pass = document.getElementById('login-pass').value.trim();
+  const btn = document.getElementById('login-btn');
+  const errEl = document.getElementById('login-err');
+  const loadEl = document.getElementById('login-loading');
+
+  errEl.style.color = '#c00'; errEl.textContent = '';
+  if (!user || !pass) { errEl.textContent = t('fill_user_pass'); return; }
+
+  btn.disabled = true;
+  loadEl.style.display = 'block';
+
+  try {
+    const json = await post({ usuario: user, senha: pass, pagina: 'menu' });
+    if (json.ok && json.token) {
+      currentUser = user;
+      applyProfile(json);
+      saveSession(json.token);
+      document.getElementById('login-pass').value = '';
+      showApp();
+    } else {
+      errEl.textContent = json.erro === 'bloqueado' ? t('locked_out') : t('wrong_credentials');
+    }
+  } catch(e) {
+    errEl.textContent = t('connection_error_retry');
+  }
+
+  btn.disabled = false;
+  loadEl.style.display = 'none';
+}
+
+async function doForgot() {
+  const user = document.getElementById('login-user').value.trim().toLowerCase();
+  const errEl = document.getElementById('login-err');
+  errEl.style.color = '#c00'; errEl.textContent = '';
+  if (!user) { errEl.textContent = t('forgot_need'); return; }
+  try {
+    await post({ action: 'forgot', usuario: user });
+    errEl.style.color = '#1f9d55'; errEl.textContent = t('forgot_ok');
+  } catch(e) { errEl.textContent = t('connection_error_retry'); }
+}
+
+function doLogout() {
+  const s = loadSession();
+  if (s) { try { fetch(`${SCRIPT_URL}?action=logout&token=${encodeURIComponent(s.token)}`); } catch(e) {} }
+  clearSession();
+  currentAcessoRelatorio = false;
+  currentAcessoDash = false;
+  currentOcultas = [];
+  showLogin();
+}
+</script>
+</body>
+</html>
