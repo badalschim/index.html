@@ -19,7 +19,8 @@ body { font-family: -apple-system, 'Segoe UI', Roboto, Arial, sans-serif; backgr
 #screen-login { min-height: calc(100vh - 24px); display: flex; flex-direction: column; background: linear-gradient(160deg, var(--blue) 0%, var(--blue2) 100%); }
 .login-top { display: flex; justify-content: flex-end; padding: 14px 16px 0; }
 .login-hero { color: #fff; text-align: center; padding: 38px 24px 26px; }
-.login-hero .logo { width: 64px; height: 64px; border-radius: 20px; background: rgba(255,255,255,.18); display: flex; align-items: center; justify-content: center; font-size: 32px; margin: 0 auto 14px; }
+.login-hero .logo { width: 92px; height: 92px; border-radius: 24px; overflow: hidden; margin: 0 auto 14px; box-shadow: 0 8px 24px rgba(0,0,0,.25); }
+.login-hero .logo img { width: 100%; height: 100%; display: block; }
 .login-hero h1 { font-size: 22px; font-weight: 800; }
 .login-hero p { font-size: 13px; opacity: .8; margin-top: 4px; }
 .login-card { background: var(--card); border-radius: 28px 28px 0 0; padding: 28px 22px calc(28px + env(safe-area-inset-bottom)); flex: 1; width: 100%; max-width: 480px; margin: 0 auto; }
@@ -100,7 +101,7 @@ body::before { content: ''; position: fixed; top: 0; left: 0; right: 0; height: 
     <button data-lang-btn="es" onclick="setLang('es')">ES</button>
   </div></div>
   <div class="login-hero">
-    <div class="logo">✨</div>
+    <div class="logo"><img src="icons/icon-192.png" alt="Paula's Cleaning Squad" /></div>
     <h1>Paula's Cleaning Squad</h1>
     <p data-i18n="team_access">Acesso da equipe</p>
   </div>
