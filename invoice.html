@@ -522,7 +522,7 @@ function generatePDF() {
   y+=150;
 
   // ISSUED TO block
-  y+=14; doc.setFont('helvetica','bold'); doc.setTextColor(40,40,40);
+  y+=14; doc.setFontSize(9); doc.setFont('helvetica','bold'); doc.setTextColor(40,40,40);
 doc.text("PAY TO:", M, y);
 y+=13;
 const bankLabel = "Bank Name: ";
@@ -531,17 +531,17 @@ const zelleLabel = "Zelle Number.: ";
 doc.setFont('helvetica','bold'); doc.setTextColor(40,40,40);
 doc.text(bankLabel, M, y);
 doc.setFont('helvetica','normal'); doc.setTextColor(80,80,80);
-doc.text(document.getElementById('bank').value, M+doc.getTextWidth(bankLabel), y);
+doc.text(document.getElementById('bank').value, M+doc.getTextWidth(bankLabel)+4, y);
 y+=12;
 doc.setFont('helvetica','bold'); doc.setTextColor(40,40,40);
 doc.text(acctLabel, M, y);
 doc.setFont('helvetica','normal'); doc.setTextColor(80,80,80);
-doc.text(document.getElementById('acct').value, M+doc.getTextWidth(acctLabel), y);
+doc.text(document.getElementById('acct').value, M+doc.getTextWidth(acctLabel)+4, y);
 y+=12;
 doc.setFont('helvetica','bold'); doc.setTextColor(40,40,40);
 doc.text(zelleLabel, M, y);
 doc.setFont('helvetica','normal'); doc.setTextColor(80,80,80);
-doc.text(document.getElementById('zelle').value, M+doc.getTextWidth(zelleLabel), y);
+doc.text(document.getElementById('zelle').value, M+doc.getTextWidth(zelleLabel)+4, y);
 
   // Dates - right column, aligned with ISSUED TO
   const di=document.getElementById('date_issue').value;
