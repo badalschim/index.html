@@ -26,8 +26,11 @@ body { font-family: -apple-system, 'Segoe UI', Roboto, Arial, sans-serif; backgr
 .day { border: 2px solid #e1e5ef; background: #f8f9fd; border-radius: 16px; padding: 12px 4px; text-align: center; cursor: pointer; font-family: inherit; color: var(--txt); transition: all .12s; }
 .day .w { font-size: 13px; font-weight: 800; text-transform: capitalize; }
 .day .d { font-size: 12px; color: var(--mut); margin-top: 2px; }
-.day.on { border-color: var(--blue2); background: var(--blue); color: #fff; transform: scale(1.03); }
-.day.on .d { color: #dbe4ff; }
+.day.off { border-color: #e0463a; background: #e0463a; color: #fff; transform: scale(1.03); }
+.day.off .d { color: #ffe1de; }
+.day .st { font-size: 11px; font-weight: 700; margin-top: 4px; color: #1f9d55; }
+.day.off .st { color: #fff; }
+.hint { font-size: 12.5px; color: var(--mut); margin: -4px 0 12px; }
 .day:disabled { cursor: default; opacity: .9; }
 textarea { width: 100%; border: 1.5px solid #e1e5ef; border-radius: 14px; padding: 12px; font-size: 15px; font-family: inherit; background: #f8f9fd; resize: vertical; min-height: 70px; outline: none; margin-top: 12px; }
 textarea:focus { border-color: var(--blue2); background: #fff; }
@@ -99,8 +102,9 @@ body::before { content: ''; position: fixed; top: 0; left: 0; right: 0; height: 
     <div id="req-box"></div>
     <div id="editing-box"></div>
     <h2 data-i18n="pick_days">Quais dias você pode trabalhar?</h2>
+    <div class="hint" id="hint"></div>
     <div class="days" id="days"></div>
-    <label class="none" id="none-wrap"><input type="checkbox" id="none-check" onchange="onNone()"> <span data-i18n="none_days">Não posso trabalhar nessa semana</span></label>
+    <label class="none" id="none-wrap" style="display:none"><input type="checkbox" id="none-check" onchange="onNone()"> <span data-i18n="none_days">Não posso trabalhar nessa semana</span></label>
     <textarea id="motivo" data-i18n-placeholder="motivo_ph" placeholder="Motivo da alteração (obrigatório)" maxlength="500" style="display:none"></textarea>
     <textarea id="obs" data-i18n-placeholder="obs_ph" placeholder="Observação (opcional)" maxlength="500"></textarea>
     <button class="btn" id="send-btn" onclick="sendDays()" data-i18n="send">Enviar</button>
@@ -135,19 +139,19 @@ body::before { content: ''; position: fixed; top: 0; left: 0; right: 0; height: 
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyGtMi4dY_1_eewqbyU8w05JNk9IqPOKFHkwzLGEP1tICwpZSyyswetMA8VA_ZwkI83-A/exec";
 
 const TR = {
-  pt: { req_btn:'Solicitar alteração', req_send:'Enviar solicitação', cancel_req:'Cancelar solicitação', motivo_ph:'Motivo da alteração (obrigatório)', motivo_need:'Informe o motivo da alteração.', req_pending:'⏳ Solicitação enviada, aguardando aprovação.', req_denied:'Sua última solicitação foi recusada.', req_approved:'Sua última solicitação foi aprovada.', req_sent:'Solicitação enviada!', req_dup:'Você já tem uma solicitação pendente.', requests:'Solicitações de alteração', approve:'Aprovar', deny:'Recusar', current_:'Atual:', new_:'Novo:', reason:'Motivo:', decided:'Feito!', confirm_deny:'Recusar esta solicitação?', back:'‹ Menu', title:'Disponibilidade', week:'Semana de', to:'a', pick_days:'Quais dias você pode trabalhar?', none_days:'Não posso trabalhar nessa semana',
+  pt: { off:'Folga', works:'Trabalha', hint:'Toque só nos dias de folga. Os outros contam como trabalho.', req_btn:'Solicitar alteração', req_send:'Enviar solicitação', cancel_req:'Cancelar solicitação', motivo_ph:'Motivo da alteração (obrigatório)', motivo_need:'Informe o motivo da alteração.', req_pending:'⏳ Solicitação enviada, aguardando aprovação.', req_denied:'Sua última solicitação foi recusada.', req_approved:'Sua última solicitação foi aprovada.', req_sent:'Solicitação enviada!', req_dup:'Você já tem uma solicitação pendente.', requests:'Solicitações de alteração', approve:'Aprovar', deny:'Recusar', current_:'Atual:', new_:'Novo:', reason:'Motivo:', decided:'Feito!', confirm_deny:'Recusar esta solicitação?', back:'‹ Menu', title:'Disponibilidade', week:'Semana de', to:'a', pick_days:'Quais dias você precisa de folga?', none_days:'Não posso trabalhar nessa semana',
     obs_ph:'Observação (opcional)', send:'Enviar', sending:'Enviando...', cancel:'Cancelar edição', lock_note:'Depois de enviar, para alterar é preciso pedir aprovação, com o motivo.',
     sent_ok:'✓ Enviado! Seus dias:', sent_none:'✓ Enviado: sem disponibilidade nessa semana', pick_one:'Escolha pelo menos um dia (ou marque que não pode).',
     locked:'Você já enviou. Fale com a responsável para alterar.', conn:'Erro de conexão. Tente novamente.', team:'Equipe', answered:'Enviou', pending:'Pendente',
     edit:'Editar', unlock:'Liberar', send_report:'Enviar relatório agora', report_sent:'Relatório enviado!', editing:'Editando:', saved:'Salvo!',
     need_login:'Entre pelo menu primeiro', need_login_s:'Faça login para informar sua disponibilidade.', go_menu:'Ir ao menu', no_days:'sem disponibilidade', confirm_unlock:'Liberar para essa pessoa enviar de novo? (apaga a resposta atual)', confirm_report:'Enviar o relatório agora?', locale:'pt-BR' },
-  en: { req_btn:'Request change', req_send:'Send request', cancel_req:'Cancel request', motivo_ph:'Reason for the change (required)', motivo_need:'Please give the reason for the change.', req_pending:'⏳ Request sent, waiting for approval.', req_denied:'Your last request was declined.', req_approved:'Your last request was approved.', req_sent:'Request sent!', req_dup:'You already have a pending request.', requests:'Change requests', approve:'Approve', deny:'Decline', current_:'Current:', new_:'New:', reason:'Reason:', decided:'Done!', confirm_deny:'Decline this request?', back:'‹ Menu', title:'Availability', week:'Week of', to:'to', pick_days:'Which days can you work?', none_days:"I can't work this week",
+  en: { off:'Off', works:'Works', hint:'Tap only your days off. All other days count as working.', req_btn:'Request change', req_send:'Send request', cancel_req:'Cancel request', motivo_ph:'Reason for the change (required)', motivo_need:'Please give the reason for the change.', req_pending:'⏳ Request sent, waiting for approval.', req_denied:'Your last request was declined.', req_approved:'Your last request was approved.', req_sent:'Request sent!', req_dup:'You already have a pending request.', requests:'Change requests', approve:'Approve', deny:'Decline', current_:'Current:', new_:'New:', reason:'Reason:', decided:'Done!', confirm_deny:'Decline this request?', back:'‹ Menu', title:'Availability', week:'Week of', to:'to', pick_days:'Which days do you need off?', none_days:"I can't work this week",
     obs_ph:'Note (optional)', send:'Send', sending:'Sending...', cancel:'Cancel editing', lock_note:'Once sent, changes need approval and a reason.',
     sent_ok:'✓ Sent! Your days:', sent_none:'✓ Sent: not available this week', pick_one:"Pick at least one day (or check that you can't work).",
     locked:'Already sent. Ask the person in charge to change it.', conn:'Connection error. Please try again.', team:'Team', answered:'Sent', pending:'Pending',
     edit:'Edit', unlock:'Unlock', send_report:'Send report now', report_sent:'Report sent!', editing:'Editing:', saved:'Saved!',
     need_login:'Log in from the menu first', need_login_s:'Log in to set your availability.', go_menu:'Go to menu', no_days:'not available', confirm_unlock:'Unlock so this person can submit again? (deletes current answer)', confirm_report:'Send the report now?', locale:'en-US' },
-  es: { req_btn:'Solicitar cambio', req_send:'Enviar solicitud', cancel_req:'Cancelar solicitud', motivo_ph:'Motivo del cambio (obligatorio)', motivo_need:'Indica el motivo del cambio.', req_pending:'⏳ Solicitud enviada, esperando aprobación.', req_denied:'Tu última solicitud fue rechazada.', req_approved:'Tu última solicitud fue aprobada.', req_sent:'¡Solicitud enviada!', req_dup:'Ya tienes una solicitud pendiente.', requests:'Solicitudes de cambio', approve:'Aprobar', deny:'Rechazar', current_:'Actual:', new_:'Nuevo:', reason:'Motivo:', decided:'¡Hecho!', confirm_deny:'¿Rechazar esta solicitud?', back:'‹ Menú', title:'Disponibilidad', week:'Semana del', to:'al', pick_days:'¿Qué días puedes trabajar?', none_days:'No puedo trabajar esta semana',
+  es: { off:'Libre', works:'Trabaja', hint:'Toca solo tus días libres. Los demás cuentan como trabajo.', req_btn:'Solicitar cambio', req_send:'Enviar solicitud', cancel_req:'Cancelar solicitud', motivo_ph:'Motivo del cambio (obligatorio)', motivo_need:'Indica el motivo del cambio.', req_pending:'⏳ Solicitud enviada, esperando aprobación.', req_denied:'Tu última solicitud fue rechazada.', req_approved:'Tu última solicitud fue aprobada.', req_sent:'¡Solicitud enviada!', req_dup:'Ya tienes una solicitud pendiente.', requests:'Solicitudes de cambio', approve:'Aprobar', deny:'Rechazar', current_:'Actual:', new_:'Nuevo:', reason:'Motivo:', decided:'¡Hecho!', confirm_deny:'¿Rechazar esta solicitud?', back:'‹ Menú', title:'Disponibilidad', week:'Semana del', to:'al', pick_days:'¿Qué días necesitas libres?', none_days:'No puedo trabajar esta semana',
     obs_ph:'Observación (opcional)', send:'Enviar', sending:'Enviando...', cancel:'Cancelar edición', lock_note:'Después de enviar, para cambiar se necesita aprobación y un motivo.',
     sent_ok:'✓ ¡Enviado! Tus días:', sent_none:'✓ Enviado: sin disponibilidad esta semana', pick_one:'Elige al menos un día (o marca que no puedes).',
     locked:'Ya enviaste. Habla con la responsable para cambiar.', conn:'Error de conexión. Inténtalo de nuevo.', team:'Equipo', answered:'Envió', pending:'Pendiente',
@@ -158,7 +162,7 @@ const TR = {
 let lang = 'pt'; try { lang = localStorage.getItem('pcs_lang') || 'pt'; } catch(e) {}
 let me = null;          // {user, nome}
 let state = null;       // resposta de disp_get
-let selected = new Set();
+let selected = new Set(); let touched = false;
 let requestMode = false;
 let editTarget = null;  // {email, nome} quando admin edita outra pessoa
 
@@ -208,6 +212,7 @@ async function refresh() {
     if (!r.ok) { $('msg').className = 'msg err'; $('msg').textContent = t('conn'); return; }
     state = r;
     if (r.minha && !editTarget && !requestMode) { selected = new Set(r.minha.dias); $('obs').value = r.minha.obs || ''; $('none-check').checked = r.minha.dias.length === 0; }
+    if (!r.minha && !editTarget && !requestMode && !touched) { selected = new Set(weekDates().map(iso)); }
     render();
   } catch(e) { $('msg').className = 'msg err'; $('msg').textContent = t('conn'); }
 }
@@ -220,10 +225,12 @@ function render() {
   const locked = isLocked();
   $('days').innerHTML = dates.map(d => {
     const k = iso(d);
-    return `<button class="day${selected.has(k) ? ' on' : ''}" ${locked ? 'disabled' : ''} onclick="toggleDay('${k}')">
-      <div class="w">${fmtDay(d, { weekday: 'short' }).replace('.', '')}</div><div class="d">${fmtShort(d)}</div></button>`;
+    const off = !selected.has(k);
+    return `<button class="day${off ? ' off' : ''}" ${locked ? 'disabled' : ''} onclick="toggleDay('${k}')">
+      <div class="w">${fmtDay(d, { weekday: 'short' }).replace('.', '')}</div><div class="d">${fmtShort(d)}</div><div class="st">${off ? t('off') : t('works')}</div></button>`;
   }).join('');
 
+  $('hint').textContent = t('hint');
   // caixa "enviado"
   if (state.minha && !editTarget) {
     const lista = state.minha.dias.length
@@ -296,15 +303,14 @@ function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<':
 function toggleDay(k) {
   if (isLocked()) return;
   selected.has(k) ? selected.delete(k) : selected.add(k);
-  if (selected.size) $('none-check').checked = false;
+  touched = true; $('none-check').checked = !selected.size;
   render();
 }
 function onNone() { if ($('none-check').checked) { selected.clear(); render(); } }
 
 async function sendDays() {
   const msg = $('msg'); msg.className = 'msg'; msg.textContent = '';
-  const nenhum = $('none-check').checked;
-  if (!selected.size && !nenhum) { msg.className = 'msg err'; msg.textContent = t('pick_one'); return; }
+  const nenhum = !selected.size;
   const btn = $('send-btn'); btn.disabled = true; btn.textContent = t('sending');
   if (requestMode) {
     const motivo = $('motivo').value.trim();
@@ -339,7 +345,7 @@ function editPerson(email) {
   const p = state.todos.find(x => x.email === email);
   if (!p) return;
   editTarget = { email, nome: p.nome };
-  selected = new Set(p.dias); $('obs').value = p.obs || ''; $('none-check').checked = p.enviado && !p.dias.length;
+  selected = p.enviado ? new Set(p.dias) : new Set(weekDates().map(iso)); $('obs').value = p.obs || ''; $('none-check').checked = p.enviado && !p.dias.length;
   render(); window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 function startRequest() {
