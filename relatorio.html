@@ -103,7 +103,7 @@ body { font-family: Arial, sans-serif; background: #f0f2f5; color: #222; font-si
   </div>
 
   <div class="page-title">📦 Relatório Semanal de Supplies</div>
-  <div class="page-sub">Total de pedidos acumulados desde o último envio do resumo (domingo)</div>
+  <div class="page-sub">Lista de compra: tudo que ainda não foi comprado.</div>
 
   <button class="refresh-btn" onclick="loadReport(); loadHistorico();">🔄 Atualizar</button>
 
@@ -111,7 +111,7 @@ body { font-family: Arial, sans-serif; background: #f0f2f5; color: #222; font-si
     <div class="loading-state">Carregando...</div>
   </div>
 
-  <div class="page-title" style="margin-top:2rem;font-size:16px">🗂️ Semanas anteriores</div>
+  <div class="page-title" style="margin-top:2rem;font-size:16px">🗂️ Já tratadas</div>
   <div id="historico-container" style="margin-top:0.75rem">
     <div class="loading-state">Carregando...</div>
   </div>
@@ -221,6 +221,18 @@ function doLogout() {
   document.getElementById('login-pass').value = '';
 }
 
+let pendLinhas = [], viewMode = 'item', lastJson = null;
+function setMode(m) { viewMode = m; drawReport(); }
+async function marcar(status) {
+  if (!pendLinhas.length) return;
+  const msg = status === 'estoque' ? 'Marcar tudo como "usei o estoque" (nada será comprado)?' : 'Confirmar que a compra foi feita?';
+  if (!confirm(msg)) return;
+  try {
+    const r = await fetch(`${SCRIPT_URL}?action=compra_marcar&status=${status}&linhas=${pendLinhas.join(',')}&token=${encodeURIComponent(pcsToken())}`).then(x => x.json());
+    if (r.erro === 'perm') { goLogin(); return; }
+  } catch(e) { alert('Erro de conexão.'); return; }
+  loadReport(); loadHistorico();
+}
 async function loadReport() {
   const container = document.getElementById('report-container');
   container.innerHTML = '<div class="loading-state">Carregando...</div>';
@@ -229,30 +241,52 @@ async function loadReport() {
     const res = await fetch(url);
     const json = await res.json();
     if (json.erro === 'perm') { goLogin(); return; }
+    lastJson = json; pendLinhas = json.linhas || [];
+    drawReport();
+  } catch(e) {
+    container.innerHTML = '<div class="empty-state">Erro ao carregar o relatório. Tente novamente.</div>';
+  }
+}
+function drawReport() {
+  const container = document.getElementById('report-container');
+  try {
+    const json = lastJson || {};
     const itens = json.itens || [];
 
     if (itens.length === 0) {
       container.innerHTML = `
         <div class="empty-state">
           <div class="icon">📭</div>
-          <div>Nenhum pedido registrado ainda nesta semana.</div>
+          <div>Nada pendente para comprar.</div>
         </div>`;
       return;
     }
 
+    const tabs = `<div style="display:flex;gap:8px;margin-bottom:10px">
+      <button class="refresh-btn" style="margin:0;${viewMode==='item'?'background:#1a3a8f;color:#fff':''}" onclick="setMode('item')">Por item</button>
+      <button class="refresh-btn" style="margin:0;${viewMode==='pessoa'?'background:#1a3a8f;color:#fff':''}" onclick="setMode('pessoa')">Por pessoa</button></div>`;
+    const acoes = `<div style="display:flex;gap:8px;margin:14px 0;flex-wrap:wrap">
+      <button class="login-btn" style="flex:1;margin:0;min-width:160px" onclick="marcar('comprado')">✅ Já comprei</button>
+</div>
+      <div class="page-sub">Não comprou? Não marque: os itens ficam aqui e somam com a próxima semana.</div>`;
+    if (viewMode === 'pessoa') {
+      container.innerHTML = tabs + (json.porPessoa || []).map(p => `<div class="week-block"><div class="week-header" style="cursor:default">👤 ${p.nome}</div><div class="week-body open">` +
+        p.itens.map(i => `<div class="week-row"><span>${i.nome}${i.antigo ? ` <span style="color:#c0392b;font-size:11px">⚠️ ${i.antigo} de semanas anteriores</span>` : ''}</span><span class="qty-badge">${i.qtd}x</span></div>`).join('') + `</div></div>`).join('') + acoes;
+      return;
+    }
     let rows = itens.map(i => `
       <tr>
         <td>${i.link
           ? `<a class="item-link" href="${i.link}" target="_blank" rel="noopener">${i.nome} <span class="cart-icon">🛒</span></a>`
-          : i.nome}</td>
+          : i.nome}${i.antigo ? `<div style="color:#c0392b;font-size:11px">⚠️ ${i.antigo} de semanas anteriores</div>` : ''}</td>
         <td class="qty-col"><span class="qty-badge">${i.quantidade}x</span></td>
       </tr>`).join('');
 
-    container.innerHTML = `
+    container.innerHTML = tabs + `
       <table class="report-table">
         <thead><tr><th>Item</th><th class="qty-col">Quantidade</th></tr></thead>
         <tbody>${rows}</tbody>
-      </table>`;
+      </table>` + acoes;
   } catch(e) {
     container.innerHTML = '<div class="empty-state">Erro ao carregar o relatório. Tente novamente.</div>';
   }
@@ -269,14 +303,14 @@ async function loadHistorico() {
     const semanas = json.semanas || [];
 
     if (semanas.length === 0) {
-      container.innerHTML = '<div class="empty-state" style="padding:1.5rem"><div>Nenhuma semana anterior registrada ainda.</div></div>';
+      container.innerHTML = '<div class="empty-state" style="padding:1.5rem"><div>Nenhuma semana tratada ainda.</div></div>';
       return;
     }
 
     container.innerHTML = semanas.map((s, idx) => `
       <div class="week-block">
         <div class="week-header" onclick="toggleWeek(${idx})">
-          <span>Semana de ${s.semana}</span>
+          <span>Semana de ${s.semana} · ${s.status === 'estoque' ? '📦 Estoque' : (s.status === 'comprado' ? '✅ Comprado' : 'Enviado')}</span>
           <span id="week-arrow-${idx}">▾</span>
         </div>
         <div class="week-body" id="week-body-${idx}">
