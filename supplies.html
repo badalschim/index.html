@@ -591,7 +591,7 @@ const COMMON_ITEMS = [
   { name: 'Esponja mágica', us: 'Mr. Clean Magic Eraser', icon: 'magiceraser' },
   { name: 'Limpador concentrado', us: 'MelaMagic', icon: 'melamagic' },
   { name: 'Tira-manchas', us: 'Tide Pure Clean Stain Remover', icon: 'tide_stain' },
-  { name: 'Amaciante', us: 'MelaSoft', icon: 'melasoft', hidden: true },
+  { name: 'MelaSoft', us: 'MelaSoft', icon: 'melasoft', hidden: true },
   { name: 'Raspador de lâmina', us: 'Razor Scraper', icon: 'scraper' },
   { name: 'Detergente de roupa', us: 'Great Value Premium Clean Pacs', icon: 'greatvalue_pacs' },
   { name: 'Alvejante perfumado', us: 'Clorox Scentiva Bleach', icon: 'scentivableach' },
@@ -626,7 +626,7 @@ function getCommonItems() {
   const items = [];
   COMMON_ITEMS.forEach((item, i) => {
     const cb = document.getElementById('common-' + i);
-    if (cb && cb.checked) items.push({ name: item.name + ' (' + item.us + ')', date: '—' });
+    if (cb && cb.checked) items.push({ name: item.hidden ? item.us : item.name + ' (' + item.us + ')', date: '—' });
   });
   return items;
 }
