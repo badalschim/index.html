@@ -271,8 +271,9 @@ function drawReport() {
     const tabs = `<div style="display:flex;gap:8px;margin-bottom:10px">
       <button class="refresh-btn" style="margin:0;${viewMode==='item'?'background:#1a3a8f;color:#fff':''}" onclick="setMode('item')">Por item</button>
       <button class="refresh-btn" style="margin:0;${viewMode==='pessoa'?'background:#1a3a8f;color:#fff':''}" onclick="setMode('pessoa')">Por pessoa</button></div>`;
+    const pode = !!json.podeMarcar;
     const resp0 = itens.filter((it, idx) => resp[idx]).length;
-    const acoes = `<button class="login-btn" style="margin:14px 0 4px" ${resp0 === itens.length ? '' : 'disabled'} onclick="salvarCompra()">Salvar (${resp0}/${itens.length})</button>
+    const acoes = !pode ? '' : `<button class="login-btn" style="margin:14px 0 4px" ${resp0 === itens.length ? '' : 'disabled'} onclick="salvarCompra()">Salvar (${resp0}/${itens.length})</button>
       <div class="page-sub">Marque cada item: ✅ comprei ou ❌ não comprei. O que não foi comprado volta automaticamente na próxima semana.</div>`;
     if (viewMode === 'pessoa') {
       container.innerHTML = tabs + (json.porPessoa || []).map(p => `<div class="week-block"><div class="week-header" style="cursor:default">👤 ${p.nome}</div><div class="week-body open">` +
@@ -285,14 +286,14 @@ function drawReport() {
           ? `<a class="item-link" href="${i.link}" target="_blank" rel="noopener">${i.nome} <span class="cart-icon">🛒</span></a>`
           : i.nome}${i.antigo ? `<div style="color:#c0392b;font-size:11px">⚠️ ${i.antigo} de semanas anteriores</div>` : ''}</td>
         <td class="qty-col"><span class="qty-badge">${i.quantidade}x</span></td>
-        <td class="qty-col" style="white-space:nowrap">
+        ${pode ? `<td class="qty-col" style="white-space:nowrap">
           <label style="cursor:pointer;font-size:12px;margin-right:8px"><input type="checkbox" ${resp[idx]==='sim'?'checked':''} onchange="setResp(${idx},'sim')"> ✅</label>
-          <label style="cursor:pointer;font-size:12px"><input type="checkbox" ${resp[idx]==='nao'?'checked':''} onchange="setResp(${idx},'nao')"> ❌</label></td>
+          <label style="cursor:pointer;font-size:12px"><input type="checkbox" ${resp[idx]==='nao'?'checked':''} onchange="setResp(${idx},'nao')"> ❌</label></td>` : ''}
       </tr>`).join('');
 
     container.innerHTML = tabs + `
       <table class="report-table">
-        <thead><tr><th>Item</th><th class="qty-col">Qtd</th><th class="qty-col">Comprei?</th></tr></thead>
+        <thead><tr><th>Item</th><th class="qty-col">Qtd</th>${pode ? '<th class="qty-col">Comprei?</th>' : ''}</tr></thead>
         <tbody>${rows}</tbody>
       </table>` + acoes;
   } catch(e) {
