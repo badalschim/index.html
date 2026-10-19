@@ -221,17 +221,23 @@ function doLogout() {
   document.getElementById('login-pass').value = '';
 }
 
-let pendLinhas = [], viewMode = 'item', lastJson = null;
+let viewMode = 'item', lastJson = null;
 function setMode(m) { viewMode = m; drawReport(); }
-async function marcar(status) {
-  if (!pendLinhas.length) return;
-  const msg = status === 'estoque' ? 'Marcar tudo como "usei o estoque" (nada será comprado)?' : 'Confirmar que a compra foi feita?';
-  if (!confirm(msg)) return;
+let resp = {}; // índice do item -> 'sim' (comprei) | 'nao' (não comprei)
+function setResp(idx, v) { resp[idx] = (resp[idx] === v ? undefined : v); drawReport(); }
+async function salvarCompra() {
+  const itens = (lastJson && lastJson.itens) || [];
+  const compradas = [];
+  itens.forEach((it, idx) => { if (resp[idx] === 'sim') compradas.push(...it.linhas); });
+  const nNao = itens.filter((it, idx) => resp[idx] === 'nao').length;
+  if (!confirm(compradas.length ? 'Salvar? O que ficou como "não comprei" volta na próxima semana.' : 'Nada foi comprado. Tudo volta na próxima semana. Salvar?')) return;
   try {
-    const r = await fetch(`${SCRIPT_URL}?action=compra_marcar&status=${status}&linhas=${pendLinhas.join(',')}&token=${encodeURIComponent(pcsToken())}`).then(x => x.json());
-    if (r.erro === 'perm') { goLogin(); return; }
+    if (compradas.length) {
+      const r = await fetch(`${SCRIPT_URL}?action=compra_marcar&status=comprado&linhas=${compradas.join(',')}&token=${encodeURIComponent(pcsToken())}`).then(x => x.json());
+      if (r.erro === 'perm') { goLogin(); return; }
+    }
   } catch(e) { alert('Erro de conexão.'); return; }
-  loadReport(); loadHistorico();
+  resp = {}; loadReport(); loadHistorico();
 }
 async function loadReport() {
   const container = document.getElementById('report-container');
@@ -241,7 +247,7 @@ async function loadReport() {
     const res = await fetch(url);
     const json = await res.json();
     if (json.erro === 'perm') { goLogin(); return; }
-    lastJson = json; pendLinhas = json.linhas || [];
+    lastJson = json; resp = {};
     drawReport();
   } catch(e) {
     container.innerHTML = '<div class="empty-state">Erro ao carregar o relatório. Tente novamente.</div>';
@@ -265,26 +271,28 @@ function drawReport() {
     const tabs = `<div style="display:flex;gap:8px;margin-bottom:10px">
       <button class="refresh-btn" style="margin:0;${viewMode==='item'?'background:#1a3a8f;color:#fff':''}" onclick="setMode('item')">Por item</button>
       <button class="refresh-btn" style="margin:0;${viewMode==='pessoa'?'background:#1a3a8f;color:#fff':''}" onclick="setMode('pessoa')">Por pessoa</button></div>`;
-    const acoes = `<div style="display:flex;gap:8px;margin:14px 0;flex-wrap:wrap">
-      <button class="login-btn" style="flex:1;margin:0;min-width:160px" onclick="marcar('comprado')">✅ Já comprei</button>
-</div>
-      <div class="page-sub">Não comprou? Não marque: os itens ficam aqui e somam com a próxima semana.</div>`;
+    const resp0 = itens.filter((it, idx) => resp[idx]).length;
+    const acoes = `<button class="login-btn" style="margin:14px 0 4px" ${resp0 === itens.length ? '' : 'disabled'} onclick="salvarCompra()">Salvar (${resp0}/${itens.length})</button>
+      <div class="page-sub">Marque cada item: ✅ comprei ou ❌ não comprei. O que não foi comprado volta automaticamente na próxima semana.</div>`;
     if (viewMode === 'pessoa') {
       container.innerHTML = tabs + (json.porPessoa || []).map(p => `<div class="week-block"><div class="week-header" style="cursor:default">👤 ${p.nome}</div><div class="week-body open">` +
-        p.itens.map(i => `<div class="week-row"><span>${i.nome}${i.antigo ? ` <span style="color:#c0392b;font-size:11px">⚠️ ${i.antigo} de semanas anteriores</span>` : ''}</span><span class="qty-badge">${i.qtd}x</span></div>`).join('') + `</div></div>`).join('') + acoes;
+        p.itens.map(i => `<div class="week-row"><span>${i.nome}${i.antigo ? ` <span style="color:#c0392b;font-size:11px">⚠️ ${i.antigo} de semanas anteriores</span>` : ''}</span><span class="qty-badge">${i.qtd}x</span></div>`).join('') + `</div></div>`).join('');
       return;
     }
-    let rows = itens.map(i => `
+    let rows = itens.map((i, idx) => `
       <tr>
         <td>${i.link
           ? `<a class="item-link" href="${i.link}" target="_blank" rel="noopener">${i.nome} <span class="cart-icon">🛒</span></a>`
           : i.nome}${i.antigo ? `<div style="color:#c0392b;font-size:11px">⚠️ ${i.antigo} de semanas anteriores</div>` : ''}</td>
         <td class="qty-col"><span class="qty-badge">${i.quantidade}x</span></td>
+        <td class="qty-col" style="white-space:nowrap">
+          <label style="cursor:pointer;font-size:12px;margin-right:8px"><input type="checkbox" ${resp[idx]==='sim'?'checked':''} onchange="setResp(${idx},'sim')"> ✅</label>
+          <label style="cursor:pointer;font-size:12px"><input type="checkbox" ${resp[idx]==='nao'?'checked':''} onchange="setResp(${idx},'nao')"> ❌</label></td>
       </tr>`).join('');
 
     container.innerHTML = tabs + `
       <table class="report-table">
-        <thead><tr><th>Item</th><th class="qty-col">Quantidade</th></tr></thead>
+        <thead><tr><th>Item</th><th class="qty-col">Qtd</th><th class="qty-col">Comprei?</th></tr></thead>
         <tbody>${rows}</tbody>
       </table>` + acoes;
   } catch(e) {
