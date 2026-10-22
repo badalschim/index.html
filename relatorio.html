@@ -105,11 +105,15 @@ body { font-family: Arial, sans-serif; background: #f0f2f5; color: #222; font-si
   <div class="page-title">📦 Relatório Semanal de Supplies</div>
   <div class="page-sub">Lista de compra: tudo que ainda não foi comprado.</div>
 
-  <button class="refresh-btn" onclick="loadReport(); loadHistorico();">🔄 Atualizar</button>
+  <button class="refresh-btn" onclick="loadReport(); loadHistorico(); loadFunc();">🔄 Atualizar</button>
 
   <div id="report-container">
     <div class="loading-state">Carregando...</div>
   </div>
+
+  <div class="page-title" style="margin-top:2rem;font-size:16px">👥 Pedidos por funcionário</div>
+  <div class="page-sub">Últimos 6 meses, separados por data do pedido.</div>
+  <div id="func-container"><div class="loading-state">Carregando...</div></div>
 
   <div class="page-title" style="margin-top:2rem;font-size:16px">🗂️ Já tratadas</div>
   <div id="historico-container" style="margin-top:0.75rem">
@@ -162,7 +166,7 @@ window.addEventListener('DOMContentLoaded', () => {
     document.getElementById('screen-app').style.display = 'block';
     document.getElementById('user-name').textContent = currentNome;
     loadReport();
-    loadHistorico();
+    loadHistorico(); loadFunc();
   }
 });
 
@@ -198,7 +202,7 @@ async function doLogin() {
       document.getElementById('screen-app').style.display = 'block';
       document.getElementById('user-name').textContent = currentNome;
       loadReport();
-      loadHistorico();
+      loadHistorico(); loadFunc();
     } else {
       errEl.textContent = 'Usuário ou senha incorretos.';
     }
@@ -237,7 +241,7 @@ async function salvarCompra() {
       if (r.erro === 'perm') { goLogin(); return; }
     }
   } catch(e) { alert('Erro de conexão.'); return; }
-  resp = {}; loadReport(); loadHistorico();
+  resp = {}; loadReport(); loadHistorico(); loadFunc();
 }
 async function loadReport() {
   const container = document.getElementById('report-container');
@@ -299,6 +303,27 @@ function drawReport() {
   } catch(e) {
     container.innerHTML = '<div class="empty-state">Erro ao carregar o relatório. Tente novamente.</div>';
   }
+}
+
+async function loadFunc() {
+  const c = document.getElementById('func-container');
+  try {
+    const json = await fetch(`${SCRIPT_URL}?action=pedidos_func&token=${encodeURIComponent(pcsToken())}`).then(x => x.json());
+    if (json.erro === 'perm') { goLogin(); return; }
+    const ps = json.pessoas || [];
+    if (!ps.length) { c.innerHTML = '<div class="empty-state" style="padding:1.5rem"><div>Nenhum pedido registrado.</div></div>'; return; }
+    c.innerHTML = ps.map((p, idx) => `
+      <div class="week-block">
+        <div class="week-header" onclick="toggleFunc(${idx})"><span>👤 ${p.nome} <span style="font-weight:400;color:#888">· ${p.datas.length} pedido(s)</span></span><span id="func-arrow-${idx}">▾</span></div>
+        <div class="week-body" id="func-body-${idx}">
+          ${p.datas.map(d => `<div class="week-row" style="display:block"><b style="color:#1a3a8f">${d.data}</b><div style="margin-top:4px;color:#444">${d.itens.join(' · ')}</div></div>`).join('')}
+        </div>
+      </div>`).join('');
+  } catch(e) { c.innerHTML = '<div class="empty-state">Erro ao carregar.</div>'; }
+}
+function toggleFunc(idx) {
+  const o = document.getElementById('func-body-' + idx).classList.toggle('open');
+  document.getElementById('func-arrow-' + idx).textContent = o ? '▴' : '▾';
 }
 
 async function loadHistorico() {
