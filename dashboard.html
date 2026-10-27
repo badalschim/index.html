@@ -29,7 +29,7 @@ body::before { content: ''; position: fixed; top: 0; left: 0; right: 0; height: 
 .hero p { font-size: 13px; opacity: .85; margin-top: 4px; }
 
 .tabs { display: flex; gap: 4px; background: #fff; border-radius: 999px; padding: 4px; margin: -30px 16px 16px; box-shadow: 0 6px 18px rgba(26,58,143,.12); position: sticky; top: calc(8px + env(safe-area-inset-top)); z-index: 50; }
-.tab { flex: 1; border: none; background: none; padding: 11px 6px; border-radius: 999px; font-size: 13px; font-weight: 700; color: var(--mut); cursor: pointer; font-family: inherit; transition: all .15s; }
+.tab { flex: 1; border: none; background: none; padding: 11px 2px; border-radius: 999px; font-size: 13px; font-weight: 700; color: var(--mut); cursor: pointer; font-family: inherit; transition: all .15s; }
 .tab.on { background: var(--blue); color: #fff; }
 .panel { display: none; padding: 0 16px; animation: up .3s; }
 .panel.on { display: block; }
@@ -81,6 +81,29 @@ body::before { content: ''; position: fixed; top: 0; left: 0; right: 0; height: 
 @keyframes sh { to { background-position: -200% 0; } }
 .center { text-align: center; padding: 60px 24px; }
 .center p { color: var(--mut); margin: 10px 0 18px; }
+
+.alert { border-radius: 14px; padding: 12px 14px; font-size: 13.5px; line-height: 1.45; margin-bottom: 8px; }
+.alert a { color: inherit; font-weight: 800; margin-left: 6px; white-space: nowrap; }
+.alert.warn { background: #fff3d6; color: #6b4a00; }
+.alert.bad { background: #fdecec; color: #9b1c1c; }
+.alert.good { background: #e9f8ef; color: #17683a; font-weight: 700; }
+.cal { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+.cal-d { text-align: center; background: #f4f6fc; border-radius: 12px; padding: 8px 2px; }
+.cal-d.low { background: #fdecec; }
+.cw { font-size: 11px; font-weight: 800; color: var(--mut); text-transform: capitalize; }
+.cn { font-size: 20px; font-weight: 800; margin: 2px 0; }
+.cs { font-size: 10px; color: var(--mut); }
+.cb { height: 34px; display: flex; align-items: flex-end; margin: 6px 6px 0; background: #e6eaf5; border-radius: 6px; overflow: hidden; }
+.cb i { display: block; width: 100%; background: var(--ok); border-radius: 6px; }
+.cal-d.low .cb i { background: var(--bad); }
+.rk { display: flex; align-items: center; gap: 8px; padding: 9px 0; border-bottom: 1px solid #eef1f8; }
+.rk:last-child { border-bottom: none; }
+.rk-n { flex: 1; font-weight: 700; font-size: 14px; min-width: 0; }
+.rk-c { font-size: 12px; color: var(--mut); }
+.filters { margin-bottom: 12px; }
+.filters input, .filters select { width: 100%; padding: 11px 12px; border: 1.5px solid #dfe4f1; border-radius: 14px; font-size: 14px; font-family: inherit; background: #fff; color: var(--txt); outline: none; }
+.frow { display: flex; gap: 8px; margin-top: 8px; }
+.fcount { font-size: 12px; color: var(--mut); margin: 8px 4px 0; font-weight: 600; }
 </style>
 <script>(function(K){try{var s=JSON.parse(localStorage.getItem('pcs_session'));if(!s||!s.token||s.expires<Date.now()){location.replace('app.html');return;}if(K&&s.ocultas&&s.ocultas.indexOf(K)!==-1)location.replace('app.html');}catch(e){location.replace('app.html');}})(null);</script>
 </head>
@@ -100,12 +123,14 @@ body::before { content: ''; position: fixed; top: 0; left: 0; right: 0; height: 
   </div>
 
   <div class="tabs">
-    <button class="tab on" data-tab="escala" onclick="showTab('escala')" data-i18n="tab_sched">Escala</button>
+    <button class="tab on" data-tab="resumo" onclick="showTab('resumo')" data-i18n="tab_sum">Resumo</button>
+    <button class="tab" data-tab="escala" onclick="showTab('escala')" data-i18n="tab_sched">Escala</button>
     <button class="tab" data-tab="mat" onclick="showTab('mat')" data-i18n="tab_sup">Materiais</button>
     <button class="tab" data-tab="fb" onclick="showTab('fb')" data-i18n="tab_fb">Feedbacks</button>
   </div>
 
-  <div class="panel on" id="p-escala"><div class="skeleton"></div><div class="skeleton"></div></div>
+  <div class="panel on" id="p-resumo"><div class="skeleton"></div><div class="skeleton"></div></div>
+  <div class="panel" id="p-escala"><div class="skeleton"></div><div class="skeleton"></div></div>
   <div class="panel" id="p-mat"></div>
   <div class="panel" id="p-fb"></div>
   <button class="refresh" onclick="load()" data-i18n="refresh">↻ Atualizar</button>
@@ -143,8 +168,13 @@ const TR = {
     need_login:'Primero entra desde el menú', need_login_s:'Inicia sesión para ver el panel.', go_menu:'Ir al menú', no_perm:'Sin permiso', no_perm_s:'No tienes acceso a esta página.', locale:'es-ES', total:'total' }
 };
 
+Object.assign(TR.pt, { tab_sum:'Resumo', hero_sum:'Visão geral', alerts:'Atenção', all_good:'Tudo em dia ✓', al_noresp:'sem resposta da folga:', al_pend:'solicitação(ões) de alteração aguardando aprovação', al_carry:'item(ns) acumulado(s) de semanas anteriores', al_low:'Avaliação baixa:', kpi_resp:'Folgas enviadas', kpi_req:'Solicitações', kpi_buy:'Itens a comprar', kpi_avg:'Nota média', week_cal:'Quantas trabalham na semana', by_emp:'Avaliações por funcionária', fb_all:'Todas', fb_search:'Buscar cliente ou comentário', fb_pall:'Todo período', fb_30:'Últimos 30 dias', fb_90:'Últimos 90 dias', fb_more:'Mostrar mais', fb_n:'avaliações', open_disp:'Abrir solicitações ›', noeval:'Sem avaliações', ev:'aval.' });
+Object.assign(TR.en, { tab_sum:'Summary', hero_sum:'Overview', alerts:'Attention', all_good:'All good ✓', al_noresp:'no days-off answer:', al_pend:'change request(s) waiting for approval', al_carry:'item(s) carried over from earlier weeks', al_low:'Low rating:', kpi_resp:'Days off sent', kpi_req:'Requests', kpi_buy:'Items to buy', kpi_avg:'Average score', week_cal:'How many work this week', by_emp:'Ratings by employee', fb_all:'Everyone', fb_search:'Search client or comment', fb_pall:'All time', fb_30:'Last 30 days', fb_90:'Last 90 days', fb_more:'Show more', fb_n:'reviews', open_disp:'Open requests ›', noeval:'No ratings', ev:'rev.' });
+Object.assign(TR.es, { tab_sum:'Resumen', hero_sum:'Visión general', alerts:'Atención', all_good:'Todo al día ✓', al_noresp:'sin respuesta de libres:', al_pend:'solicitud(es) de cambio esperando aprobación', al_carry:'artículo(s) acumulado(s) de semanas anteriores', al_low:'Valoración baja:', kpi_resp:'Libres enviados', kpi_req:'Solicitudes', kpi_buy:'Artículos a comprar', kpi_avg:'Nota media', week_cal:'Cuántas trabajan en la semana', by_emp:'Valoraciones por empleada', fb_all:'Todas', fb_search:'Buscar cliente o comentario', fb_pall:'Todo el período', fb_30:'Últimos 30 días', fb_90:'Últimos 90 días', fb_more:'Mostrar más', fb_n:'valoraciones', open_disp:'Abrir solicitudes ›', noeval:'Sin valoraciones', ev:'val.' });
+
 let lang = 'pt'; try { lang = localStorage.getItem('pcs_lang') || 'pt'; } catch(e) {}
-let me = null, data = null, curTab = 'escala', matSel = 'open';
+let me = null, data = null, curTab = 'resumo', matSel = 'open';
+let fbPer = '', fbQ = '', fbDias = 0, fbN = 15;
 const t = k => (TR[lang] && TR[lang][k]) || TR.pt[k] || k;
 const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -165,10 +195,13 @@ function applyLang() {
 }
 function setLang(l) { lang = l; try { localStorage.setItem('pcs_lang', l); } catch(e) {} applyLang(); }
 function setHero() {
-  const titles = { escala: t('tab_sched'), mat: t('tab_sup'), fb: t('tab_fb') };
+  const titles = { resumo: t('tab_sum'), escala: t('tab_sched'), mat: t('tab_sup'), fb: t('tab_fb') };
   $('h-title').textContent = titles[curTab];
   if (!data) { $('sub').textContent = ''; return; }
-  if (curTab === 'escala') {
+  if (curTab === 'resumo') {
+    const e = data.escala;
+    $('sub').textContent = t('hero_sum') + ' · ' + t('week') + ' ' + fmtShort(parseISO(e.dias[0].iso)) + ' ' + t('to') + ' ' + fmtShort(parseISO(e.dias[6].iso));
+  } else if (curTab === 'escala') {
     const e = data.escala, ini = parseISO(e.dias[0].iso), fim = parseISO(e.dias[6].iso);
     $('sub').textContent = t('week') + ' ' + fmtShort(ini) + ' ' + t('to') + ' ' + fmtShort(fim);
   } else if (curTab === 'mat') {
@@ -186,7 +219,7 @@ function showTab(n) {
 }
 
 async function load() {
-  ['p-escala', 'p-mat', 'p-fb'].forEach(id => $(id).innerHTML = '<div class="skeleton"></div><div class="skeleton"></div>');
+  ['p-resumo', 'p-escala', 'p-mat', 'p-fb'].forEach(id => $(id).innerHTML = '<div class="skeleton"></div><div class="skeleton"></div>');
   try {
     const r = await fetch(SCRIPT_URL + '?action=dash&token=' + encodeURIComponent(me.token)).then(x => x.json());
     if (r.erro === 'auth') { location.replace('app.html'); return; }
@@ -194,11 +227,11 @@ async function load() {
       $('app').style.display = 'none'; $('noperm').style.display = 'block'; return;
     }
     data = r; render();
-  } catch(e) { ['p-escala', 'p-mat', 'p-fb'].forEach(id => $(id).innerHTML = `<div class="empty">${t('conn')}</div>`); }
+  } catch(e) { ['p-resumo', 'p-escala', 'p-mat', 'p-fb'].forEach(id => $(id).innerHTML = `<div class="empty">${t('conn')}</div>`); }
 }
 
 function render() {
-  renderEscala(); renderMat(); renderFb(); setHero();
+  renderResumo(); renderEscala(); renderMat(); renderFb(); setHero();
 }
 
 function renderEscala() {
@@ -259,15 +292,92 @@ function renderMat() {
   $('p-mat').innerHTML = h;
 }
 
-function renderFb() {
-  const f = data.feedbacks;
+const num = v => { const n = parseFloat(String(v || '').replace(',', '.')); return isNaN(n) ? null : n; };
+const avg = a => a.length ? a.reduce((x, y) => x + y, 0) / a.length : null;
+const f1 = n => n === null ? '—' : (Math.round(n * 10) / 10).toString().replace('.', lang === 'en' ? '.' : ',');
+function pessoasDe(q) { return String(q || '').split(/\s*(?:,|&|\/|\se\s)\s*/).map(x => x.trim()).filter(Boolean); }
+
+function renderResumo() {
+  const e = data.escala, fb = data.feedbacks || [];
+  const resp = e.total - e.semResposta.length;
+  const pend = (data.solicPend || []);
+  const compra = (data.materiais || []).reduce((a, i) => a + i.quantidade, 0);
+  const carry = (data.materiais || []).reduce((a, i) => a + (i.antigo || 0), 0);
+  const ult = fb.slice(0, 15);
+  const media = avg(ult.map(x => num(x.nota)).filter(n => n !== null));
+  const baixas = ult.filter(x => { const n = num(x.nota); return n !== null && n < 4; });
+
+  let al = '';
+  if (e.semResposta.length) al += `<div class="alert warn">⏳ <b>${e.semResposta.length}</b> ${t('al_noresp')} ${e.semResposta.map(esc).join(', ')}</div>`;
+  if (pend.length) al += `<div class="alert warn">📝 <b>${pend.length}</b> ${t('al_pend')} (${pend.map(p => esc(p.nome)).join(', ')}) <a href="disponibilidade.html">${t('open_disp')}</a></div>`;
+  if (carry) al += `<div class="alert bad">⚠️ <b>${carry}</b> ${t('al_carry')}</div>`;
+  baixas.forEach(x => al += `<div class="alert bad">⭐ ${t('al_low')} <b>${esc(x.nota)}</b> · ${esc(x.cliente || '—')}${x.quem ? ' (' + esc(x.quem) + ')' : ''} · ${esc(x.data)}</div>`);
+  if (!al) al = `<div class="alert good">${t('all_good')}</div>`;
+
+  const kpi = `<div class="stats" style="grid-template-columns:1fr 1fr">
+    <div class="stat"><div class="n" style="color:var(--ok)">${resp}/${e.total}</div><div class="l">${t('kpi_resp')}</div></div>
+    <div class="stat"><div class="n" style="color:${pend.length ? 'var(--warn)' : 'var(--txt)'}">${pend.length}</div><div class="l">${t('kpi_req')}</div></div>
+    <div class="stat"><div class="n" style="color:var(--blue)">${compra}</div><div class="l">${t('kpi_buy')}</div></div>
+    <div class="stat"><div class="n" style="color:var(--warn)">★ ${f1(media)}</div><div class="l">${t('kpi_avg')}</div></div></div>`;
+
+  const maxW = Math.max(1, ...e.dias.map(d => d.pode.length));
+  const cal = `<div class="cal">${e.dias.map(d => {
+    const dt = parseISO(d.iso), n = d.pode.length, total = n + d.nao.length;
+    const low = total && d.nao.length > 0 && n / total < 0.7;
+    return `<div class="cal-d${low ? ' low' : ''}"><div class="cw">${dt.toLocaleDateString(t('locale'), { weekday: 'short' }).replace('.', '')}</div><div class="cn">${n}</div><div class="cs">${fmtShort(dt)}</div><div class="cb"><i style="height:${Math.round(n / maxW * 100)}%"></i></div></div>`;
+  }).join('')}</div>`;
+
+  // por funcionária
+  const m = {};
+  fb.forEach(x => { const n = num(x.nota); if (n === null) return; pessoasDe(x.quem).forEach(p => { (m[p] = m[p] || []).push(n); }); });
+  const rank = Object.keys(m).map(p => {
+    const a = m[p], rec = avg(a.slice(0, 5)), ant = a.length > 5 ? avg(a.slice(5, 10)) : null;
+    const tr = ant === null ? '' : (rec - ant >= 0.3 ? '<span style="color:var(--ok)">↑</span>' : (rec - ant <= -0.3 ? '<span style="color:var(--bad)">↓</span>' : '<span style="color:var(--mut)">→</span>'));
+    return { p, n: a.length, m: avg(a), tr };
+  }).sort((x, y) => y.m - x.m);
+  const emp = rank.length ? rank.map(r => `<div class="rk"><span class="rk-n">${esc(r.p)}</span><span class="rk-c">${r.n} ${t('ev')}</span><span class="score">★ ${f1(r.m)} ${r.tr}</span></div>`).join('') : `<div class="empty" style="padding:10px">${t('noeval')}</div>`;
+
+  $('p-resumo').innerHTML = `<div class="sec-t" style="margin-top:4px">${t('alerts')}</div>${al}
+    <div class="sec-t">${t('kpi_resp')} · ${t('kpi_buy')}</div>${kpi}
+    <div class="sec-t">${t('week_cal')}</div><div class="card">${cal}</div>
+    <div class="sec-t">${t('by_emp')}</div><div class="card">${emp}</div>`;
+}
+
+function fbFiltrados() {
+  const f = data.feedbacks || [];
+  const lim = fbDias ? new Date(Date.now() - fbDias * 86400000) : null;
+  const q = fbQ.trim().toLowerCase();
+  return f.filter(x => {
+    if (fbPer && pessoasDe(x.quem).indexOf(fbPer) === -1) return false;
+    if (lim && (!x.iso || parseISO(x.iso) < lim)) return false;
+    if (q && (x.cliente + ' ' + x.comentario).toLowerCase().indexOf(q) === -1) return false;
+    return true;
+  });
+}
+function fbSet(k, v) { if (k === 'per') fbPer = v; else if (k === 'dias') fbDias = +v; else fbQ = v; fbN = 15; renderFb(true); }
+function fbMais() { fbN += 15; renderFb(true); }
+
+function renderFb(keepFocus) {
+  const f = data.feedbacks || [];
   if (!f.length) { $('p-fb').innerHTML = `<div class="empty">💬<br>${t('no_fb')}</div>`; return; }
-  $('p-fb').innerHTML = f.map(x => `<div class="card">
+  const pessoas = [...new Set(f.flatMap(x => pessoasDe(x.quem)))].sort();
+  const lista = fbFiltrados(), vis = lista.slice(0, fbN);
+  const filtros = `<div class="filters">
+    <input id="fb-q" type="search" placeholder="${t('fb_search')}" value="${esc(fbQ)}" oninput="fbSet('q', this.value)" />
+    <div class="frow"><select onchange="fbSet('per', this.value)"><option value="">${t('fb_all')}</option>${pessoas.map(p => `<option value="${esc(p)}"${p === fbPer ? ' selected' : ''}>${esc(p)}</option>`).join('')}</select>
+    <select onchange="fbSet('dias', this.value)"><option value="0">${t('fb_pall')}</option><option value="30"${fbDias === 30 ? ' selected' : ''}>${t('fb_30')}</option><option value="90"${fbDias === 90 ? ' selected' : ''}>${t('fb_90')}</option></select></div>
+    <div class="fcount">${lista.length} ${t('fb_n')}</div></div>`;
+  const cards = vis.map(x => `<div class="card">
     <div class="fb-top"><div><div class="fb-client">${esc(x.cliente || '—')}</div><div class="fb-meta">${esc(x.data)}${x.quem ? ' · ' + esc(x.quem) : ''}</div></div>
     ${x.nota ? `<div class="score">★ ${esc(x.nota)}</div>` : ''}</div>
     ${(x.punctuality || x.agility || x.quality) ? `<div class="fb-sub">${x.punctuality ? `<span>⏱ ${t('punct')}: ${esc(x.punctuality)}</span>` : ''}${x.agility ? `<span>⚡ ${t('agil')}: ${esc(x.agility)}</span>` : ''}${x.quality ? `<span>✨ ${t('qual')}: ${esc(x.quality)}</span>` : ''}</div>` : ''}
     ${x.comentario ? `<div class="fb-com">${esc(x.comentario)}</div>` : ''}
   </div>`).join('');
+  const mais = lista.length > vis.length ? `<button class="wk" style="display:block;margin:6px auto" onclick="fbMais()">${t('fb_more')} (${lista.length - vis.length})</button>` : '';
+  const had = keepFocus && document.activeElement && document.activeElement.id === 'fb-q';
+  const pos = had ? document.activeElement.selectionStart : 0;
+  $('p-fb').innerHTML = filtros + (cards || `<div class="empty">💬<br>${t('no_fb')}</div>`) + mais;
+  if (had) { const el = $('fb-q'); el.focus(); try { el.setSelectionRange(pos, pos); } catch(e) {} }
 }
 
 window.addEventListener('DOMContentLoaded', () => {
