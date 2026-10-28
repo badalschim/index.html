@@ -330,7 +330,8 @@ function renderResumo() {
   // por funcionária
   const m = {};
   fb.forEach(x => { const n = num(x.nota); if (n === null) return; pessoasDe(x.quem).forEach(p => { (m[p] = m[p] || []).push(n); }); });
-  const rank = Object.keys(m).map(p => {
+  const ativos = data.ativos || null;
+  const rank = Object.keys(m).filter(p => !ativos || ativos.indexOf(p) !== -1).map(p => {
     const a = m[p], rec = avg(a.slice(0, 5)), ant = a.length > 5 ? avg(a.slice(5, 10)) : null;
     const tr = ant === null ? '' : (rec - ant >= 0.3 ? '<span style="color:var(--ok)">↑</span>' : (rec - ant <= -0.3 ? '<span style="color:var(--bad)">↓</span>' : '<span style="color:var(--mut)">→</span>'));
     return { p, n: a.length, m: avg(a), tr };
