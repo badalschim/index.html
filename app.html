@@ -158,7 +158,7 @@ const TRANSLATIONS = {
     supplies_t: 'Pedido de materiais', supplies_s: 'Lista de supplies',
     invoice_t: 'Invoice', invoice_s: 'Gerar e salvar invoice',
     avail_t: 'Solicitar folga', avail_s: 'Dias que você precisa de folga',
-    dash_t: 'Painel', dash_s: 'Escala, materiais e feedbacks', agenda_t: 'Agenda', agenda_s: 'Serviços, equipes e clientes', func_t: 'Funcionários', func_s: 'Fichas e equipes',
+    dash_t: 'Painel', dash_s: 'Escala, materiais e feedbacks', agenda_t: 'Agenda', agenda_s: 'Serviços, equipes e clientes', func_t: 'Funcionários', func_s: 'Fichas e equipes', atend_t: 'Meu atendimento', atend_s: 'Serviços do dia e dados do cliente',
     report_t: 'Relatório semanal', report_s: 'Pedidos de materiais da semana',
     fill_user_pass: 'Preencha usuário e senha.', wrong_credentials: 'Usuário ou senha incorretos.',
     connection_error_retry: 'Erro de conexão. Tente novamente.'
@@ -171,7 +171,7 @@ const TRANSLATIONS = {
     supplies_t: 'Supplies request', supplies_s: 'Supply list',
     invoice_t: 'Invoice', invoice_s: 'Create and save invoice',
     avail_t: 'Request day off', avail_s: 'Days you need off',
-    dash_t: 'Dashboard', dash_s: 'Schedule, supplies and feedback', agenda_t: 'Schedule', agenda_s: 'Jobs, teams and clients', func_t: 'Employees', func_s: 'Profiles and teams',
+    dash_t: 'Dashboard', dash_s: 'Schedule, supplies and feedback', agenda_t: 'Schedule', agenda_s: 'Jobs, teams and clients', func_t: 'Employees', func_s: 'Profiles and teams', atend_t: 'My jobs', atend_s: 'Daily jobs and client info',
     report_t: 'Weekly report', report_s: "This week's supply requests",
     fill_user_pass: 'Fill in username and password.', wrong_credentials: 'Incorrect username or password.',
     connection_error_retry: 'Connection error. Please try again.'
@@ -184,7 +184,7 @@ const TRANSLATIONS = {
     supplies_t: 'Pedido de materiales', supplies_s: 'Lista de suministros',
     invoice_t: 'Invoice', invoice_s: 'Crear y guardar invoice',
     avail_t: 'Solicitar libre', avail_s: 'Días que necesitas libres',
-    dash_t: 'Panel', dash_s: 'Escala, materiales y comentarios', agenda_t: 'Agenda', agenda_s: 'Servicios, equipos y clientes', func_t: 'Empleados', func_s: 'Fichas y equipos',
+    dash_t: 'Panel', dash_s: 'Escala, materiales y comentarios', agenda_t: 'Agenda', agenda_s: 'Servicios, equipos y clientes', func_t: 'Empleados', func_s: 'Fichas y equipos', atend_t: 'Mi atención', atend_s: 'Servicios del día y datos del cliente',
     report_t: 'Informe semanal', report_s: 'Pedidos de materiales de la semana',
     fill_user_pass: 'Completa usuario y contraseña.', wrong_credentials: 'Usuario o contraseña incorrectos.',
     connection_error_retry: 'Error de conexión. Inténtalo de nuevo.'
@@ -197,6 +197,7 @@ let currentNome = '';
 let currentAcessoRelatorio = false;
 let currentAcessoDash = false;
 let currentAcessoAgenda = false;
+let currentAcessoAtend = false;
 let currentOcultas = [];
 let currentModelo = '';
 let currentBloq = [];
@@ -215,6 +216,9 @@ function buildMenu() {
   items = items.filter(i => currentOcultas.indexOf(i.key) === -1);
   if (currentAcessoDash) {
     items.push({ href: 'dashboard.html', icon: '📊', bg: '#e4f4ff', t: 'dash_t', s: 'dash_s' });
+  }
+  if (currentAcessoAtend) {
+    items.push({ href: 'atendimento.html', icon: '🧹', bg: '#e8f7e4', t: 'atend_t', s: 'atend_s' });
   }
   if (currentAcessoAgenda) {
     items.push({ href: 'agenda.html', icon: '🗓️', bg: '#e6fbf3', t: 'agenda_t', s: 'agenda_s' });
@@ -288,6 +292,7 @@ function applyProfile(p) {
   currentAcessoRelatorio = !!p.acessoRelatorio;
   currentAcessoDash = !!p.acessoDashboard;
   currentAcessoAgenda = !!p.acessoAgenda;
+  currentAcessoAtend = !!p.acessoAtendimento;
   currentOcultas = p.ocultas || [];
   currentModelo = p.modelo || '';
   currentBloq = p.bloqueados || [];
@@ -295,7 +300,7 @@ function applyProfile(p) {
 function saveSession(token, expires) {
   try {
     localStorage.setItem(SESSION_KEY, JSON.stringify({
-      user: currentUser, token: token, nome: currentNome, acessoRelatorio: currentAcessoRelatorio, acessoDash: currentAcessoDash, acessoAgenda: currentAcessoAgenda,
+      user: currentUser, token: token, nome: currentNome, acessoRelatorio: currentAcessoRelatorio, acessoDash: currentAcessoDash, acessoAgenda: currentAcessoAgenda, acessoAtendimento: currentAcessoAtend,
       ocultas: currentOcultas, modelo: currentModelo, bloqueados: currentBloq, expires: expires || (Date.now() + SESSION_DURATION),
       simula: currentSimula, sim: currentSim || undefined, simNome: currentSim ? currentSimNome : undefined
     }));
@@ -353,7 +358,7 @@ async function entrarSim() {
     const j = await fetch(`${SCRIPT_URL}?action=sim_entrar&alvo=${encodeURIComponent(alvo)}&token=${encodeURIComponent(s.token)}`).then(x => x.json());
     if (!j.ok) { alert('Não foi possível entrar.'); return; }
     localStorage.setItem('pcs_session_orig', localStorage.getItem('pcs_session'));
-    localStorage.setItem('pcs_session', JSON.stringify({ user: j.user, token: j.token, nome: j.nome, acessoRelatorio: j.acessoRelatorio, acessoDash: j.acessoDashboard, acessoAgenda: j.acessoAgenda,
+    localStorage.setItem('pcs_session', JSON.stringify({ user: j.user, token: j.token, nome: j.nome, acessoRelatorio: j.acessoRelatorio, acessoDash: j.acessoDashboard, acessoAgenda: j.acessoAgenda, acessoAtendimento: j.acessoAtendimento,
       ocultas: j.ocultas || [], modelo: j.modelo || '', bloqueados: j.bloqueados || [], expires: Date.now() + 2 * 60 * 60 * 1000, simula: false, sim: true, simNome: j.nome }));
     location.reload();
   } catch(e) { alert('Erro de conexão.'); }
@@ -368,7 +373,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   const s = loadSession();
   if (!s) return;
   currentUser = s.user; currentSim = !!s.sim; currentSimNome = s.simNome || '';
-  applyProfile({ podeSimular: s.simula, nome: s.nome, acessoRelatorio: s.acessoRelatorio, acessoDashboard: s.acessoDash, acessoAgenda: s.acessoAgenda, ocultas: s.ocultas, modelo: s.modelo, bloqueados: s.bloqueados });
+  applyProfile({ podeSimular: s.simula, nome: s.nome, acessoRelatorio: s.acessoRelatorio, acessoDashboard: s.acessoDash, acessoAgenda: s.acessoAgenda, acessoAtendimento: s.acessoAtendimento, ocultas: s.ocultas, modelo: s.modelo, bloqueados: s.bloqueados });
   showApp();
   // confere com o servidor se o acesso ainda vale (e atualiza as permissões)
   try {

@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="theme-color" content="#1a3a8f" />
+<title>Meu atendimento - Paula's Cleaning Squad</title>
+<link rel="manifest" href="manifest.json" />
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+<link rel="icon" type="image/png" href="icons/icon-192.png" />
+<script>if('serviceWorker' in navigator) window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));</script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;background:#f0f2f5;color:#222;font-size:15px;min-height:100vh;padding-bottom:30px}
+.top{background:#1a3a8f;color:#fff;padding:14px 16px 12px;position:sticky;top:0;z-index:20}
+.top-row{display:flex;justify-content:space-between;align-items:center}
+.pill{background:rgba(255,255,255,.18);color:#fff;text-decoration:none;border:none;border-radius:20px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:Arial}
+h1{font-size:18px;margin:8px 0 2px}.sub{font-size:12px;opacity:.85}
+.nav{display:flex;align-items:center;gap:8px;padding:10px 12px}
+.nav button{border:1px solid #cfd6ea;background:#fff;border-radius:8px;padding:9px 14px;font-weight:700;color:#1a3a8f;font-size:14px;cursor:pointer}
+.nav .d{flex:1;text-align:center;font-weight:700;color:#1a3a8f}
+.owner{padding:0 12px 8px;font-size:13px;color:#555;display:none}
+.list{padding:0 12px;display:flex;flex-direction:column;gap:10px}
+.job{background:#fff;border-radius:14px;padding:14px;box-shadow:0 1px 4px rgba(0,0,0,.08);cursor:pointer;border-left:6px solid #1a3a8f}
+.job .tm{font-weight:700;color:#1a3a8f;font-size:13px}
+.job .nm{font-weight:700;font-size:17px;margin:3px 0}
+.job .ad{font-size:13px;color:#777}
+.badge{display:inline-block;font-size:11px;font-weight:700;border-radius:12px;padding:3px 9px;color:#fff;background:#21ba45;margin-top:6px;margin-right:4px}
+.st{background:#1a3a8f}.st-A-Caminho{background:#e69500}.st-Iniciado{background:#e66b00}.st-Concluído{background:#1f9d55}.st-Cancelado{background:#999}
+.empty{text-align:center;color:#888;padding:3rem 1rem}
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:flex-end;justify-content:center;z-index:50}
+.ov.on{display:flex}
+.sheet{background:#fff;border-radius:16px 16px 0 0;width:100%;max-width:520px;max-height:94vh;display:flex;flex-direction:column;overflow:hidden}
+@media(min-width:600px){.ov{align-items:center}.sheet{border-radius:16px}}
+.hero{background:linear-gradient(135deg,#1a3a8f,#3a5fc4);color:#fff;padding:22px 16px 14px;position:relative}
+.hero .x{position:absolute;right:12px;top:10px;background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:50%;width:30px;height:30px;font-size:16px;cursor:pointer}
+.hero .n{font-size:20px;font-weight:700}.hero .t{font-size:13px;opacity:.9;margin-top:2px}
+.body{overflow:auto;padding:12px 16px;flex:1}
+.addr{display:flex;gap:8px;align-items:center;margin-bottom:10px}
+.addr .a{flex:1;color:#555;font-size:14px;line-height:1.4}
+.addr a{background:#eef2ff;color:#1a3a8f;border-radius:18px;padding:8px 12px;font-size:12px;font-weight:700;text-decoration:none}
+.sec{border-top:1px solid #eee;padding:10px 0}
+.sec>summary{cursor:pointer;font-weight:700;display:flex;justify-content:space-between;align-items:center;list-style:none}
+.sec>summary::-webkit-details-marker{display:none}
+.cnt{background:#e9e9e9;border-radius:6px;padding:2px 8px;font-size:12px;margin-right:6px}
+.row{font-size:14px;margin:6px 0;color:#444}.row b{color:#222}
+.note{background:#fff8ec;border:1px solid #ecd9b5;border-radius:8px;padding:10px;margin:8px 0;font-size:14px;white-space:pre-wrap;word-break:break-word}
+.note.imp{background:#fdeaea;border-color:#f0b5b5}
+.note .au{display:block;font-size:11px;color:#999;margin-top:6px}
+.add textarea{width:100%;border:1px solid #ccc;border-radius:8px;padding:9px;font-size:14px;font-family:Arial}
+.add .r{display:flex;gap:8px;margin-top:6px;align-items:center;flex-wrap:wrap}
+.add button{border:none;border-radius:8px;padding:9px 14px;font-weight:700;cursor:pointer;background:#1a3a8f;color:#fff;font-family:Arial}
+.add button.g{background:#eee;color:#333}
+.go{border:none;width:100%;padding:18px;font-size:18px;font-weight:700;color:#fff;background:#21ba45;cursor:pointer;font-family:Arial}
+.go.b{background:#1a3a8f}.go.o{background:#e66b00}.go.d{background:#999}
+.pop{background:#fff;border-radius:14px;max-width:440px;width:92%;max-height:80vh;overflow:auto;padding:16px;margin:auto}
+.pop h3{margin-bottom:10px;color:#c0392b}
+.pop button{width:100%;margin-top:12px;padding:13px;border:none;border-radius:8px;font-weight:700;font-size:15px;background:#1a3a8f;color:#fff;cursor:pointer;font-family:Arial}
+.pop button.g{background:#eee;color:#333}
+.toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:#222;color:#fff;border-radius:20px;padding:10px 18px;font-size:13px;z-index:99;display:none}
+.center{display:none;min-height:80vh;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px;gap:10px}
+</style>
+<script>(function(){try{var s=JSON.parse(localStorage.getItem('pcs_session'));if(!s||!s.token||s.expires<Date.now()){location.replace('app.html');return;}}catch(e){location.replace('app.html');}})();</script>
+</head>
+<body>
+<div id="app" style="display:none">
+  <div class="top">
+    <div class="top-row"><a class="pill" href="app.html">‹ Menu</a><button class="pill" onclick="load()">↻ Atualizar</button></div>
+    <h1>Meu atendimento</h1><div class="sub" id="sub"></div>
+  </div>
+  <div class="nav"><button onclick="mv(-1)">‹</button><div class="d" id="dt"></div><button onclick="mv(1)">›</button><button onclick="hoje()">Hoje</button></div>
+  <div class="owner" id="owner"><label><input type="checkbox" id="todos" onchange="load()"> Ver serviços de todas as equipes (gestão)</label></div>
+  <div class="list" id="list"></div>
+</div>
+<div class="center" id="noperm"><h2>Sem permissão</h2><p>Esta página ainda não está liberada para você.</p><a class="pill" style="background:#1a3a8f" href="app.html">Ir ao menu</a></div>
+
+<div class="ov" id="ov" onclick="if(event.target===this)fechar()">
+  <div class="sheet">
+    <div class="hero"><button class="x" onclick="fechar()">✕</button><div class="n" id="hN"></div><div class="t" id="hT"></div></div>
+    <div class="body" id="body"></div>
+    <button class="go" id="go" onclick="avancar()"></button>
+  </div>
+</div>
+<div class="ov" id="ovP" style="z-index:60"><div class="pop"><h3>⚠️ Notas importantes</h3><div id="pBody"></div><button onclick="confirmaLi()">Li e entendi — Iniciar</button><button class="g" onclick="$('ovP').classList.remove('on')">Voltar</button></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyGtMi4dY_1_eewqbyU8w05JNk9IqPOKFHkwzLGEP1tICwpZSyyswetMA8VA_ZwkI83-A/exec";
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+let me = null, dia = iso(new Date()), servs = [], cur = null, dono = false, simMode = false;
+function iso(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+function pd(s) { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); }
+function addD(s, n) { const d = pd(s); d.setDate(d.getDate() + n); return iso(d); }
+function getSession() { try { const s = JSON.parse(localStorage.getItem('pcs_session')); if (s && s.token && s.expires > Date.now()) return s; } catch (e) {} return null; }
+function toast(m) { const t = $('toast'); t.textContent = m; t.style.display = 'block'; clearTimeout(toast.t); toast.t = setTimeout(() => t.style.display = 'none', 2600); }
+async function api(p) { const q = new URLSearchParams(Object.assign({ token: me.token }, p)).toString(); return (await fetch(SCRIPT_URL + '?' + q)).json(); }
+const NEXT = { 'Agendado': ['A Caminho', 'A Caminho', ''], 'A Caminho': ['Iniciado', 'Iniciar serviço', 'o'], 'Iniciado': ['Concluído', 'Concluir serviço', 'b'], 'Concluído': [null, 'Concluído ✓', 'd'], 'Cancelado': [null, 'Serviço cancelado', 'd'] };
+
+async function boot() {
+  me = getSession();
+  if (!me) { location.replace('app.html'); return; }
+  if (!me.acessoAtendimento) { $('noperm').style.display = 'flex'; return; }
+  $('app').style.display = 'block'; await load();
+}
+async function load() {
+  $('dt').textContent = pd(dia).toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' });
+  $('list').innerHTML = '<div class="empty">Carregando…</div>';
+  try {
+    const j = await api({ action: 'atend_dia', data: dia, todos: $('todos').checked ? '1' : '0' });
+    if (!j.ok) { $('list').innerHTML = '<div class="empty">Sem acesso.</div>'; return; }
+    servs = j.servicos; dono = j.dono;
+    $('owner').style.display = dono ? 'block' : 'none';
+    $('sub').textContent = (j.eu || '') + (j.equipe ? ' · Equipe ' + j.equipe : '');
+    render();
+  } catch (e) { $('list').innerHTML = '<div class="empty">Erro de conexão. Toque em Atualizar.</div>'; }
+}
+function mv(n) { dia = addD(dia, n); load(); }
+function hoje() { dia = iso(new Date()); load(); }
+function stClass(s) { return 'st-' + String(s).replace(/\s+/g, '-'); }
+function render() {
+  const l = servs.filter(s => s.status !== 'Cancelado').length;
+  $('list').innerHTML = servs.length ? servs.map((s, i) => '<div class="job" style="border-left-color:' + (s.status === 'Concluído' ? '#1f9d55' : s.status === 'Cancelado' ? '#999' : '#1a3a8f') + '" onclick="abrir(' + i + ')">' +
+    '<div class="tm">' + (s.ini || 'sem horário') + (s.fim ? ' – ' + s.fim : '') + '</div><div class="nm">' + esc(s.cliente) + '</div><div class="ad">' + esc(s.end) + '</div>' +
+    '<span class="badge">' + esc(s.tipo || 'Serviço') + '</span><span class="badge ' + stClass(s.status) + '">' + esc(s.status) + '</span>' +
+    (s.notas.some(n => n.tipo === 'importante') ? '<span class="badge" style="background:#c0392b">⚠️ notas</span>' : '') + '</div>').join('') : '<div class="empty">Nenhum serviço neste dia.</div>';
+}
+function abrir(i) { cur = servs[i]; desenha(); $('ov').classList.add('on'); }
+function fechar() { $('ov').classList.remove('on'); }
+function noteH(n) { return '<div class="note' + (n.tipo === 'importante' ? ' imp' : '') + '">' + esc(n.texto) + '<span class="au">' + esc(n.autor) + ' · ' + esc(n.data) + '</span></div>'; }
+function desenha() {
+  const s = cur;
+  $('hN').textContent = s.cliente; $('hT').textContent = (s.ini || '') + (s.fim ? ' – ' + s.fim : '') + (s.tipo ? ' · ' + s.tipo : '');
+  const q = encodeURIComponent(s.end + (s.estado ? ' ' + s.estado : '') + (s.cep ? ' ' + s.cep : ''));
+  const colegas = s.cleaners ? s.cleaners : '—';
+  $('body').innerHTML =
+    '<div class="addr"><div class="a">' + esc(s.end) + (s.complemento ? '<br>' + esc(s.complemento) : '') + '</div><a target="_blank" href="https://www.google.com/maps/search/?api=1&query=' + q + '">📍 Maps</a><a target="_blank" href="https://waze.com/ul?q=' + q + '&navigate=yes">Waze</a></div>' +
+    (s.status === 'Cancelado' ? '<div class="note imp">Este serviço foi cancelado.</div>' : '') +
+    '<details class="sec" open><summary><span>Detalhes</span></summary>' +
+    '<div class="row"><b>Equipe:</b> ' + (s.equipe ? esc(s.equipe) : '—') + ' · ' + esc(colegas) + '</div>' +
+    (s.freq ? '<div class="row"><b>Frequência:</b> ' + esc(s.freq) + '</div>' : '') +
+    (s.acesso || s.codigo ? '<div class="row"><b>Acesso:</b> ' + esc(s.acesso) + (s.codigo ? ' — <b>' + esc(s.codigo) + '</b>' : '') + '</div>' : '') +
+    (s.obs ? '<div class="row"><b>Obs. do serviço:</b> ' + esc(s.obs) + '</div>' : '') +
+    (s.aCaminho ? '<div class="row"><b>A caminho:</b> ' + esc(s.aCaminho) + '</div>' : '') + (s.iniciou ? '<div class="row"><b>Início:</b> ' + esc(s.iniciou) + '</div>' : '') + (s.concluiu ? '<div class="row"><b>Fim:</b> ' + esc(s.concluiu) + '</div>' : '') +
+    '</details>' +
+    '<details class="sec" open><summary><span><span class="cnt">' + s.notas.length + '</span>Notas</span></summary><div id="nl">' + (s.notas.length ? s.notas.map(noteH).join('') : '<div class="row">Nenhuma nota.</div>') + '</div>' +
+    '<div class="add"><textarea id="nt" rows="2" placeholder="Adicionar nota…"></textarea><div class="r"><button onclick="addNota(false)">Salvar nota</button>' +
+    (dono ? '<button onclick="addNota(true)" style="background:#c0392b">Salvar como importante</button>' + (s.obsCliente ? '<button class="g" onclick="usaObs()">Usar obs. do cliente</button>' : '') : '') + '</div></div></details>';
+  const nx = NEXT[s.status] || NEXT['Agendado'];
+  const b = $('go'); b.textContent = nx[1]; b.className = 'go ' + nx[2]; b.disabled = !nx[0];
+}
+function usaObs() { $('nt').value = cur.obsCliente; }
+async function addNota(imp) {
+  const t = $('nt').value.trim(); if (!t) return;
+  try {
+    const j = await api({ action: 'atend_nota', cid: cur.cid, texto: t, tipo: imp ? 'importante' : 'comum' });
+    if (!j.ok) throw 0;
+    const n = { tipo: imp ? 'importante' : 'comum', texto: t, autor: me.nome || '', data: iso(new Date()) };
+    servs.filter(x => x.cid === cur.cid).forEach(x => x.notas.push(n));
+    desenha(); render(); toast('Nota salva');
+  } catch (e) { toast('Não foi possível salvar (modo "Ver como" é só leitura)'); }
+}
+function avancar() {
+  const nx = NEXT[cur.status] || NEXT['Agendado']; if (!nx[0]) return;
+  if (nx[0] === 'Iniciado') {
+    const imp = cur.notas.filter(n => n.tipo === 'importante');
+    if (imp.length) { $('pBody').innerHTML = imp.map(noteH).join(''); $('ovP').classList.add('on'); return; }
+  }
+  if (nx[0] === 'Concluído' && !confirm('Confirmar que o serviço foi concluído? Verifique as tarefas e as notas antes de finalizar.')) return;
+  muda(nx[0]);
+}
+function confirmaLi() { $('ovP').classList.remove('on'); muda('Iniciado'); }
+async function muda(st) {
+  try {
+    const j = await api({ action: 'atend_status', id: cur.id, status: st });
+    if (!j.ok) throw j.erro || 0;
+    cur.status = st; const h = new Date().toTimeString().slice(0, 5), d = iso(new Date()) + ' ' + h;
+    if (st === 'A Caminho') cur.aCaminho = d; if (st === 'Iniciado') cur.iniciou = d; if (st === 'Concluído') cur.concluiu = d;
+    desenha(); render(); toast(st === 'Concluído' ? 'Serviço concluído ✓' : 'Status: ' + st);
+  } catch (e) { toast(e === 'sim' || e === 0 ? 'Não foi possível salvar' : 'Não permitido: ' + e); }
+}
+boot();
+</script>
+<script src="sim.js"></script>
+</body>
+</html>
