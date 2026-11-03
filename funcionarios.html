@@ -72,6 +72,7 @@ h1{font-size:18px;margin:8px 0 2px}.sub{font-size:12px;opacity:.85}
     <h2 id="mt">Funcionário</h2>
     <div class="f"><label>Situação</label><select id="f_ativo"><option value="sim">Ativo</option><option value="nao">Inativo</option></select></div>
     <div class="f2"><div class="f"><label>Nome</label><input id="f_nome"></div><div class="f"><label>Sobrenome</label><input id="f_sobrenome"></div></div>
+    <div class="f" id="rowVinc" style="display:none"><label>Esse login já tem ficha? Vincular a:</label><select id="f_vinc" onchange="vincPick()"></select></div>
     <div class="f2"><div class="f"><label>Telefone</label><input id="f_telefone" type="tel"></div><div class="f"><label>E-mail (login do app)</label><input id="f_email" type="email"></div></div>
     <div class="sec">Trabalho</div>
     <div class="f2">
@@ -173,6 +174,8 @@ function abrir(i) {
   $('mt').textContent = i === null ? 'Novo funcionário' : nomeCompleto(f);
   CAMPOS.forEach(k => $('f_' + k).value = f[k] || (k === 'ativo' ? 'sim' : k === 'motorista' ? 'nao' : ''));
   const pm = f.perm || null;
+  $('rowVinc').style.display = f.semFicha ? 'block' : 'none';
+  if (f.semFicha) $('f_vinc').innerHTML = '<option value="">Criar ficha nova</option>' + lista.map((x, n) => x.id && !x.email ? '<option value="' + n + '">' + esc(nomeCompleto(x)) + (x.equipe ? ' · ' + esc(x.equipe) : '') + (x.perfil ? ' · ' + esc(x.perfil) : '') + '</option>' : '').join('');
   $('p_login').checked = i === null ? true : !!f.loginAtivo;
   PERMS.forEach(k => $('p_' + k).checked = pm ? !!pm[k] : !!PERM_PADRAO[k]);
   $('p_modelo').value = pm ? pm.modelo : ''; $('p_bloq').value = pm ? pm.bloq : '';
@@ -180,9 +183,15 @@ function abrir(i) {
   $('p_convite').checked = true; togLogin();
   $('ov').classList.add('on');
 }
+function vincPick() {
+  const v = $('f_vinc').value; if (v === '') return;
+  const x = lista[+v];
+  ['nome', 'sobrenome', 'telefone', 'perfil', 'equipe', 'motorista', 'pagamento', 'nascimento', 'zelle', 'endereco', 'emerg_nome', 'emerg_tel', 'obs'].forEach(k => { if (x[k]) $('f_' + k).value = x[k]; });
+}
 function fechar() { $('ov').classList.remove('on'); }
 async function salvar() {
-  const d = { action: 'func_salvar', id: editKey === null ? '' : (lista[editKey].id || '') };
+  const vinc = (editKey !== null && lista[editKey].semFicha && $('f_vinc').value !== '') ? lista[+$('f_vinc').value] : null;
+  const d = { action: 'func_salvar', id: vinc ? vinc.id : (editKey === null ? '' : (lista[editKey].id || '')) };
   CAMPOS.forEach(k => d[k] = $('f_' + k).value);
   if (!d.nome.trim()) { toast('Informe o nome'); return; }
   const tinha = editKey !== null && lista[editKey].login;
@@ -201,6 +210,7 @@ async function salvar() {
     if (editKey === null) lista.push(Object.assign({ id: j.id }, o)); else Object.assign(lista[editKey], o, { id: j.id, semFicha: false });
     if (d.p_login !== undefined) { o.login = d.p_login === '1' || tinha; o.loginAtivo = d.p_login === '1' && d.ativo === 'sim'; if (d.p_login === '1') { o.perm = {}; PERMS.forEach(k => o.perm[k] = d['p_' + k] === '1'); o.perm.modelo = d.p_modelo; o.perm.bloq = d.p_bloq; } }
     if (d.p_login !== undefined) Object.assign(editKey === null ? lista[lista.length - 1] : lista[editKey], { login: o.login, loginAtivo: o.loginAtivo }, o.perm ? { perm: o.perm } : {});
+    if (vinc) { fechar(); await load(); toast('Vinculado'); return; }
     fechar(); render(); toast(j.convite === 'enviado' ? 'Salvo · e-mail enviado' : j.convite === 'falhou' ? 'Salvo · e-mail NÃO enviado' : 'Salvo');
   } catch (e) { toast('Não foi possível salvar'); }
 }
