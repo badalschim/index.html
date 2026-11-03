@@ -532,6 +532,7 @@
 
     // Check unexported reviews
     checkUnexportedReviews();
+    setTimeout(function() { if (window.autoExportDaily) window.autoExportDaily(); }, 5000);
 
     // Montar container de msgs (rR não é mais chamado via fetch)
     const mrvEl = gi('mrv');
@@ -1012,17 +1013,18 @@ async function getTeamUsers(jobDate, teamNumber) {
   return _scheduleCache[key];
 }
 
-async function exportReviewsToSheets() {
+async function exportReviewsToSheets(auto) {
   const btn = gi('mp-export-btn');
   const status = gi('mp-export-status');
+  if (auto && !getImportKey(false)) return false; // automático nunca pergunta senha
   if (btn) { btn.textContent = '⏳ Buscando...'; btn.disabled = true; }
-  if (status) status.textContent = 'Carregando funcionários...';
+  if (status) status.textContent = auto ? 'Atualizando avaliações...' : 'Carregando funcionários...';
   await loadEmployeeEmails();
   if (status) status.textContent = '';
   try {
     const toDate = new Date();
     // Buscar só a partir da última data exportada (ou 30 dias)
-    let lastExp = await serverLastDate(true);
+    let lastExp = await serverLastDate(!auto);
     if (!lastExp) lastExp = localStorage.getItem('mjo_last_export_date');
     // volta 3 dias por segurança: o servidor ignora o que já existe
     const fromDate = lastExp ? new Date(new Date(lastExp).getTime() - 3*24*60*60*1000) : new Date(Date.now() - 30*24*60*60*1000);
@@ -1081,7 +1083,7 @@ async function exportReviewsToSheets() {
     if (!newRows.length) {
       if (status) status.textContent = 'Planilha já atualizada';
       if (btn) { btn.textContent = '✅ OK'; setTimeout(function() { btn.textContent = '📤 Exportar Avaliações'; btn.disabled = false; }, 3000); }
-      return;
+      return true;
     }
 
     // Enviar direto para a planilha
@@ -1095,7 +1097,12 @@ async function exportReviewsToSheets() {
       if (status) status.textContent = msg;
       if (btn) { btn.textContent = '✅ ' + imp.adicionadas + ' enviadas'; setTimeout(function() { btn.textContent = '📤 Exportar Avaliações'; btn.disabled = false; }, 4000); }
       checkUnexportedReviews();
-      return;
+      return true;
+    }
+    if (auto) { // automático: não baixa CSV, só avisa
+      if (status) status.textContent = 'Auto: não enviou (' + ((imp && imp.erro) || 'sem conexão') + '). Use o botão.';
+      if (btn) { btn.textContent = '📤 Exportar Avaliações'; btn.disabled = false; }
+      return false;
     }
     if (status) status.textContent = 'Não consegui enviar (' + ((imp && imp.erro) || 'sem conexão') + '). Baixando CSV...';
 
@@ -1130,6 +1137,7 @@ async function exportReviewsToSheets() {
     if (status) status.textContent = 'Erro: ' + e.message;
     if (btn) { btn.textContent = '❌ Erro'; setTimeout(function() { btn.textContent = '📤 Exportar Avaliações'; btn.disabled = false; }, 3000); }
     console.error('[MaidPad Export]', e);
+    return false;
   }
 }
 
@@ -1244,6 +1252,22 @@ async function exportReviewsToSheets() {
   }
 
   // Expose to global scope for onclick handlers
+  // Exportação automática: ao abrir o MaidPad depois das 19h
+  async function autoExportDaily() {
+    try {
+      // só depois das 19h (horário da Flórida) e uma vez por dia: os serviços já terminaram
+      const HORA_MINIMA = 19;
+      const parts = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', hour12: false }).formatToParts(new Date());
+      const g = function(t) { return (parts.find(function(x) { return x.type === t; }) || {}).value; };
+      const hojeNY = g('year') + '-' + g('month') + '-' + g('day');
+      const horaNY = parseInt(g('hour'), 10) % 24;
+      if (horaNY < HORA_MINIMA) return;
+      if (localStorage.getItem('mjo_auto_day') === hojeNY) return;
+      const ok = await exportReviewsToSheets(true);
+      if (ok) localStorage.setItem('mjo_auto_day', hojeNY);
+    } catch(e) {}
+  }
+  window.autoExportDaily = autoExportDaily;
   window.exportReviewsToSheets = exportReviewsToSheets;
 
 })();
