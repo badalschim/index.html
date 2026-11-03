@@ -25,10 +25,14 @@ h1{font-size:18px;margin:8px 0 2px}
 .bar button{font-weight:700;color:#1a3a8f;cursor:pointer}
 .bar .on{background:#1a3a8f;color:#fff}
 .bar .grow{flex:1;min-width:120px}
-.dtitle{font-weight:700;color:#1a3a8f;font-size:15px;flex:1;text-align:center;min-width:140px}
+.bar.nv{justify-content:center}
+.dtitle{font-weight:700;color:#1a3a8f;font-size:15px;text-align:center;min-width:230px}
 .sum{padding:0 14px 8px;font-size:12px;color:#666}
-.board{display:flex;gap:10px;overflow-x:auto;padding:4px 12px 16px;align-items:flex-start}
-.col{min-width:210px;max-width:240px;flex:0 0 auto;background:#e6eaf5;border-radius:10px;padding:8px}
+.board{display:grid;grid-template-columns:250px 1fr;gap:12px;padding:4px 12px 16px;align-items:start}
+.teams{display:grid;grid-template-columns:repeat(auto-fill,minmax(215px,1fr));gap:10px;align-items:start}
+.col{background:#e6eaf5;border-radius:10px;padding:8px;min-width:0}
+.col.vazia{min-height:64px}
+.col .ph{display:none;font-size:11px;color:#8a93ad;text-align:center;padding:4px}.col.vazia .ph{display:block}
 .col.over{outline:2px dashed #1a3a8f}
 .col-h{font-weight:700;font-size:13px;color:#fff;border-radius:6px;padding:6px 8px;margin-bottom:8px;display:flex;justify-content:space-between}
 .card{background:#fff;border-radius:8px;padding:8px 9px;margin-bottom:8px;border-left:5px solid #1a3a8f;box-shadow:0 1px 3px rgba(0,0,0,.08);cursor:pointer}
@@ -44,8 +48,9 @@ h1{font-size:18px;margin:8px 0 2px}
 .col.fold .card{display:none}
 .teamrow{display:flex;align-items:center;gap:8px;padding:8px 2px;border-bottom:1px solid #eee;font-size:14px}.teamrow input{width:18px;height:18px}
 @media(max-width:700px){
-  .board{flex-direction:column;overflow:visible;padding:4px 10px 16px}
-  .col{min-width:0;max-width:none;width:100%}
+  .board{display:block;padding:4px 10px 16px}
+  .teams{display:flex;flex-direction:column;gap:10px;margin-top:10px}
+  .col{width:100%}
   .mv{display:block}
   .week{grid-template-columns:1fr;padding:4px 10px 16px}
   .bar .dtitle{order:-1;flex-basis:100%;flex:1 1 100%}
@@ -96,7 +101,7 @@ h1{font-size:18px;margin:8px 0 2px}
   </div>
 
   <div id="p-ag">
-    <div class="bar">
+    <div class="bar nv">
       <button onclick="nav(-1)">‹</button>
       <div class="dtitle" id="dtitle"></div>
       <button onclick="nav(1)">›</button>
@@ -283,13 +288,14 @@ function renderDia() {
   const comServ = new Set(lista.map(s => s.equipe || ''));
   const eqs = [''].concat(todasEq().filter(e => hidEq.indexOf(e) < 0 || comServ.has(e)));
   const ocultas = todasEq().filter(e => hidEq.indexOf(e) >= 0 && !comServ.has(e)).length;
-  $('view').innerHTML = (lista.length ? '' : '<div class="empty" style="padding:.8rem">Nenhum serviço neste dia — as equipes abaixo aceitam serviços arrastados.</div>') +
-    '<div class="board">' + eqs.map(eq => {
+  const colH = eq => {
     const its = lista.filter(s => (s.equipe || '') === eq);
-    const vazio = !its.length, fold = foldEq[eq] === true || (foldEq[eq] === undefined && vazio && window.innerWidth <= 700);
-    return '<div class="col' + (vazio && window.innerWidth <= 700 ? ' vazia' : '') + (foldEq[eq] ? ' fold' : '') + '" ondragover="event.preventDefault();this.classList.add(\'over\')" ondragleave="this.classList.remove(\'over\')" ondrop="dropS(event,\'' + eq + '\')">' +
-      '<div class="col-h" onclick="foldEq[\'' + eq + '\']=!foldEq[\'' + eq + '\'];render()" style="background:' + cor(eq) + '"><span>' + (eq ? 'Equipe ' + esc(eq) : 'Sem equipe') + '</span><span>' + its.length + '</span></div>' + its.map(cardH).join('') + '</div>';
-  }).join('') + '</div>' + (ocultas ? '<div class="sum" style="text-align:center">' + ocultas + ' equipe(s) oculta(s) — use ⚙ Equipes para mostrar</div>' : '');
+    const vazio = !its.length;
+    return '<div class="col' + (vazio ? ' vazia' : '') + (foldEq[eq] ? ' fold' : '') + '" ondragover="event.preventDefault();this.classList.add(\'over\')" ondragleave="this.classList.remove(\'over\')" ondrop="dropS(event,\'' + eq + '\')">' +
+      '<div class="col-h" onclick="foldEq[\'' + eq + '\']=!foldEq[\'' + eq + '\'];render()" style="background:' + cor(eq) + '"><span>' + (eq ? 'Equipe ' + esc(eq) : 'Sem equipe') + '</span><span>' + its.length + '</span></div>' + its.map(cardH).join('') + '<div class="ph">arraste um serviço aqui</div></div>';
+  };
+  $('view').innerHTML = '<div class="board">' + colH('') + '<div class="teams">' + eqs.slice(1).map(colH).join('') + '</div></div>' +
+    (ocultas ? '<div class="sum" style="text-align:center">' + ocultas + ' equipe(s) oculta(s) — use ⚙ Equipes para mostrar</div>' : '');
 }
 function renderSem() {
   const ini = domingo(cur);
