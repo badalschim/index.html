@@ -43,6 +43,9 @@ h1{font-size:18px;margin:8px 0 2px}
 .s-Agendado{background:#1a3a8f}.s-A-Caminho{background:#e69500}.s-Iniciado{background:#e66b00}.s-Concluído,.s-Concluido{background:#1f9d55}.s-Cancelado{background:#999}
 .card.cancel{opacity:.55}.card.cancel .nm{text-decoration:line-through}
 .col-h{cursor:pointer}
+.ppl{display:flex;flex-wrap:wrap;gap:4px;margin:0 0 8px;min-height:6px}
+.pp{background:#fff;border:1px solid #cfd6ea;border-radius:12px;padding:3px 9px;font-size:12px;cursor:grab;color:#1a3a8f;font-weight:700}
+.pp.alt{border-color:#e69500;background:#fff6e0}
 .mv{display:none;margin-top:6px;width:100%;border:1px solid #cfd6ea;border-radius:6px;padding:6px;font-size:12px;background:#f5f7ff;font-family:Arial}
 .col.vazia .mv{display:none}.col.vazia{padding-bottom:4px}.col.vazia .col-h{margin-bottom:4px;opacity:.7}
 .col.fold .card{display:none}
@@ -170,6 +173,12 @@ h1{font-size:18px;margin:8px 0 2px}
     <div class="mb"><button class="b2" onclick="fechar()">Cancelar</button><button class="b1" onclick="salvarEq()">Aplicar</button></div>
   </div>
 </div>
+<div class="ov" id="ovM" onclick="if(event.target===this)fechar()">
+  <div class="modal"><h2 id="mpT">Mover funcionária</h2>
+    <div class="info">Vale só para o dia <b id="mpD"></b>. A equipe padrão (ficha do funcionário) não muda.</div>
+    <div class="f"><label>Equipe neste dia</label><select id="mpSel"></select></div>
+    <div class="mb"><button class="b2" onclick="fechar()">Fechar</button><button class="b3" onclick="mpPadrao()">Voltar ao padrão</button><button class="b1" onclick="mpSalvar()">Mover</button></div>
+  </div></div>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -178,10 +187,12 @@ const $ = id => document.getElementById(id);
 const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const COLORS = ['#1a3a8f','#1f9d55','#c0392b','#8e44ad','#e67e22','#16a085','#d35400','#2c3e50','#b8860b','#c2185b','#0277bd','#6d4c41'];
 const cor = eq => eq ? COLORS[(parseInt(eq) || 0) % COLORS.length] : '#777';
+const NEQ = 30;
+let rosters = {}, dragKind = 's', dragFid = null, moveFid = null;
 let me = null, serv = [], pessoas = [], clientes = [], loaded = [null, null], equipesSrv = [], extraEq = [], hidEq = [], foldEq = {};
-try { hidEq = JSON.parse(localStorage.getItem('pcs_ag_hid') || '[]'); extraEq = JSON.parse(localStorage.getItem('pcs_ag_extra') || '[]'); } catch (e) {}
+try { const hv = localStorage.getItem('pcs_ag_hid'); hidEq = hv === null ? Array.from({ length: NEQ - 12 }, (_, i) => String(i + 13)) : JSON.parse(hv); extraEq = JSON.parse(localStorage.getItem('pcs_ag_extra') || '[]'); } catch (e) {}
 function todasEq() {
-  const s = new Set(['1','2','3','4','5','6','7','8','9','10','11','12']);
+  const s = new Set(); for (let i = 1; i <= NEQ; i++) s.add(String(i));
   equipesSrv.forEach(e => s.add(String(e))); extraEq.forEach(e => s.add(String(e)));
   serv.forEach(x => { if (/^\d+$/.test(x.equipe || '')) s.add(x.equipe); });
   return [...s].sort((a, b) => a - b);
@@ -264,7 +275,7 @@ function cardH(s) {
     '<div class="tm">' + (s.ini ? s.ini + (s.fim ? ' – ' + s.fim : '') : 'sem horário') + '</div>' +
     '<div class="nm">' + esc(s.cliente) + '</div>' +
     '<div class="mt">' + esc(s.tipo) + (s.freq ? ' · ' + esc(s.freq) : '') + (s.valor ? ' · $' + esc(s.valor) : '') + '</div>' +
-    (s.cleaners ? '<div class="mt">👤 ' + esc(s.cleaners) + '</div>' : '') +
+    (function () { const m = membros(s.equipe, s.data); const nm = m.length ? m.map(p => curto(p.nome)).join(', ') : s.cleaners; return nm ? '<div class="mt">👤 ' + esc(nm) + '</div>' : ''; })() +
     '<span class="st ' + k + '">' + esc(st) + '</span>' +
     '<select class="mv" onclick="event.stopPropagation()" onchange="moverSel(\'' + s.id + '\',this.value)"><option value="">↪ Mover para…</option><option value="__">Sem equipe</option>' + todasEq().filter(e => hidEq.indexOf(e) < 0 || e === s.equipe).map(e => '<option value="' + e + '"' + (e === s.equipe ? ' disabled' : '') + '>Equipe ' + e + '</option>').join('') + '</select></div>';
 }
@@ -273,7 +284,7 @@ function ordena(a, b) { return (a.ini || '99') < (b.ini || '99') ? -1 : (a.ini |
 function render() {
   $('dpick').value = cur;
   $('sub').textContent = serv.length + ' serviços carregados';
-  if (view === 'dia') renderDia(); else renderSem();
+  if (view === 'dia') { renderDia(); if (!rosters[cur]) ensureRoster(cur).then(() => { if (view === 'dia') renderDia(); }); } else renderSem();
 }
 function resumo(lista) {
   const ativos = lista.filter(s => s.status !== 'Cancelado');
@@ -285,14 +296,17 @@ function renderDia() {
   $('dtitle').textContent = fmtLong(cur);
   const lista = serv.filter(s => s.data === cur).sort(ordena);
   resumo(lista);
-  const comServ = new Set(lista.map(s => s.equipe || ''));
+  const ros = rosters[cur] || [];
+  const comServ = new Set(lista.map(s => s.equipe || '').concat(ros.filter(p => p.equipe).map(p => p.equipe)));
   const eqs = [''].concat(todasEq().filter(e => hidEq.indexOf(e) < 0 || comServ.has(e)));
   const ocultas = todasEq().filter(e => hidEq.indexOf(e) >= 0 && !comServ.has(e)).length;
   const colH = eq => {
     const its = lista.filter(s => (s.equipe || '') === eq);
     const vazio = !its.length;
-    return '<div class="col' + (vazio ? ' vazia' : '') + (foldEq[eq] ? ' fold' : '') + '" ondragover="event.preventDefault();this.classList.add(\'over\')" ondragleave="this.classList.remove(\'over\')" ondrop="dropS(event,\'' + eq + '\')">' +
-      '<div class="col-h" onclick="foldEq[\'' + eq + '\']=!foldEq[\'' + eq + '\'];render()" style="background:' + cor(eq) + '"><span>' + (eq ? 'Equipe ' + esc(eq) : 'Sem equipe') + '</span><span>' + its.length + '</span></div>' + its.map(cardH).join('') + '<div class="ph">arraste um serviço aqui</div></div>';
+    const ppl = ros.filter(p => (p.equipe || '') === eq);
+    const vazio2 = vazio && !ppl.length;
+    return '<div class="col' + (vazio2 ? ' vazia' : '') + (foldEq[eq] ? ' fold' : '') + '" ondragover="event.preventDefault();this.classList.add(\'over\')" ondragleave="this.classList.remove(\'over\')" ondrop="dropS(event,\'' + eq + '\')">' +
+      '<div class="col-h" onclick="foldEq[\'' + eq + '\']=!foldEq[\'' + eq + '\'];render()" style="background:' + cor(eq) + '"><span>' + (eq ? 'Equipe ' + esc(eq) : 'Sem equipe') + '</span><span>' + its.length + '</span></div>' + (ppl.length ? '<div class="ppl">' + ppl.map(p => '<span class="pp' + (p.alterado ? ' alt' : '') + '" draggable="true" ondragstart="dragP(event,\'' + p.id + '\')" onclick="movePessoa(\'' + p.id + '\')" title="' + (p.alterado ? 'Fora do padrão (Equipe ' + (p.padrao || 'sem') + ') · ' : '') + 'toque para mover">' + esc(curto(p.nome)) + (p.alterado ? ' ↻' : '') + '</span>').join('') + '</div>' : '') + its.map(cardH).join('') + '<div class="ph">arraste um serviço ou funcionária aqui</div></div>';
   };
   $('view').innerHTML = '<div class="board">' + colH('') + '<div class="teams">' + eqs.slice(1).map(colH).join('') + '</div></div>' +
     (ocultas ? '<div class="sum" style="text-align:center">' + ocultas + ' equipe(s) oculta(s) — use ⚙ Equipes para mostrar</div>' : '');
@@ -312,11 +326,38 @@ function renderSem() {
 }
 
 function moverSel(id, v) { const s = serv.find(x => x.id === id); if (!s || !v) return; salvarCampos(s, { equipe: v === '__' ? '' : v }); }
+function curoster(d) { return rosters[d] || null; }
+function curto(n) { const p = n.split(' '); return p[0] + (p[1] ? ' ' + p[1][0] + '.' : ''); }
+function membros(eq, d) { const r = rosters[d]; return r && eq ? r.filter(p => p.equipe === String(eq)) : []; }
+async function ensureRoster(d) {
+  if (rosters[d]) return;
+  try { const j = await api({ action: 'agenda_equipes', data: d }); if (j.ok) rosters[d] = j.pessoas; } catch (e) {}
+}
+function dragP(e, fid) { dragKind = 'p'; dragFid = fid; e.dataTransfer.setData('text/plain', fid); e.stopPropagation(); }
+function movePessoa(fid) {
+  const p = (rosters[cur] || []).find(x => x.id === fid); if (!p) return;
+  moveFid = fid; $('mpT').textContent = p.nome; $('mpD').textContent = fmtLong(cur);
+  $('mpSel').innerHTML = '<option value="sem">Sem equipe</option>' + todasEq().map(e => '<option value="' + e + '">Equipe ' + e + '</option>').join('');
+  $('mpSel').value = p.equipe || 'sem'; $('ovM').classList.add('on');
+}
+function mpSalvar() { const v = $('mpSel').value; fechar(); moverPessoa(moveFid, v === 'sem' ? '' : v); }
+function mpPadrao() { fechar(); moverPessoa(moveFid, '__padrao'); }
+async function moverPessoa(fid, eq) {
+  const lista = rosters[cur] || [], p = lista.find(x => x.id === fid); if (!p) return;
+  const antes = { equipe: p.equipe, alterado: p.alterado };
+  if (eq === '__padrao') { p.equipe = p.padrao; p.alterado = false; } else { p.equipe = eq; p.alterado = eq !== p.padrao; }
+  renderDia();
+  try {
+    const j = await api({ action: 'equipe_mover', data: cur, fid: fid, equipe: eq === '' ? 'sem' : eq });
+    if (!j.ok) throw 0; toast('Movido só neste dia');
+  } catch (e) { Object.assign(p, antes); renderDia(); toast('Não foi possível mover'); }
+}
 // arrastar e soltar (computador)
 let dragId = null;
-function dragS(e, id) { dragId = id; e.dataTransfer.setData('text/plain', id); }
+function dragS(e, id) { dragKind = 's'; dragId = id; e.dataTransfer.setData('text/plain', id); }
 async function dropS(e, eq) {
   e.preventDefault(); e.currentTarget.classList.remove('over');
+  if (dragKind === 'p') { const pp = (rosters[cur] || []).find(x => x.id === dragFid); if (pp && pp.equipe !== eq) moverPessoa(dragFid, eq); return; }
   const s = serv.find(x => x.id === dragId); if (!s || (s.equipe || '') === eq) return;
   await salvarCampos(s, { equipe: eq });
 }
@@ -379,7 +420,7 @@ function novo() {
   $('sTipo').value = 'Regular Cleaning'; $('sData').value = cur; $('sSt').value = 'Agendado'; fillEq(''); chips();
   $('sInfo').style.display = 'none'; $('sCancel').style.display = 'none'; $('ovS').classList.add('on');
 }
-function fechar() { $('ovS').classList.remove('on'); $('ovC').classList.remove('on'); $('ovE').classList.remove('on'); }
+function fechar() { $('ovM').classList.remove('on'); $('ovS').classList.remove('on'); $('ovC').classList.remove('on'); $('ovE').classList.remove('on'); }
 async function salvarS() {
   const nome = $('sCli').value.trim(), c = clientes.find(x => x.nome === nome);
   if (!nome || !$('sData').value) { toast('Informe cliente e data'); return; }

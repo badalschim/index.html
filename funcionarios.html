@@ -148,7 +148,7 @@ async function load() {
     lista = j.funcionarios;
     const eq = [...new Set(lista.map(f => f.equipe).filter(Boolean))].sort((a, b) => (parseInt(a) || 999) - (parseInt(b) || 999));
     $('fe').innerHTML = '<option value="">Todas as equipes</option>' + eq.map(e => '<option>' + esc(e) + '</option>').join('');
-    $('dlEq').innerHTML = eq.map(e => '<option value="' + esc(e) + '">').join('');
+    $('dlEq').innerHTML = Array.from({ length: 30 }, (_, i) => String(i + 1)).concat(['Administrativo']).map(e => '<option value="' + e + '">').join('');
     $('dlPf').innerHTML = [...new Set(lista.map(f => f.perfil).filter(Boolean))].map(e => '<option value="' + esc(e) + '">').join('');
     render();
   } catch (e) { $('list').innerHTML = '<div class="empty">Erro de conexão.</div>'; }
