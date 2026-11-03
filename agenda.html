@@ -341,9 +341,10 @@ function render() {
 }
 function resumo(lista) {
   const ativos = lista.filter(s => s.status !== 'Cancelado');
-  const tot = ativos.reduce((a, s) => a + (parseFloat(s.valor) || 0), 0);
-  const sem = ativos.filter(s => !s.equipe).length;
-  $('sum').textContent = ativos.length + ' serviços · $' + tot.toFixed(0) + (sem ? ' · ' + sem + ' sem equipe' : '') + (lista.length > ativos.length ? ' · ' + (lista.length - ativos.length) + ' cancelados' : '');
+  const comEq = ativos.filter(s => s.equipe);
+  const tot = comEq.reduce((a, s) => a + (parseFloat(s.valor) || 0), 0);
+  const sem = ativos.length - comEq.length;
+  $('sum').textContent = comEq.length + ' serviços nas equipes · $' + tot.toFixed(0) + (sem ? ' · ' + sem + ' sem equipe (não somam)' : '') + (lista.length > ativos.length ? ' · ' + (lista.length - ativos.length) + ' cancelados' : '');
 }
 function renderDia() {
   $('dtitle').textContent = fmtLong(cur);
