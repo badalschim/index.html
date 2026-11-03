@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="theme-color" content="#1a3a8f" />
+<title>Agenda - Paula's Cleaning Squad</title>
+<link rel="manifest" href="manifest.json" />
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+<link rel="icon" type="image/png" href="icons/icon-192.png" />
+<script>if('serviceWorker' in navigator) window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));</script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;background:#f0f2f5;color:#222;font-size:14px;min-height:100vh;padding-bottom:70px}
+.top{background:#1a3a8f;color:#fff;padding:14px 16px 10px;position:sticky;top:0;z-index:20}
+.top-row{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.pill{background:rgba(255,255,255,.18);color:#fff;text-decoration:none;border:none;border-radius:20px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:Arial}
+h1{font-size:18px;margin:8px 0 2px}
+.sub{font-size:12px;opacity:.85}
+.tabs{display:flex;gap:6px;margin-top:10px}
+.tab{flex:1;background:rgba(255,255,255,.14);color:#fff;border:none;border-radius:8px;padding:8px;font-weight:700;font-size:13px;cursor:pointer;font-family:Arial}
+.tab.on{background:#fff;color:#1a3a8f}
+.bar{display:flex;gap:6px;align-items:center;padding:10px 12px;flex-wrap:wrap}
+.bar button,.bar input,.bar select{border:1px solid #cfd6ea;background:#fff;border-radius:8px;padding:8px 10px;font-size:13px;font-family:Arial}
+.bar button{font-weight:700;color:#1a3a8f;cursor:pointer}
+.bar .on{background:#1a3a8f;color:#fff}
+.bar .grow{flex:1;min-width:120px}
+.dtitle{font-weight:700;color:#1a3a8f;font-size:15px;flex:1;text-align:center;min-width:140px}
+.sum{padding:0 14px 8px;font-size:12px;color:#666}
+.board{display:flex;gap:10px;overflow-x:auto;padding:4px 12px 16px;align-items:flex-start}
+.col{min-width:210px;max-width:240px;flex:0 0 auto;background:#e6eaf5;border-radius:10px;padding:8px}
+.col.over{outline:2px dashed #1a3a8f}
+.col-h{font-weight:700;font-size:13px;color:#fff;border-radius:6px;padding:6px 8px;margin-bottom:8px;display:flex;justify-content:space-between}
+.card{background:#fff;border-radius:8px;padding:8px 9px;margin-bottom:8px;border-left:5px solid #1a3a8f;box-shadow:0 1px 3px rgba(0,0,0,.08);cursor:pointer}
+.card .tm{font-size:12px;font-weight:700;color:#1a3a8f}
+.card .nm{font-weight:700;margin:2px 0;word-break:break-word}
+.card .mt{font-size:11px;color:#777}
+.card .st{display:inline-block;font-size:10px;font-weight:700;border-radius:10px;padding:2px 7px;margin-top:4px;color:#fff}
+.s-Agendado{background:#1a3a8f}.s-A-Caminho{background:#e69500}.s-Iniciado{background:#e66b00}.s-Concluído,.s-Concluido{background:#1f9d55}.s-Cancelado{background:#999}
+.card.cancel{opacity:.55}.card.cancel .nm{text-decoration:line-through}
+.week{display:grid;grid-template-columns:repeat(7,minmax(150px,1fr));gap:8px;overflow-x:auto;padding:4px 12px 16px}
+.wday{background:#e6eaf5;border-radius:10px;padding:8px}
+.wday-h{font-weight:700;font-size:12px;color:#1a3a8f;margin-bottom:8px}
+.wday-h.today{color:#c0392b}
+.list{padding:0 12px}
+.cli{background:#fff;border-radius:10px;padding:10px 12px;margin-bottom:8px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.cli .n{font-weight:700}
+.cli .m{font-size:12px;color:#777;margin-top:2px}
+.badge{display:inline-block;font-size:10px;font-weight:700;border-radius:10px;padding:2px 7px;background:#eef2ff;color:#1a3a8f;margin-left:4px}
+.fab{position:fixed;right:16px;bottom:16px;background:#1a3a8f;color:#fff;border:none;border-radius:28px;padding:14px 20px;font-weight:700;font-size:14px;box-shadow:0 4px 14px rgba(0,0,0,.3);cursor:pointer;z-index:15;font-family:Arial}
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:flex-end;justify-content:center;z-index:50}
+.ov.on{display:flex}
+.modal{background:#fff;border-radius:16px 16px 0 0;width:100%;max-width:520px;max-height:92vh;overflow:auto;padding:16px}
+@media(min-width:600px){.ov{align-items:center}.modal{border-radius:16px}}
+.modal h2{font-size:16px;color:#1a3a8f;margin-bottom:12px}
+.f{margin-bottom:10px}
+.f label{display:block;font-size:11px;font-weight:700;color:#555;margin-bottom:3px}
+.f input,.f select,.f textarea{width:100%;border:1px solid #ccc;border-radius:8px;padding:9px;font-size:14px;font-family:Arial}
+.f2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.mb{display:flex;gap:8px;margin-top:14px}
+.mb button{flex:1;padding:12px;border-radius:8px;border:none;font-weight:700;font-size:14px;cursor:pointer;font-family:Arial}
+.b1{background:#1a3a8f;color:#fff}.b2{background:#eee;color:#333}.b3{background:#fdeaea;color:#c0392b}
+.chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+.chip{background:#eef2ff;color:#1a3a8f;border-radius:14px;padding:4px 9px;font-size:12px;cursor:pointer;border:none;font-family:Arial}
+.chip.on{background:#1a3a8f;color:#fff}
+.info{font-size:12px;color:#555;background:#f5f7ff;border-radius:8px;padding:8px;margin-bottom:10px;line-height:1.5}
+.toast{position:fixed;left:50%;bottom:80px;transform:translateX(-50%);background:#222;color:#fff;border-radius:20px;padding:10px 18px;font-size:13px;z-index:99;display:none}
+.empty{text-align:center;color:#888;padding:2rem 1rem}
+.center{display:none;min-height:80vh;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px;gap:10px}
+</style>
+<script>(function(){try{var s=JSON.parse(localStorage.getItem('pcs_session'));if(!s||!s.token||s.expires<Date.now()){location.replace('app.html');return;}}catch(e){location.replace('app.html');}})();</script>
+</head>
+<body>
+<div id="app" style="display:none">
+  <div class="top">
+    <div class="top-row"><a class="pill" href="app.html">‹ Menu</a><button class="pill" onclick="load(true)">↻ Atualizar</button></div>
+    <h1>Agenda</h1>
+    <div class="sub" id="sub"></div>
+    <div class="tabs">
+      <button class="tab on" data-t="ag" onclick="showTab('ag')">Agenda</button>
+      <button class="tab" data-t="cl" onclick="showTab('cl')">Clientes</button>
+    </div>
+  </div>
+
+  <div id="p-ag">
+    <div class="bar">
+      <button onclick="nav(-1)">‹</button>
+      <div class="dtitle" id="dtitle"></div>
+      <button onclick="nav(1)">›</button>
+      <button onclick="hoje()">Hoje</button>
+      <input type="date" id="dpick" onchange="irPara(this.value)">
+      <button id="vDia" class="on" onclick="setView('dia')">Dia</button>
+      <button id="vSem" onclick="setView('sem')">Semana</button>
+    </div>
+    <div class="sum" id="sum"></div>
+    <div id="view"></div>
+  </div>
+
+  <div id="p-cl" style="display:none">
+    <div class="bar">
+      <input class="grow" id="cq" placeholder="Buscar nome, telefone, endereço…" oninput="renderCli()">
+      <select id="cet" onchange="renderCli()"></select>
+    </div>
+    <div class="sum" id="csum"></div>
+    <div class="list" id="clist"></div>
+  </div>
+  <button class="fab" id="fab" onclick="novo()">+ Serviço</button>
+</div>
+
+<div class="center" id="noperm"><h2>Sem permissão</h2><p>Esta página é exclusiva da gestão.</p><a class="pill" style="background:#1a3a8f" href="app.html">Ir ao menu</a></div>
+
+<div class="ov" id="ovS" onclick="if(event.target===this)fechar()">
+  <div class="modal">
+    <h2 id="sTit">Serviço</h2>
+    <div class="info" id="sInfo" style="display:none"></div>
+    <div class="f"><label>Cliente</label><input id="sCli" list="dlCli" autocomplete="off" oninput="pickCli()"><datalist id="dlCli"></datalist></div>
+    <div class="f"><label>Endereço</label><input id="sEnd"></div>
+    <div class="f2">
+      <div class="f"><label>Data</label><input type="date" id="sData"></div>
+      <div class="f"><label>Equipe</label><select id="sEq"></select></div>
+    </div>
+    <div class="f2">
+      <div class="f"><label>Início</label><input type="time" id="sIni"></div>
+      <div class="f"><label>Fim</label><input type="time" id="sFim"></div>
+    </div>
+    <div class="f2">
+      <div class="f"><label>Tipo</label><input id="sTipo" list="dlTipo"><datalist id="dlTipo"><option>Regular Cleaning</option><option>Quick cleaning</option><option>Limpeza Profunda</option><option>Airbnb</option><option>Jeitinho</option></datalist></div>
+      <div class="f"><label>Valor ($)</label><input id="sVal" type="number" step="0.5"></div>
+    </div>
+    <div class="f"><label>Status</label><select id="sSt"><option>Agendado</option><option>A Caminho</option><option>Iniciado</option><option>Concluído</option><option>Cancelado</option></select></div>
+    <div class="f"><label>Funcionárias</label><input id="sCl" placeholder="Nomes separados por vírgula"><div class="chips" id="sChips"></div></div>
+    <div class="f"><label>Observações</label><textarea id="sObs" rows="2"></textarea></div>
+    <div class="mb"><button class="b2" onclick="fechar()">Fechar</button><button class="b3" id="sCancel" onclick="cancelar()">Cancelar serviço</button><button class="b1" onclick="salvarS()">Salvar</button></div>
+  </div>
+</div>
+
+<div class="ov" id="ovC" onclick="if(event.target===this)fechar()">
+  <div class="modal">
+    <h2 id="cTit">Cliente</h2>
+    <div id="cForm"></div>
+    <div class="mb"><button class="b2" onclick="fechar()">Fechar</button><button class="b1" onclick="salvarC()">Salvar</button></div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyGtMi4dY_1_eewqbyU8w05JNk9IqPOKFHkwzLGEP1tICwpZSyyswetMA8VA_ZwkI83-A/exec";
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const COLORS = ['#1a3a8f','#1f9d55','#c0392b','#8e44ad','#e67e22','#16a085','#d35400','#2c3e50','#b8860b','#c2185b','#0277bd','#6d4c41'];
+const cor = eq => eq ? COLORS[(parseInt(eq) || 0) % COLORS.length] : '#777';
+let me = null, serv = [], pessoas = [], clientes = [], loaded = [null, null];
+let view = 'dia', cur = isoHoje(), tab = 'ag', editId = null, editCli = null;
+
+function getSession() { try { const s = JSON.parse(localStorage.getItem('pcs_session')); if (s && s.token && s.expires > Date.now()) return s; } catch (e) {} return null; }
+function isoHoje() { const d = new Date(); return iso(d); }
+function iso(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+function pd(s) { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); }
+function addD(s, n) { const d = pd(s); d.setDate(d.getDate() + n); return iso(d); }
+function domingo(s) { return addD(s, -pd(s).getDay()); }
+function fmtLong(s) { return pd(s).toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' }); }
+function toast(m) { const t = $('toast'); t.textContent = m; t.style.display = 'block'; clearTimeout(toast.t); toast.t = setTimeout(() => t.style.display = 'none', 2500); }
+async function api(params) {
+  const q = new URLSearchParams(Object.assign({ token: me.token }, params)).toString();
+  const r = await fetch(SCRIPT_URL + '?' + q);
+  return r.json();
+}
+
+async function boot() {
+  me = getSession();
+  if (!me) { location.replace('app.html'); return; }
+  if (!me.acessoAgenda) { $('noperm').style.display = 'flex'; return; }
+  $('app').style.display = 'block';
+  await load(true);
+  carregarClientes();
+}
+async function load(force) {
+  // carrega de 14 dias antes a 60 depois da data atual
+  const de = addD(domingo(cur), -14), ate = addD(domingo(cur), 60);
+  if (!force && loaded[0] && de >= loaded[0] && ate <= loaded[1]) { render(); return; }
+  $('view').innerHTML = '<div class="empty">Carregando…</div>';
+  try {
+    const j = await api({ action: 'agenda', de: de, ate: ate });
+    if (!j.ok) { $('view').innerHTML = '<div class="empty">Sem acesso ou aba "servicos" não encontrada.</div>'; return; }
+    serv = j.servicos; pessoas = j.pessoas || []; loaded = [de, ate];
+    render();
+  } catch (e) { $('view').innerHTML = '<div class="empty">Erro de conexão. Toque em Atualizar.</div>'; }
+}
+async function carregarClientes() {
+  try {
+    const j = await api({ action: 'clientes_lista' });
+    if (j.ok) { clientes = j.clientes; fillCli(); if (tab === 'cl') renderCli(); }
+  } catch (e) {}
+}
+function fillCli() {
+  $('dlCli').innerHTML = clientes.filter(c => /ativo|ocasional|pausado|agendado|lead$/i.test(c.etapa)).map(c => '<option value="' + esc(c.nome) + '">').join('');
+  const et = [...new Set(clientes.map(c => c.etapa).filter(Boolean))];
+  $('cet').innerHTML = '<option value="">Todos</option>' + et.map(e => '<option' + (e === 'Ativo' ? ' selected' : '') + '>' + esc(e) + '</option>').join('');
+}
+
+function showTab(t) {
+  tab = t;
+  document.querySelectorAll('.tab').forEach(b => b.classList.toggle('on', b.dataset.t === t));
+  $('p-ag').style.display = t === 'ag' ? 'block' : 'none';
+  $('p-cl').style.display = t === 'cl' ? 'block' : 'none';
+  $('fab').textContent = t === 'ag' ? '+ Serviço' : '+ Cliente';
+  if (t === 'cl') renderCli();
+}
+function setView(v) { view = v; $('vDia').classList.toggle('on', v === 'dia'); $('vSem').classList.toggle('on', v === 'sem'); render(); }
+function nav(n) { cur = addD(cur, view === 'dia' ? n : n * 7); load(false); }
+function hoje() { cur = isoHoje(); load(false); }
+function irPara(v) { if (v) { cur = v; load(false); } }
+
+function cardH(s) {
+  const st = (s.status || 'Agendado'), k = 's-' + st.replace(/\s+/g, '-');
+  return '<div class="card' + (st === 'Cancelado' ? ' cancel' : '') + '" style="border-left-color:' + cor(s.equipe) + '" draggable="true" ondragstart="dragS(event,\'' + s.id + '\')" onclick="abrir(\'' + s.id + '\')">' +
+    '<div class="tm">' + (s.ini ? s.ini + (s.fim ? ' – ' + s.fim : '') : 'sem horário') + '</div>' +
+    '<div class="nm">' + esc(s.cliente) + '</div>' +
+    '<div class="mt">' + esc(s.tipo) + (s.freq ? ' · ' + esc(s.freq) : '') + (s.valor ? ' · $' + esc(s.valor) : '') + '</div>' +
+    (s.cleaners ? '<div class="mt">👤 ' + esc(s.cleaners) + '</div>' : '') +
+    '<span class="st ' + k + '">' + esc(st) + '</span></div>';
+}
+function ordena(a, b) { return (a.ini || '99') < (b.ini || '99') ? -1 : (a.ini || '99') > (b.ini || '99') ? 1 : 0; }
+
+function render() {
+  $('dpick').value = cur;
+  $('sub').textContent = serv.length + ' serviços carregados';
+  if (view === 'dia') renderDia(); else renderSem();
+}
+function resumo(lista) {
+  const ativos = lista.filter(s => s.status !== 'Cancelado');
+  const tot = ativos.reduce((a, s) => a + (parseFloat(s.valor) || 0), 0);
+  const sem = ativos.filter(s => !s.equipe).length;
+  $('sum').textContent = ativos.length + ' serviços · $' + tot.toFixed(0) + (sem ? ' · ' + sem + ' sem equipe' : '') + (lista.length > ativos.length ? ' · ' + (lista.length - ativos.length) + ' cancelados' : '');
+}
+function renderDia() {
+  $('dtitle').textContent = fmtLong(cur);
+  const lista = serv.filter(s => s.data === cur).sort(ordena);
+  resumo(lista);
+  if (!lista.length) { $('view').innerHTML = '<div class="empty">Nenhum serviço neste dia.</div>'; return; }
+  const eqs = [...new Set(lista.map(s => s.equipe || ''))].sort((a, b) => (a === '' ? -1 : b === '' ? 1 : (parseInt(a) || 0) - (parseInt(b) || 0)));
+  $('view').innerHTML = '<div class="board">' + eqs.map(eq => {
+    const its = lista.filter(s => (s.equipe || '') === eq);
+    return '<div class="col" ondragover="event.preventDefault();this.classList.add(\'over\')" ondragleave="this.classList.remove(\'over\')" ondrop="dropS(event,\'' + eq + '\')">' +
+      '<div class="col-h" style="background:' + cor(eq) + '"><span>' + (eq ? 'Equipe ' + esc(eq) : 'Sem equipe') + '</span><span>' + its.length + '</span></div>' + its.map(cardH).join('') + '</div>';
+  }).join('') + '</div>';
+}
+function renderSem() {
+  const ini = domingo(cur);
+  $('dtitle').textContent = pd(ini).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }) + ' – ' + pd(addD(ini, 6)).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' });
+  const lista = serv.filter(s => s.data >= ini && s.data <= addD(ini, 6));
+  resumo(lista);
+  let h = '<div class="week">';
+  for (let i = 0; i < 7; i++) {
+    const d = addD(ini, i), its = lista.filter(s => s.data === d).sort(ordena);
+    h += '<div class="wday" ondragover="event.preventDefault()" ondrop="dropD(event,\'' + d + '\')"><div class="wday-h' + (d === isoHoje() ? ' today' : '') + '" onclick="cur=\'' + d + '\';setView(\'dia\')" style="cursor:pointer">' +
+      pd(d).toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit' }) + ' · ' + its.filter(s => s.status !== 'Cancelado').length + '</div>' + its.map(cardH).join('') + '</div>';
+  }
+  $('view').innerHTML = h + '</div>';
+}
+
+// arrastar e soltar (computador)
+let dragId = null;
+function dragS(e, id) { dragId = id; e.dataTransfer.setData('text/plain', id); }
+async function dropS(e, eq) {
+  e.preventDefault(); e.currentTarget.classList.remove('over');
+  const s = serv.find(x => x.id === dragId); if (!s || (s.equipe || '') === eq) return;
+  await salvarCampos(s, { equipe: eq });
+}
+async function dropD(e, d) {
+  e.preventDefault();
+  const s = serv.find(x => x.id === dragId); if (!s || s.data === d) return;
+  await salvarCampos(s, { data: d });
+}
+async function salvarCampos(s, mud) {
+  const novo = Object.assign({}, s, mud), antigo = Object.assign({}, s);
+  Object.assign(s, mud); render();
+  try {
+    const j = await api(payload(novo));
+    if (!j.ok) throw 0; toast('Salvo');
+  } catch (e) { Object.assign(s, antigo); render(); toast('Não foi possível salvar'); }
+}
+function payload(s) {
+  return { action: 'agenda_salvar', id: s.id || '', data: s.data, ini: s.ini, fim: s.fim, cliente: s.cliente, cid: s.cid, end: s.end, tipo: s.tipo, freq: s.freq, status: s.status, equipe: s.equipe, cleaners: s.cleaners, valor: s.valor, obs: s.obs };
+}
+
+// modal serviço
+function fillEq(sel) {
+  const set = new Set(serv.map(s => s.equipe).filter(Boolean)); for (let i = 1; i <= 12; i++) set.add(String(i));
+  const l = [...set].sort((a, b) => a - b);
+  $('sEq').innerHTML = '<option value="">Sem equipe</option>' + l.map(e => '<option value="' + e + '">Equipe ' + e + '</option>').join('');
+  $('sEq').value = sel || '';
+}
+function chips() {
+  const sel = $('sCl').value.split(',').map(x => x.trim()).filter(Boolean);
+  $('sChips').innerHTML = pessoas.map(p => '<button type="button" class="chip' + (sel.indexOf(p) >= 0 ? ' on' : '') + '" onclick="togChip(this.textContent)">' + esc(p) + '</button>').join('');
+}
+function togChip(n) {
+  let sel = $('sCl').value.split(',').map(x => x.trim()).filter(Boolean);
+  sel = sel.indexOf(n) >= 0 ? sel.filter(x => x !== n) : sel.concat(n);
+  $('sCl').value = sel.join(', '); chips();
+}
+function pickCli() {
+  const c = clientes.find(x => x.nome === $('sCli').value);
+  if (!c) return;
+  $('sEnd').value = [c.endereco, c.cidade].filter(Boolean).join(', ');
+  if (!$('sVal').value) $('sVal').value = c.valor || '';
+  if (!$('sEq').value && c.equipe) $('sEq').value = c.equipe;
+  $('sInfo').style.display = 'block';
+  $('sInfo').innerHTML = [c.telefone && '📞 ' + esc(c.telefone), c.acesso && '🔑 ' + esc(c.acesso) + ' ' + esc(c.codigo), c.obs && '📝 ' + esc(c.obs)].filter(Boolean).join('<br>');
+}
+function abrir(id) {
+  const s = serv.find(x => x.id === id); if (!s) return;
+  editId = id; $('sTit').textContent = 'Editar serviço';
+  $('sCli').value = s.cliente; $('sEnd').value = s.end; $('sData').value = s.data; fillEq(s.equipe);
+  $('sIni').value = s.ini; $('sFim').value = s.fim; $('sTipo').value = s.tipo; $('sVal').value = s.valor; $('sSt').value = s.status || 'Agendado';
+  $('sCl').value = s.cleaners; $('sObs').value = s.obs; chips();
+  const c = clientes.find(x => String(x.id) === String(s.cid));
+  if (c) { $('sInfo').style.display = 'block'; $('sInfo').innerHTML = [c.telefone && '📞 ' + esc(c.telefone), c.acesso && '🔑 ' + esc(c.acesso) + ' ' + esc(c.codigo), c.obs && '📝 ' + esc(c.obs)].filter(Boolean).join('<br>'); } else $('sInfo').style.display = 'none';
+  $('sCancel').style.display = ''; $('ovS').classList.add('on');
+}
+function novo() {
+  if (tab === 'cl') { abrirCli(null); return; }
+  editId = null; $('sTit').textContent = 'Novo serviço';
+  ['sCli', 'sEnd', 'sIni', 'sFim', 'sTipo', 'sVal', 'sCl', 'sObs'].forEach(i => $(i).value = '');
+  $('sTipo').value = 'Regular Cleaning'; $('sData').value = cur; $('sSt').value = 'Agendado'; fillEq(''); chips();
+  $('sInfo').style.display = 'none'; $('sCancel').style.display = 'none'; $('ovS').classList.add('on');
+}
+function fechar() { $('ovS').classList.remove('on'); $('ovC').classList.remove('on'); }
+async function salvarS() {
+  const nome = $('sCli').value.trim(), c = clientes.find(x => x.nome === nome);
+  if (!nome || !$('sData').value) { toast('Informe cliente e data'); return; }
+  const dados = { id: editId || '', data: $('sData').value, ini: $('sIni').value, fim: $('sFim').value, cliente: nome, cid: c ? c.id : (editId ? (serv.find(x => x.id === editId) || {}).cid : ''), end: $('sEnd').value, tipo: $('sTipo').value, freq: editId ? (serv.find(x => x.id === editId) || {}).freq : (c ? c.frequencia : ''), status: $('sSt').value, equipe: $('sEq').value, cleaners: $('sCl').value, valor: $('sVal').value, obs: $('sObs').value };
+  try {
+    const j = await api(payload(dados));
+    if (!j.ok) throw 0;
+    dados.id = j.id;
+    if (editId) Object.assign(serv.find(x => x.id === editId), dados); else serv.push(dados);
+    fechar(); render(); toast('Salvo');
+  } catch (e) { toast('Não foi possível salvar'); }
+}
+async function cancelar() {
+  if (!editId) return;
+  $('sSt').value = 'Cancelado'; await salvarS();
+}
+
+// clientes
+const CF = [['nome', 'Nome'], ['telefone', 'Telefone'], ['telefone2', 'Telefone 2'], ['email', 'E-mail'], ['etapa', 'Etapa'], ['endereco', 'Endereço'], ['complemento', 'Complemento'], ['cidade', 'Cidade'], ['estado', 'Estado'], ['cep', 'CEP'], ['acesso', 'Forma de acesso'], ['codigo', 'Código de acesso'], ['equipe', 'Equipe padrão'], ['valor', 'Valor ($)'], ['frequencia', 'Frequência'], ['dia_semana', 'Dia da semana'], ['pagamento', 'Pagamento'], ['info_pagamento', 'Info. pagamento'], ['obs', 'Observações']];
+function renderCli() {
+  const q = $('cq').value.trim().toLowerCase(), et = $('cet').value;
+  const l = clientes.filter(c => (!et || c.etapa === et) && (!q || [c.nome, c.telefone, c.endereco, c.email, c.cidade].join(' ').toLowerCase().indexOf(q) >= 0));
+  $('csum').textContent = l.length + ' clientes';
+  $('clist').innerHTML = l.slice(0, 150).map(c => '<div class="cli" onclick="abrirCli(\'' + esc(c.id) + '\')"><div class="n">' + esc(c.nome) + '<span class="badge">' + esc(c.etapa) + '</span></div><div class="m">' +
+    esc([c.endereco, c.cidade].filter(Boolean).join(', ')) + '</div><div class="m">' + esc([c.frequencia, c.valor && '$' + c.valor, c.equipe && 'Equipe ' + c.equipe, c.telefone].filter(Boolean).join(' · ')) + '</div></div>').join('') + (l.length > 150 ? '<div class="empty">Mostrando 150. Refine a busca.</div>' : '');
+}
+function abrirCli(id) {
+  editCli = id; const c = id ? clientes.find(x => String(x.id) === String(id)) : {};
+  $('cTit').textContent = id ? c.nome : 'Novo cliente';
+  $('cForm').innerHTML = CF.map(([k, l]) => '<div class="f"><label>' + l + '</label>' + (k === 'obs' ? '<textarea id="c_' + k + '" rows="2">' + esc(c[k] || '') + '</textarea>' : '<input id="c_' + k + '" value="' + esc(c[k] || (k === 'etapa' && !id ? 'Ativo' : '')) + '">') + '</div>').join('');
+  $('ovC').classList.add('on');
+}
+async function salvarC() {
+  const d = { action: 'cliente_salvar', id: editCli || '' };
+  CF.forEach(([k]) => d[k] = $('c_' + k).value);
+  if (!d.nome.trim()) { toast('Informe o nome'); return; }
+  try {
+    const j = await api(d);
+    if (!j.ok) throw 0;
+    const o = {}; CF.forEach(([k]) => o[k] = d[k]);
+    if (editCli) Object.assign(clientes.find(x => String(x.id) === String(editCli)), o); else clientes.unshift(Object.assign({ id: j.id }, o));
+    fillCli(); fechar(); renderCli(); toast('Salvo');
+  } catch (e) { toast('Não foi possível salvar'); }
+}
+boot();
+</script>
+<script src="sim.js"></script>
+</body>
+</html>
