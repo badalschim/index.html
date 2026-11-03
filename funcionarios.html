@@ -81,11 +81,12 @@ h1{font-size:18px;margin:8px 0 2px}.sub{font-size:12px;opacity:.85}
     </div>
     <div class="f2">
       <div class="f"><label>Motorista</label><select id="f_motorista"><option value="nao">Não</option><option value="sim">Sim</option></select></div>
-      <div class="f" id="boxPag1"><label>Pagamento</label><select id="f_pag_tipo"><option value="">— não definido —</option><option value="fixo_dia">Fixo por dia ($)</option><option value="percentual">% do serviço</option></select></div>
+      <div class="f" id="boxPag1"><label>Pagamento</label><select id="f_pag_tipo" onchange="togPag()"><option value="">— não definido —</option><option value="fixo_dia">Fixo por dia ($)</option><option value="percentual">% do serviço</option><option value="misto">Fixo na semana + % no fim de semana</option></select></div>
     </div>
     <div class="f2" id="boxPag2">
       <div class="f"><label id="lbPag">Valor</label><input id="f_pag_valor" type="number" step="0.01" min="0" placeholder="Ex.: 120 ou 70"></div>
-      <div class="f"><label>&nbsp;</label><div class="sub2" style="margin:8px 0 0">$ por dia trabalhado, ou % do valor dos serviços da equipe (dividido entre as pessoas).</div></div>
+      <div class="f" id="boxV2" style="display:none"><label>% sábado e domingo</label><input id="f_pag_valor2" type="number" step="0.01" min="0" max="100" placeholder="Ex.: 70"></div>
+      <div class="f" id="boxHint"><label>&nbsp;</label><div class="sub2" style="margin:8px 0 0" id="pagHint"></div></div>
     </div>
     <div class="sec">Pessoal</div>
     <div class="f2"><div class="f"><label>Nascimento (DD/MM/AAAA)</label><input id="f_nascimento" placeholder="DD/MM/AAAA"></div><div class="f"><label>Zelle</label><input id="f_zelle"></div></div>
@@ -124,7 +125,7 @@ h1{font-size:18px;margin:8px 0 2px}.sub{font-size:12px;opacity:.85}
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyGtMi4dY_1_eewqbyU8w05JNk9IqPOKFHkwzLGEP1tICwpZSyyswetMA8VA_ZwkI83-A/exec";
 const $ = id => document.getElementById(id);
 const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-const CAMPOS = ['nome','sobrenome','email','telefone','perfil','equipe','motorista','pag_tipo','pag_valor','nascimento','zelle','endereco','emerg_nome','emerg_tel','ativo','obs'];
+const CAMPOS = ['nome','sobrenome','email','telefone','perfil','equipe','motorista','pag_tipo','pag_valor','pag_valor2','nascimento','zelle','endereco','emerg_nome','emerg_tel','ativo','obs'];
 let me = null, lista = [], at = 'sim', editKey = null;
 const PERMS = ['aval','ped','inv','disp','rel','compra','adm','dash','atend','agenda','lucro','simula','folga'];
 const PERM_PADRAO = { aval: 1, ped: 1, inv: 1, disp: 1, folga: 1 };
@@ -170,7 +171,7 @@ function render() {
     return '<div class="fc' + ((f.ativo || 'sim') === 'nao' ? ' off' : '') + '" onclick="abrir(' + i + ')"><div class="n">' + esc(nomeCompleto(f)) + '</div>' +
       '<div class="m">' + esc([f.telefone, f.email].filter(Boolean).join(' · ')) + '</div>' +
       '<div>' + (f.equipe ? '<span class="tag">' + (/^\d+$/.test(f.equipe) ? 'Equipe ' : '') + esc(f.equipe) + '</span>' : '') + (f.perfil ? '<span class="tag g">' + esc(f.perfil) + '</span>' : '') +
-      (f.motorista === 'sim' ? '<span class="tag o">🚗 Motorista</span>' : '') + (f.pag_tipo && f.pag_valor ? '<span class="tag o">' + (f.pag_tipo === 'percentual' ? esc(f.pag_valor) + '%' : '$' + esc(f.pag_valor) + '/dia') + '</span>' : (f.pagamento ? '<span class="tag o">' + esc(f.pagamento) + '</span>' : '')) +
+      (f.motorista === 'sim' ? '<span class="tag o">🚗 Motorista</span>' : '') + (f.pag_tipo && f.pag_valor ? '<span class="tag o">' + (f.pag_tipo === 'percentual' ? esc(f.pag_valor) + '%' : f.pag_tipo === 'misto' ? '$' + esc(f.pag_valor) + '/dia + ' + esc(f.pag_valor2 || 0) + '% fds' : '$' + esc(f.pag_valor) + '/dia') + '</span>' : (f.pagamento ? '<span class="tag o">' + esc(f.pagamento) + '</span>' : '')) +
       (f.login ? '<span class="tag">📱 App</span>' : '') + (a !== null && a <= 14 ? '<span class="tag r">🎂 ' + (a === 0 ? 'hoje' : 'em ' + a + 'd') + '</span>' : '') + (f.semFicha ? '<span class="tag r">sem ficha</span>' : '') + '</div>' +
       (tel ? '<div class="acts" onclick="event.stopPropagation()"><a href="tel:' + tel + '">📞 Ligar</a><a href="https://wa.me/' + (tel.length === 10 ? '1' : '') + tel + '" target="_blank">💬 WhatsApp</a></div>' : '') + '</div>';
   }).join('') : '<div class="empty">Nenhum funcionário.</div>';
@@ -185,10 +186,17 @@ function abrir(i) {
   $('p_login').checked = i === null ? true : !!f.loginAtivo;
   PERMS.forEach(k => $('p_' + k).checked = pm ? !!pm[k] : !!PERM_PADRAO[k]);
   $('p_modelo').value = pm ? pm.modelo : ''; $('p_bloq').value = pm ? pm.bloq : '';
-  $('f_email').disabled = !!f.login;
+  $('f_email').disabled = !!f.login; togPag();
   const vl = !!me.acessoLucro; ['boxPag1', 'boxPag2', 'rowLucro'].forEach(i => $(i).style.display = vl ? '' : 'none');
   $('p_convite').checked = true; togLogin();
   $('ov').classList.add('on');
+}
+function togPag() {
+  const t = $('f_pag_tipo').value;
+  $('lbPag').textContent = t === 'percentual' ? '% do valor do serviço' : t === 'misto' ? 'Fixo por dia, seg a sex ($)' : 'Valor por dia ($)';
+  $('boxV2').style.display = t === 'misto' ? '' : 'none';
+  $('boxHint').style.display = t === 'misto' ? 'none' : '';
+  $('pagHint').textContent = t === 'percentual' ? 'Dividido entre as pessoas da equipe no dia.' : t ? 'Pago nos dias em que ela está numa equipe com serviço.' : '';
 }
 function vincPick() {
   const v = $('f_vinc').value; if (v === '') return;
@@ -199,7 +207,7 @@ function fechar() { $('ov').classList.remove('on'); }
 async function salvar() {
   const vinc = (editKey !== null && lista[editKey].semFicha && $('f_vinc').value !== '') ? lista[+$('f_vinc').value] : null;
   const d = { action: 'func_salvar', id: vinc ? vinc.id : (editKey === null ? '' : (lista[editKey].id || '')) };
-  CAMPOS.forEach(k => { if (!me.acessoLucro && (k === 'pag_tipo' || k === 'pag_valor')) return; d[k] = $('f_' + k).value; });
+  CAMPOS.forEach(k => { if (!me.acessoLucro && (k === 'pag_tipo' || k === 'pag_valor' || k === 'pag_valor2')) return; d[k] = $('f_' + k).value; });
   if (!d.nome.trim()) { toast('Informe o nome'); return; }
   const tinha = editKey !== null && lista[editKey].login;
   if ($('p_login').checked && !d.email.trim()) { toast('Informe o e-mail para criar o login'); return; }
