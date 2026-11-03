@@ -158,7 +158,7 @@ const TRANSLATIONS = {
     supplies_t: 'Pedido de materiais', supplies_s: 'Lista de supplies',
     invoice_t: 'Invoice', invoice_s: 'Gerar e salvar invoice',
     avail_t: 'Solicitar folga', avail_s: 'Dias que você precisa de folga',
-    dash_t: 'Painel', dash_s: 'Escala, materiais e feedbacks', agenda_t: 'Agenda', agenda_s: 'Serviços, equipes e clientes',
+    dash_t: 'Painel', dash_s: 'Escala, materiais e feedbacks', agenda_t: 'Agenda', agenda_s: 'Serviços, equipes e clientes', func_t: 'Funcionários', func_s: 'Fichas e equipes',
     report_t: 'Relatório semanal', report_s: 'Pedidos de materiais da semana',
     fill_user_pass: 'Preencha usuário e senha.', wrong_credentials: 'Usuário ou senha incorretos.',
     connection_error_retry: 'Erro de conexão. Tente novamente.'
@@ -171,7 +171,7 @@ const TRANSLATIONS = {
     supplies_t: 'Supplies request', supplies_s: 'Supply list',
     invoice_t: 'Invoice', invoice_s: 'Create and save invoice',
     avail_t: 'Request day off', avail_s: 'Days you need off',
-    dash_t: 'Dashboard', dash_s: 'Schedule, supplies and feedback', agenda_t: 'Schedule', agenda_s: 'Jobs, teams and clients',
+    dash_t: 'Dashboard', dash_s: 'Schedule, supplies and feedback', agenda_t: 'Schedule', agenda_s: 'Jobs, teams and clients', func_t: 'Employees', func_s: 'Profiles and teams',
     report_t: 'Weekly report', report_s: "This week's supply requests",
     fill_user_pass: 'Fill in username and password.', wrong_credentials: 'Incorrect username or password.',
     connection_error_retry: 'Connection error. Please try again.'
@@ -184,7 +184,7 @@ const TRANSLATIONS = {
     supplies_t: 'Pedido de materiales', supplies_s: 'Lista de suministros',
     invoice_t: 'Invoice', invoice_s: 'Crear y guardar invoice',
     avail_t: 'Solicitar libre', avail_s: 'Días que necesitas libres',
-    dash_t: 'Panel', dash_s: 'Escala, materiales y comentarios', agenda_t: 'Agenda', agenda_s: 'Servicios, equipos y clientes',
+    dash_t: 'Panel', dash_s: 'Escala, materiales y comentarios', agenda_t: 'Agenda', agenda_s: 'Servicios, equipos y clientes', func_t: 'Empleados', func_s: 'Fichas y equipos',
     report_t: 'Informe semanal', report_s: 'Pedidos de materiales de la semana',
     fill_user_pass: 'Completa usuario y contraseña.', wrong_credentials: 'Usuario o contraseña incorrectos.',
     connection_error_retry: 'Error de conexión. Inténtalo de nuevo.'
@@ -218,6 +218,7 @@ function buildMenu() {
   }
   if (currentAcessoAgenda) {
     items.push({ href: 'agenda.html', icon: '🗓️', bg: '#e6fbf3', t: 'agenda_t', s: 'agenda_s' });
+    items.push({ href: 'funcionarios.html', icon: '👥', bg: '#fdeef6', t: 'func_t', s: 'func_s' });
   }
   if (currentAcessoRelatorio) {
     items.push({ href: 'relatorio.html', icon: '📦', bg: '#f1e8ff', t: 'report_t', s: 'report_s' });

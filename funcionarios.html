@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="theme-color" content="#1a3a8f" />
+<title>Funcionários - Paula's Cleaning Squad</title>
+<link rel="manifest" href="manifest.json" />
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+<link rel="icon" type="image/png" href="icons/icon-192.png" />
+<script>if('serviceWorker' in navigator) window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));</script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;background:#f0f2f5;color:#222;font-size:14px;min-height:100vh;padding-bottom:80px}
+.top{background:#1a3a8f;color:#fff;padding:14px 16px 12px;position:sticky;top:0;z-index:20}
+.top-row{display:flex;justify-content:space-between;align-items:center}
+.pill{background:rgba(255,255,255,.18);color:#fff;text-decoration:none;border:none;border-radius:20px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:Arial}
+h1{font-size:18px;margin:8px 0 2px}.sub{font-size:12px;opacity:.85}
+.bar{display:flex;gap:6px;padding:10px 12px;flex-wrap:wrap}
+.bar input,.bar select,.bar button{border:1px solid #cfd6ea;background:#fff;border-radius:8px;padding:9px 10px;font-size:13px;font-family:Arial}
+.bar .grow{flex:1;min-width:150px}
+.bar button.on{background:#1a3a8f;color:#fff;font-weight:700}
+.list{padding:0 12px;display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:10px}
+.fc{background:#fff;border-radius:12px;padding:12px;box-shadow:0 1px 3px rgba(0,0,0,.07);cursor:pointer;border-left:5px solid #1a3a8f}
+.fc.off{opacity:.55;border-left-color:#999}
+.fc .n{font-weight:700;font-size:15px}
+.fc .m{font-size:12px;color:#666;margin-top:3px;line-height:1.5}
+.tag{display:inline-block;font-size:10px;font-weight:700;border-radius:10px;padding:2px 8px;margin:4px 4px 0 0;background:#eef2ff;color:#1a3a8f}
+.tag.g{background:#e6f6ea;color:#1f7a45}.tag.o{background:#fff4d6;color:#9a6a00}.tag.r{background:#fdeaea;color:#c0392b}
+.acts{display:flex;gap:6px;margin-top:8px}
+.acts a{font-size:12px;font-weight:700;text-decoration:none;background:#f0f4ff;color:#1a3a8f;border-radius:14px;padding:5px 10px}
+.fab{position:fixed;right:16px;bottom:16px;background:#1a3a8f;color:#fff;border:none;border-radius:28px;padding:14px 20px;font-weight:700;font-size:14px;box-shadow:0 4px 14px rgba(0,0,0,.3);cursor:pointer;font-family:Arial}
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:flex-end;justify-content:center;z-index:50}
+.ov.on{display:flex}
+.modal{background:#fff;border-radius:16px 16px 0 0;width:100%;max-width:520px;max-height:92vh;overflow:auto;padding:16px}
+@media(min-width:600px){.ov{align-items:center}.modal{border-radius:16px}}
+.modal h2{font-size:16px;color:#1a3a8f;margin-bottom:10px}
+.sec{font-size:11px;font-weight:700;color:#1a3a8f;text-transform:uppercase;letter-spacing:.05em;margin:12px 0 6px;border-top:1px solid #eee;padding-top:10px}
+.f{margin-bottom:10px}.f label{display:block;font-size:11px;font-weight:700;color:#555;margin-bottom:3px}
+.f input,.f select,.f textarea{width:100%;border:1px solid #ccc;border-radius:8px;padding:9px;font-size:14px;font-family:Arial}
+.f2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.mb{display:flex;gap:8px;margin-top:14px}.mb button{flex:1;padding:12px;border-radius:8px;border:none;font-weight:700;font-size:14px;cursor:pointer;font-family:Arial}
+.b1{background:#1a3a8f;color:#fff}.b2{background:#eee;color:#333}
+.toast{position:fixed;left:50%;bottom:80px;transform:translateX(-50%);background:#222;color:#fff;border-radius:20px;padding:10px 18px;font-size:13px;z-index:99;display:none}
+.empty{text-align:center;color:#888;padding:2rem 1rem;grid-column:1/-1}
+.center{display:none;min-height:80vh;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px;gap:10px}
+</style>
+<script>(function(){try{var s=JSON.parse(localStorage.getItem('pcs_session'));if(!s||!s.token||s.expires<Date.now()){location.replace('app.html');return;}}catch(e){location.replace('app.html');}})();</script>
+</head>
+<body>
+<div id="app" style="display:none">
+  <div class="top">
+    <div class="top-row"><a class="pill" href="app.html">‹ Menu</a><button class="pill" onclick="load()">↻ Atualizar</button></div>
+    <h1>Funcionários</h1><div class="sub" id="sub"></div>
+  </div>
+  <div class="bar">
+    <input class="grow" id="q" placeholder="Buscar nome, telefone, e-mail…" oninput="render()">
+    <select id="fe" onchange="render()"></select>
+    <button id="bA" class="on" onclick="setAt('sim')">Ativos</button>
+    <button id="bI" onclick="setAt('nao')">Inativos</button>
+    <button id="bT" onclick="setAt('')">Todos</button>
+  </div>
+  <div class="list" id="list"></div>
+  <button class="fab" onclick="abrir(null)">+ Funcionário</button>
+</div>
+<div class="center" id="noperm"><h2>Sem permissão</h2><p>Página exclusiva da gestão.</p><a class="pill" style="background:#1a3a8f" href="app.html">Ir ao menu</a></div>
+
+<div class="ov" id="ov" onclick="if(event.target===this)fechar()">
+  <div class="modal">
+    <h2 id="mt">Funcionário</h2>
+    <div class="f"><label>Situação</label><select id="f_ativo"><option value="sim">Ativo</option><option value="nao">Inativo</option></select></div>
+    <div class="f2"><div class="f"><label>Nome</label><input id="f_nome"></div><div class="f"><label>Sobrenome</label><input id="f_sobrenome"></div></div>
+    <div class="f2"><div class="f"><label>Telefone</label><input id="f_telefone" type="tel"></div><div class="f"><label>E-mail (login do app)</label><input id="f_email" type="email"></div></div>
+    <div class="sec">Trabalho</div>
+    <div class="f2">
+      <div class="f"><label>Equipe padrão</label><input id="f_equipe" list="dlEq" placeholder="Ex.: 3 ou Administrativo"><datalist id="dlEq"></datalist></div>
+      <div class="f"><label>Perfil</label><input id="f_perfil" list="dlPf" placeholder="Cleaner, Manager…"><datalist id="dlPf"></datalist></div>
+    </div>
+    <div class="f2">
+      <div class="f"><label>Motorista</label><select id="f_motorista"><option value="nao">Não</option><option value="sim">Sim</option></select></div>
+      <div class="f"><label>Pagamento</label><input id="f_pagamento" placeholder="Ex.: 70%"></div>
+    </div>
+    <div class="sec">Pessoal</div>
+    <div class="f2"><div class="f"><label>Nascimento (DD/MM/AAAA)</label><input id="f_nascimento" placeholder="DD/MM/AAAA"></div><div class="f"><label>Zelle</label><input id="f_zelle"></div></div>
+    <div class="f"><label>Endereço</label><input id="f_endereco"></div>
+    <div class="f2"><div class="f"><label>Contato de emergência</label><input id="f_emerg_nome"></div><div class="f"><label>Tel. emergência</label><input id="f_emerg_tel" type="tel"></div></div>
+    <div class="f"><label>Observações</label><textarea id="f_obs" rows="2"></textarea></div>
+    <div class="mb"><button class="b2" onclick="fechar()">Fechar</button><button class="b1" onclick="salvar()">Salvar</button></div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyGtMi4dY_1_eewqbyU8w05JNk9IqPOKFHkwzLGEP1tICwpZSyyswetMA8VA_ZwkI83-A/exec";
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const CAMPOS = ['nome','sobrenome','email','telefone','perfil','equipe','motorista','pagamento','nascimento','zelle','endereco','emerg_nome','emerg_tel','ativo','obs'];
+let me = null, lista = [], at = 'sim', editKey = null;
+function getSession() { try { const s = JSON.parse(localStorage.getItem('pcs_session')); if (s && s.token && s.expires > Date.now()) return s; } catch (e) {} return null; }
+function toast(m) { const t = $('toast'); t.textContent = m; t.style.display = 'block'; clearTimeout(toast.t); toast.t = setTimeout(() => t.style.display = 'none', 2500); }
+async function api(p) { const q = new URLSearchParams(Object.assign({ token: me.token }, p)).toString(); return (await fetch(SCRIPT_URL + '?' + q)).json(); }
+function nomeCompleto(f) { return (f.nome + ' ' + (f.sobrenome || '')).trim(); }
+function aniv(s) {
+  const m = String(s || '').match(/^(\d{1,2})[\/\-](\d{1,2})/); if (!m) return null;
+  const h = new Date(); h.setHours(0, 0, 0, 0);
+  let d = new Date(h.getFullYear(), +m[2] - 1, +m[1]); if (d < h) d.setFullYear(h.getFullYear() + 1);
+  return Math.round((d - h) / 86400000);
+}
+async function boot() {
+  me = getSession();
+  if (!me) { location.replace('app.html'); return; }
+  if (!me.acessoAgenda) { $('noperm').style.display = 'flex'; return; }
+  $('app').style.display = 'block'; await load();
+}
+async function load() {
+  $('list').innerHTML = '<div class="empty">Carregando…</div>';
+  try {
+    const j = await api({ action: 'func_lista' });
+    if (!j.ok) { $('list').innerHTML = '<div class="empty">Sem acesso.</div>'; return; }
+    lista = j.funcionarios;
+    const eq = [...new Set(lista.map(f => f.equipe).filter(Boolean))].sort((a, b) => (parseInt(a) || 999) - (parseInt(b) || 999));
+    $('fe').innerHTML = '<option value="">Todas as equipes</option>' + eq.map(e => '<option>' + esc(e) + '</option>').join('');
+    $('dlEq').innerHTML = eq.map(e => '<option value="' + esc(e) + '">').join('');
+    $('dlPf').innerHTML = [...new Set(lista.map(f => f.perfil).filter(Boolean))].map(e => '<option value="' + esc(e) + '">').join('');
+    render();
+  } catch (e) { $('list').innerHTML = '<div class="empty">Erro de conexão.</div>'; }
+}
+function setAt(v) { at = v; ['A', 'I', 'T'].forEach(k => $('b' + k).classList.toggle('on', (k === 'A' && v === 'sim') || (k === 'I' && v === 'nao') || (k === 'T' && v === ''))); render(); }
+function render() {
+  const q = $('q').value.trim().toLowerCase(), fe = $('fe').value;
+  const l = lista.filter(f => (!at || (f.ativo || 'sim') === at) && (!fe || f.equipe === fe) && (!q || [nomeCompleto(f), f.telefone, f.email, f.perfil].join(' ').toLowerCase().indexOf(q) >= 0))
+    .sort((a, b) => nomeCompleto(a).localeCompare(nomeCompleto(b)));
+  const ativos = lista.filter(f => (f.ativo || 'sim') === 'sim').length;
+  $('sub').textContent = ativos + ' ativos · ' + (lista.length - ativos) + ' inativos';
+  $('list').innerHTML = l.length ? l.map(f => {
+    const i = lista.indexOf(f), a = aniv(f.nascimento), tel = String(f.telefone || '').replace(/\D/g, '');
+    return '<div class="fc' + ((f.ativo || 'sim') === 'nao' ? ' off' : '') + '" onclick="abrir(' + i + ')"><div class="n">' + esc(nomeCompleto(f)) + '</div>' +
+      '<div class="m">' + esc([f.telefone, f.email].filter(Boolean).join(' · ')) + '</div>' +
+      '<div>' + (f.equipe ? '<span class="tag">' + (/^\d+$/.test(f.equipe) ? 'Equipe ' : '') + esc(f.equipe) + '</span>' : '') + (f.perfil ? '<span class="tag g">' + esc(f.perfil) + '</span>' : '') +
+      (f.motorista === 'sim' ? '<span class="tag o">🚗 Motorista</span>' : '') + (f.pagamento ? '<span class="tag o">' + esc(f.pagamento) + '</span>' : '') +
+      (f.login ? '<span class="tag">📱 App</span>' : '') + (a !== null && a <= 14 ? '<span class="tag r">🎂 ' + (a === 0 ? 'hoje' : 'em ' + a + 'd') + '</span>' : '') + (f.semFicha ? '<span class="tag r">sem ficha</span>' : '') + '</div>' +
+      (tel ? '<div class="acts" onclick="event.stopPropagation()"><a href="tel:' + tel + '">📞 Ligar</a><a href="https://wa.me/' + (tel.length === 10 ? '1' : '') + tel + '" target="_blank">💬 WhatsApp</a></div>' : '') + '</div>';
+  }).join('') : '<div class="empty">Nenhum funcionário.</div>';
+}
+function abrir(i) {
+  editKey = i; const f = i === null ? { ativo: 'sim', motorista: 'nao' } : lista[i];
+  $('mt').textContent = i === null ? 'Novo funcionário' : nomeCompleto(f);
+  CAMPOS.forEach(k => $('f_' + k).value = f[k] || (k === 'ativo' ? 'sim' : k === 'motorista' ? 'nao' : ''));
+  $('ov').classList.add('on');
+}
+function fechar() { $('ov').classList.remove('on'); }
+async function salvar() {
+  const d = { action: 'func_salvar', id: editKey === null ? '' : (lista[editKey].id || '') };
+  CAMPOS.forEach(k => d[k] = $('f_' + k).value);
+  if (!d.nome.trim()) { toast('Informe o nome'); return; }
+  try {
+    const j = await api(d);
+    if (!j.ok) throw 0;
+    const o = {}; CAMPOS.forEach(k => o[k] = d[k]);
+    if (editKey === null) lista.push(Object.assign({ id: j.id }, o)); else Object.assign(lista[editKey], o, { id: j.id, semFicha: false });
+    fechar(); render(); toast('Salvo');
+  } catch (e) { toast('Não foi possível salvar'); }
+}
+boot();
+</script>
+<script src="sim.js"></script>
+</body>
+</html>
