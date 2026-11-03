@@ -38,6 +38,19 @@ h1{font-size:18px;margin:8px 0 2px}
 .card .st{display:inline-block;font-size:10px;font-weight:700;border-radius:10px;padding:2px 7px;margin-top:4px;color:#fff}
 .s-Agendado{background:#1a3a8f}.s-A-Caminho{background:#e69500}.s-Iniciado{background:#e66b00}.s-Concluído,.s-Concluido{background:#1f9d55}.s-Cancelado{background:#999}
 .card.cancel{opacity:.55}.card.cancel .nm{text-decoration:line-through}
+.col-h{cursor:pointer}
+.mv{display:none;margin-top:6px;width:100%;border:1px solid #cfd6ea;border-radius:6px;padding:6px;font-size:12px;background:#f5f7ff;font-family:Arial}
+.col.vazia .mv{display:none}.col.vazia{padding-bottom:4px}.col.vazia .col-h{margin-bottom:4px;opacity:.7}
+.col.fold .card{display:none}
+.teamrow{display:flex;align-items:center;gap:8px;padding:8px 2px;border-bottom:1px solid #eee;font-size:14px}.teamrow input{width:18px;height:18px}
+@media(max-width:700px){
+  .board{flex-direction:column;overflow:visible;padding:4px 10px 16px}
+  .col{min-width:0;max-width:none;width:100%}
+  .mv{display:block}
+  .week{grid-template-columns:1fr;padding:4px 10px 16px}
+  .bar .dtitle{order:-1;flex-basis:100%;flex:1 1 100%}
+  .top{padding:10px 12px 8px}
+}
 .week{display:grid;grid-template-columns:repeat(7,minmax(150px,1fr));gap:8px;overflow-x:auto;padding:4px 12px 16px}
 .wday{background:#e6eaf5;border-radius:10px;padding:8px}
 .wday-h{font-weight:700;font-size:12px;color:#1a3a8f;margin-bottom:8px}
@@ -91,6 +104,7 @@ h1{font-size:18px;margin:8px 0 2px}
       <input type="date" id="dpick" onchange="irPara(this.value)">
       <button id="vDia" class="on" onclick="setView('dia')">Dia</button>
       <button id="vSem" onclick="setView('sem')">Semana</button>
+      <button onclick="abrirEq()">⚙ Equipes</button>
     </div>
     <div class="sum" id="sum"></div>
     <div id="view"></div>
@@ -141,6 +155,16 @@ h1{font-size:18px;margin:8px 0 2px}
     <div class="mb"><button class="b2" onclick="fechar()">Fechar</button><button class="b1" onclick="salvarC()">Salvar</button></div>
   </div>
 </div>
+<div class="ov" id="ovE" onclick="if(event.target===this)fechar()">
+  <div class="modal">
+    <h2>Equipes exibidas</h2>
+    <div class="info">Desmarque as equipes que não estão sendo usadas para escondê-las do quadro. Equipes com serviço no dia sempre aparecem.</div>
+    <div id="eqList"></div>
+    <div class="f" style="margin-top:10px"><label>Adicionar equipe (número)</label><input id="eqNova" type="number" min="1" placeholder="Ex.: 13"></div>
+    <div class="mb"><button class="b2" onclick="eqTodas(true)">Marcar todas</button><button class="b2" onclick="eqTodas(false)">Desmarcar todas</button></div>
+    <div class="mb"><button class="b2" onclick="fechar()">Cancelar</button><button class="b1" onclick="salvarEq()">Aplicar</button></div>
+  </div>
+</div>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -149,7 +173,25 @@ const $ = id => document.getElementById(id);
 const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const COLORS = ['#1a3a8f','#1f9d55','#c0392b','#8e44ad','#e67e22','#16a085','#d35400','#2c3e50','#b8860b','#c2185b','#0277bd','#6d4c41'];
 const cor = eq => eq ? COLORS[(parseInt(eq) || 0) % COLORS.length] : '#777';
-let me = null, serv = [], pessoas = [], clientes = [], loaded = [null, null];
+let me = null, serv = [], pessoas = [], clientes = [], loaded = [null, null], equipesSrv = [], extraEq = [], hidEq = [], foldEq = {};
+try { hidEq = JSON.parse(localStorage.getItem('pcs_ag_hid') || '[]'); extraEq = JSON.parse(localStorage.getItem('pcs_ag_extra') || '[]'); } catch (e) {}
+function todasEq() {
+  const s = new Set(['1','2','3','4','5','6','7','8','9','10','11','12']);
+  equipesSrv.forEach(e => s.add(String(e))); extraEq.forEach(e => s.add(String(e)));
+  serv.forEach(x => { if (/^\d+$/.test(x.equipe || '')) s.add(x.equipe); });
+  return [...s].sort((a, b) => a - b);
+}
+function abrirEq() {
+  $('eqList').innerHTML = todasEq().map(e => '<label class="teamrow"><input type="checkbox" value="' + e + '"' + (hidEq.indexOf(e) < 0 ? ' checked' : '') + '> Equipe ' + e + '</label>').join('');
+  $('eqNova').value = ''; $('ovE').classList.add('on');
+}
+function eqTodas(v) { document.querySelectorAll('#eqList input').forEach(i => i.checked = v); }
+function salvarEq() {
+  const n = $('eqNova').value.trim(); if (/^\d+$/.test(n) && extraEq.indexOf(n) < 0) { extraEq.push(n); const c = document.createElement('input'); c.type = 'checkbox'; c.value = n; c.checked = true; c.className = 'tmp'; $('eqList').appendChild(c); }
+  hidEq = [...document.querySelectorAll('#eqList input')].filter(i => !i.checked).map(i => i.value);
+  try { localStorage.setItem('pcs_ag_hid', JSON.stringify(hidEq)); localStorage.setItem('pcs_ag_extra', JSON.stringify(extraEq)); } catch (e) {}
+  fechar(); render();
+}
 let view = 'dia', cur = isoHoje(), tab = 'ag', editId = null, editCli = null;
 
 function getSession() { try { const s = JSON.parse(localStorage.getItem('pcs_session')); if (s && s.token && s.expires > Date.now()) return s; } catch (e) {} return null; }
@@ -182,7 +224,7 @@ async function load(force) {
   try {
     const j = await api({ action: 'agenda', de: de, ate: ate });
     if (!j.ok) { $('view').innerHTML = '<div class="empty">Sem acesso ou aba "servicos" não encontrada.</div>'; return; }
-    serv = j.servicos; pessoas = j.pessoas || []; loaded = [de, ate];
+    serv = j.servicos; pessoas = j.pessoas || []; equipesSrv = j.equipes || []; loaded = [de, ate];
     render();
   } catch (e) { $('view').innerHTML = '<div class="empty">Erro de conexão. Toque em Atualizar.</div>'; }
 }
@@ -218,7 +260,8 @@ function cardH(s) {
     '<div class="nm">' + esc(s.cliente) + '</div>' +
     '<div class="mt">' + esc(s.tipo) + (s.freq ? ' · ' + esc(s.freq) : '') + (s.valor ? ' · $' + esc(s.valor) : '') + '</div>' +
     (s.cleaners ? '<div class="mt">👤 ' + esc(s.cleaners) + '</div>' : '') +
-    '<span class="st ' + k + '">' + esc(st) + '</span></div>';
+    '<span class="st ' + k + '">' + esc(st) + '</span>' +
+    '<select class="mv" onclick="event.stopPropagation()" onchange="moverSel(\'' + s.id + '\',this.value)"><option value="">↪ Mover para…</option><option value="__">Sem equipe</option>' + todasEq().filter(e => hidEq.indexOf(e) < 0 || e === s.equipe).map(e => '<option value="' + e + '"' + (e === s.equipe ? ' disabled' : '') + '>Equipe ' + e + '</option>').join('') + '</select></div>';
 }
 function ordena(a, b) { return (a.ini || '99') < (b.ini || '99') ? -1 : (a.ini || '99') > (b.ini || '99') ? 1 : 0; }
 
@@ -237,13 +280,16 @@ function renderDia() {
   $('dtitle').textContent = fmtLong(cur);
   const lista = serv.filter(s => s.data === cur).sort(ordena);
   resumo(lista);
-  if (!lista.length) { $('view').innerHTML = '<div class="empty">Nenhum serviço neste dia.</div>'; return; }
-  const eqs = [...new Set(lista.map(s => s.equipe || ''))].sort((a, b) => (a === '' ? -1 : b === '' ? 1 : (parseInt(a) || 0) - (parseInt(b) || 0)));
-  $('view').innerHTML = '<div class="board">' + eqs.map(eq => {
+  const comServ = new Set(lista.map(s => s.equipe || ''));
+  const eqs = [''].concat(todasEq().filter(e => hidEq.indexOf(e) < 0 || comServ.has(e)));
+  const ocultas = todasEq().filter(e => hidEq.indexOf(e) >= 0 && !comServ.has(e)).length;
+  $('view').innerHTML = (lista.length ? '' : '<div class="empty" style="padding:.8rem">Nenhum serviço neste dia — as equipes abaixo aceitam serviços arrastados.</div>') +
+    '<div class="board">' + eqs.map(eq => {
     const its = lista.filter(s => (s.equipe || '') === eq);
-    return '<div class="col" ondragover="event.preventDefault();this.classList.add(\'over\')" ondragleave="this.classList.remove(\'over\')" ondrop="dropS(event,\'' + eq + '\')">' +
-      '<div class="col-h" style="background:' + cor(eq) + '"><span>' + (eq ? 'Equipe ' + esc(eq) : 'Sem equipe') + '</span><span>' + its.length + '</span></div>' + its.map(cardH).join('') + '</div>';
-  }).join('') + '</div>';
+    const vazio = !its.length, fold = foldEq[eq] === true || (foldEq[eq] === undefined && vazio && window.innerWidth <= 700);
+    return '<div class="col' + (vazio && window.innerWidth <= 700 ? ' vazia' : '') + (foldEq[eq] ? ' fold' : '') + '" ondragover="event.preventDefault();this.classList.add(\'over\')" ondragleave="this.classList.remove(\'over\')" ondrop="dropS(event,\'' + eq + '\')">' +
+      '<div class="col-h" onclick="foldEq[\'' + eq + '\']=!foldEq[\'' + eq + '\'];render()" style="background:' + cor(eq) + '"><span>' + (eq ? 'Equipe ' + esc(eq) : 'Sem equipe') + '</span><span>' + its.length + '</span></div>' + its.map(cardH).join('') + '</div>';
+  }).join('') + '</div>' + (ocultas ? '<div class="sum" style="text-align:center">' + ocultas + ' equipe(s) oculta(s) — use ⚙ Equipes para mostrar</div>' : '');
 }
 function renderSem() {
   const ini = domingo(cur);
@@ -259,6 +305,7 @@ function renderSem() {
   $('view').innerHTML = h + '</div>';
 }
 
+function moverSel(id, v) { const s = serv.find(x => x.id === id); if (!s || !v) return; salvarCampos(s, { equipe: v === '__' ? '' : v }); }
 // arrastar e soltar (computador)
 let dragId = null;
 function dragS(e, id) { dragId = id; e.dataTransfer.setData('text/plain', id); }
@@ -326,7 +373,7 @@ function novo() {
   $('sTipo').value = 'Regular Cleaning'; $('sData').value = cur; $('sSt').value = 'Agendado'; fillEq(''); chips();
   $('sInfo').style.display = 'none'; $('sCancel').style.display = 'none'; $('ovS').classList.add('on');
 }
-function fechar() { $('ovS').classList.remove('on'); $('ovC').classList.remove('on'); }
+function fechar() { $('ovS').classList.remove('on'); $('ovC').classList.remove('on'); $('ovE').classList.remove('on'); }
 async function salvarS() {
   const nome = $('sCli').value.trim(), c = clientes.find(x => x.nome === nome);
   if (!nome || !$('sData').value) { toast('Informe cliente e data'); return; }
