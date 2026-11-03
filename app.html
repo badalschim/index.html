@@ -198,6 +198,7 @@ let currentAcessoRelatorio = false;
 let currentAcessoDash = false;
 let currentAcessoAgenda = false;
 let currentAcessoAtend = false;
+let currentAcessoLucro = false;
 let currentOcultas = [];
 let currentModelo = '';
 let currentBloq = [];
@@ -293,6 +294,7 @@ function applyProfile(p) {
   currentAcessoDash = !!p.acessoDashboard;
   currentAcessoAgenda = !!p.acessoAgenda;
   currentAcessoAtend = !!p.acessoAtendimento;
+  currentAcessoLucro = !!p.acessoLucro;
   currentOcultas = p.ocultas || [];
   currentModelo = p.modelo || '';
   currentBloq = p.bloqueados || [];
@@ -300,7 +302,7 @@ function applyProfile(p) {
 function saveSession(token, expires) {
   try {
     localStorage.setItem(SESSION_KEY, JSON.stringify({
-      user: currentUser, token: token, nome: currentNome, acessoRelatorio: currentAcessoRelatorio, acessoDash: currentAcessoDash, acessoAgenda: currentAcessoAgenda, acessoAtendimento: currentAcessoAtend,
+      user: currentUser, token: token, nome: currentNome, acessoRelatorio: currentAcessoRelatorio, acessoDash: currentAcessoDash, acessoAgenda: currentAcessoAgenda, acessoAtendimento: currentAcessoAtend, acessoLucro: currentAcessoLucro,
       ocultas: currentOcultas, modelo: currentModelo, bloqueados: currentBloq, expires: expires || (Date.now() + SESSION_DURATION),
       simula: currentSimula, sim: currentSim || undefined, simNome: currentSim ? currentSimNome : undefined
     }));
@@ -358,7 +360,7 @@ async function entrarSim() {
     const j = await fetch(`${SCRIPT_URL}?action=sim_entrar&alvo=${encodeURIComponent(alvo)}&token=${encodeURIComponent(s.token)}`).then(x => x.json());
     if (!j.ok) { alert('Não foi possível entrar.'); return; }
     localStorage.setItem('pcs_session_orig', localStorage.getItem('pcs_session'));
-    localStorage.setItem('pcs_session', JSON.stringify({ user: j.user, token: j.token, nome: j.nome, acessoRelatorio: j.acessoRelatorio, acessoDash: j.acessoDashboard, acessoAgenda: j.acessoAgenda, acessoAtendimento: j.acessoAtendimento,
+    localStorage.setItem('pcs_session', JSON.stringify({ user: j.user, token: j.token, nome: j.nome, acessoRelatorio: j.acessoRelatorio, acessoDash: j.acessoDashboard, acessoAgenda: j.acessoAgenda, acessoAtendimento: j.acessoAtendimento, acessoLucro: j.acessoLucro,
       ocultas: j.ocultas || [], modelo: j.modelo || '', bloqueados: j.bloqueados || [], expires: Date.now() + 2 * 60 * 60 * 1000, simula: false, sim: true, simNome: j.nome }));
     location.reload();
   } catch(e) { alert('Erro de conexão.'); }
@@ -373,7 +375,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   const s = loadSession();
   if (!s) return;
   currentUser = s.user; currentSim = !!s.sim; currentSimNome = s.simNome || '';
-  applyProfile({ podeSimular: s.simula, nome: s.nome, acessoRelatorio: s.acessoRelatorio, acessoDashboard: s.acessoDash, acessoAgenda: s.acessoAgenda, acessoAtendimento: s.acessoAtendimento, ocultas: s.ocultas, modelo: s.modelo, bloqueados: s.bloqueados });
+  applyProfile({ podeSimular: s.simula, nome: s.nome, acessoRelatorio: s.acessoRelatorio, acessoDashboard: s.acessoDash, acessoAgenda: s.acessoAgenda, acessoAtendimento: s.acessoAtendimento, acessoLucro: s.acessoLucro, ocultas: s.ocultas, modelo: s.modelo, bloqueados: s.bloqueados });
   showApp();
   // confere com o servidor se o acesso ainda vale (e atualiza as permissões)
   try {

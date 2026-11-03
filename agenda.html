@@ -116,7 +116,7 @@ h1{font-size:18px;margin:8px 0 2px}
     <div class="tabs">
       <button class="tab on" data-t="ag" onclick="showTab('ag')">Agenda</button>
       <button class="tab" data-t="cl" onclick="showTab('cl')">Clientes</button>
-      <button class="tab" data-t="lu" onclick="showTab('lu')">💰 Lucro</button>
+      <button class="tab" id="tabLu" data-t="lu" onclick="showTab('lu')" style="display:none">💰 Lucro</button>
     </div>
   </div>
 
@@ -252,6 +252,7 @@ async function boot() {
   if (!me) { location.replace('app.html'); return; }
   if (!me.acessoAgenda) { $('noperm').style.display = 'flex'; return; }
   $('app').style.display = 'block';
+  if (me.acessoLucro) $('tabLu').style.display = '';
   await load(true);
   carregarClientes();
 }
@@ -351,7 +352,7 @@ function resumo(lista) {
   const comEq = lista.filter(s => s.status !== 'Cancelado' && s.equipe);
   const tot = comEq.reduce((a, s) => a + (parseFloat(s.valor) || 0), 0);
   let t = comEq.length + ' serviços ' + (view === 'dia' ? (cur === isoHoje() ? 'hoje' : 'no dia') : 'na semana') + ' · $' + tot.toFixed(0);
-  if (view === 'dia') {
+  if (view === 'dia' && me && me.acessoLucro) {
     const c = luCache[cur.slice(0, 7)];
     if (!c) { if (!luTried[cur.slice(0, 7)]) { luTried[cur.slice(0, 7)] = 1; luFetch(cur.slice(0, 7)).then(() => { if (view === 'dia') render(); }); } }
     else { const d = c.dias.find(x => x.data === cur); if (d) t += ' · lucro $' + d.lucro.toFixed(0); }

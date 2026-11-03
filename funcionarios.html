@@ -81,9 +81,9 @@ h1{font-size:18px;margin:8px 0 2px}.sub{font-size:12px;opacity:.85}
     </div>
     <div class="f2">
       <div class="f"><label>Motorista</label><select id="f_motorista"><option value="nao">Não</option><option value="sim">Sim</option></select></div>
-      <div class="f"><label>Pagamento</label><select id="f_pag_tipo"><option value="">— não definido —</option><option value="fixo_dia">Fixo por dia ($)</option><option value="percentual">% do serviço</option></select></div>
+      <div class="f" id="boxPag1"><label>Pagamento</label><select id="f_pag_tipo"><option value="">— não definido —</option><option value="fixo_dia">Fixo por dia ($)</option><option value="percentual">% do serviço</option></select></div>
     </div>
-    <div class="f2">
+    <div class="f2" id="boxPag2">
       <div class="f"><label id="lbPag">Valor</label><input id="f_pag_valor" type="number" step="0.01" min="0" placeholder="Ex.: 120 ou 70"></div>
       <div class="f"><label>&nbsp;</label><div class="sub2" style="margin:8px 0 0">$ por dia trabalhado, ou % do valor dos serviços da equipe (dividido entre as pessoas).</div></div>
     </div>
@@ -108,6 +108,7 @@ h1{font-size:18px;margin:8px 0 2px}.sub{font-size:12px;opacity:.85}
       <label class="chk"><input type="checkbox" id="p_dash"> 📊 Painel</label>
       <label class="chk"><input type="checkbox" id="p_atend"> 🧹 Meu atendimento (serviços do dia)</label>
       <label class="chk"><input type="checkbox" id="p_agenda"> 🗓️ Agenda e funcionários</label>
+      <label class="chk" id="rowLucro"><input type="checkbox" id="p_lucro"> 💰 Lucro e salários (exige Agenda)</label>
       <label class="chk"><input type="checkbox" id="p_simula"> 👁️ "Ver como"</label>
       <label class="chk"><input type="checkbox" id="p_folga"> Aparece no relatório de folgas</label>
       <div class="f2" style="margin-top:8px">
@@ -125,7 +126,7 @@ const $ = id => document.getElementById(id);
 const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const CAMPOS = ['nome','sobrenome','email','telefone','perfil','equipe','motorista','pag_tipo','pag_valor','nascimento','zelle','endereco','emerg_nome','emerg_tel','ativo','obs'];
 let me = null, lista = [], at = 'sim', editKey = null;
-const PERMS = ['aval','ped','inv','disp','rel','compra','adm','dash','atend','agenda','simula','folga'];
+const PERMS = ['aval','ped','inv','disp','rel','compra','adm','dash','atend','agenda','lucro','simula','folga'];
 const PERM_PADRAO = { aval: 1, ped: 1, inv: 1, disp: 1, folga: 1 };
 function togLogin() { const on = $('p_login').checked; $('permBox').style.display = on ? 'block' : 'none'; $('rowConv').style.display = on && !(editKey !== null && lista[editKey].login) ? 'flex' : 'none'; }
 function getSession() { try { const s = JSON.parse(localStorage.getItem('pcs_session')); if (s && s.token && s.expires > Date.now()) return s; } catch (e) {} return null; }
@@ -185,6 +186,7 @@ function abrir(i) {
   PERMS.forEach(k => $('p_' + k).checked = pm ? !!pm[k] : !!PERM_PADRAO[k]);
   $('p_modelo').value = pm ? pm.modelo : ''; $('p_bloq').value = pm ? pm.bloq : '';
   $('f_email').disabled = !!f.login;
+  const vl = !!me.acessoLucro; ['boxPag1', 'boxPag2', 'rowLucro'].forEach(i => $(i).style.display = vl ? '' : 'none');
   $('p_convite').checked = true; togLogin();
   $('ov').classList.add('on');
 }
@@ -197,7 +199,7 @@ function fechar() { $('ov').classList.remove('on'); }
 async function salvar() {
   const vinc = (editKey !== null && lista[editKey].semFicha && $('f_vinc').value !== '') ? lista[+$('f_vinc').value] : null;
   const d = { action: 'func_salvar', id: vinc ? vinc.id : (editKey === null ? '' : (lista[editKey].id || '')) };
-  CAMPOS.forEach(k => d[k] = $('f_' + k).value);
+  CAMPOS.forEach(k => { if (!me.acessoLucro && (k === 'pag_tipo' || k === 'pag_valor')) return; d[k] = $('f_' + k).value; });
   if (!d.nome.trim()) { toast('Informe o nome'); return; }
   const tinha = editKey !== null && lista[editKey].login;
   if ($('p_login').checked && !d.email.trim()) { toast('Informe o e-mail para criar o login'); return; }
@@ -211,7 +213,7 @@ async function salvar() {
   try {
     const j = await api(d);
     if (!j.ok) throw 0;
-    const o = {}; CAMPOS.forEach(k => o[k] = d[k]);
+    const o = {}; CAMPOS.forEach(k => { if (d[k] !== undefined) o[k] = d[k]; });
     if (editKey === null) lista.push(Object.assign({ id: j.id }, o)); else Object.assign(lista[editKey], o, { id: j.id, semFicha: false });
     if (d.p_login !== undefined) { o.login = d.p_login === '1' || tinha; o.loginAtivo = d.p_login === '1' && d.ativo === 'sim'; if (d.p_login === '1') { o.perm = {}; PERMS.forEach(k => o.perm[k] = d['p_' + k] === '1'); o.perm.modelo = d.p_modelo; o.perm.bloq = d.p_bloq; } }
     if (d.p_login !== undefined) Object.assign(editKey === null ? lista[lista.length - 1] : lista[editKey], { login: o.login, loginAtivo: o.loginAtivo }, o.perm ? { perm: o.perm } : {});
