@@ -42,6 +42,8 @@ h1{font-size:18px;margin:8px 0 2px}.sub{font-size:12px;opacity:.85}
 .mb{display:flex;gap:8px;margin-top:14px}.mb button{flex:1;padding:12px;border-radius:8px;border:none;font-weight:700;font-size:14px;cursor:pointer;font-family:Arial}
 .b1{background:#1a3a8f;color:#fff}.b2{background:#eee;color:#333}
 .toast{position:fixed;left:50%;bottom:80px;transform:translateX(-50%);background:#222;color:#fff;border-radius:20px;padding:10px 18px;font-size:13px;z-index:99;display:none}
+.chk{display:flex;align-items:center;gap:8px;padding:7px 2px;font-size:14px;cursor:pointer}.chk input{width:18px;height:18px}
+.sub2{font-size:11px;font-weight:700;color:#555;margin:10px 0 2px}
 .empty{text-align:center;color:#888;padding:2rem 1rem;grid-column:1/-1}
 .center{display:none;min-height:80vh;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px;gap:10px}
 </style>
@@ -85,6 +87,28 @@ h1{font-size:18px;margin:8px 0 2px}.sub{font-size:12px;opacity:.85}
     <div class="f"><label>Endereço</label><input id="f_endereco"></div>
     <div class="f2"><div class="f"><label>Contato de emergência</label><input id="f_emerg_nome"></div><div class="f"><label>Tel. emergência</label><input id="f_emerg_tel" type="tel"></div></div>
     <div class="f"><label>Observações</label><textarea id="f_obs" rows="2"></textarea></div>
+    <div class="sec">Acesso ao app</div>
+    <label class="chk"><input type="checkbox" id="p_login" onchange="togLogin()"> Pode entrar no app (login = e-mail acima)</label>
+    <label class="chk" id="rowConv"><input type="checkbox" id="p_convite" checked> Enviar e-mail para ela criar a senha</label>
+    <div id="permBox">
+      <div class="sub2">Telas que ela vê</div>
+      <label class="chk"><input type="checkbox" id="p_aval"> ⭐ Avaliações</label>
+      <label class="chk"><input type="checkbox" id="p_ped"> 🛒 Pedidos de material</label>
+      <label class="chk"><input type="checkbox" id="p_inv"> 🧾 Invoice</label>
+      <label class="chk"><input type="checkbox" id="p_disp"> 📅 Solicitar folga</label>
+      <div class="sub2">Gestão</div>
+      <label class="chk"><input type="checkbox" id="p_rel"> 📦 Relatório de supplies</label>
+      <label class="chk"><input type="checkbox" id="p_compra"> ✅ Pode marcar "comprei"</label>
+      <label class="chk"><input type="checkbox" id="p_adm"> 🗂️ Gerencia a escala (folgas)</label>
+      <label class="chk"><input type="checkbox" id="p_dash"> 📊 Painel</label>
+      <label class="chk"><input type="checkbox" id="p_agenda"> 🗓️ Agenda e funcionários</label>
+      <label class="chk"><input type="checkbox" id="p_simula"> 👁️ "Ver como"</label>
+      <label class="chk"><input type="checkbox" id="p_folga"> Aparece no relatório de folgas</label>
+      <div class="f2" style="margin-top:8px">
+        <div class="f"><label>Modelo de invoice</label><input id="p_modelo" placeholder="1, 2, 3…"></div>
+        <div class="f"><label>Itens bloqueados</label><input id="p_bloq" placeholder="separe por vírgula"></div>
+      </div>
+    </div>
     <div class="mb"><button class="b2" onclick="fechar()">Fechar</button><button class="b1" onclick="salvar()">Salvar</button></div>
   </div>
 </div>
@@ -95,6 +119,9 @@ const $ = id => document.getElementById(id);
 const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const CAMPOS = ['nome','sobrenome','email','telefone','perfil','equipe','motorista','pagamento','nascimento','zelle','endereco','emerg_nome','emerg_tel','ativo','obs'];
 let me = null, lista = [], at = 'sim', editKey = null;
+const PERMS = ['aval','ped','inv','disp','rel','compra','adm','dash','agenda','simula','folga'];
+const PERM_PADRAO = { aval: 1, ped: 1, inv: 1, disp: 1, folga: 1 };
+function togLogin() { const on = $('p_login').checked; $('permBox').style.display = on ? 'block' : 'none'; $('rowConv').style.display = on && !(editKey !== null && lista[editKey].login) ? 'flex' : 'none'; }
 function getSession() { try { const s = JSON.parse(localStorage.getItem('pcs_session')); if (s && s.token && s.expires > Date.now()) return s; } catch (e) {} return null; }
 function toast(m) { const t = $('toast'); t.textContent = m; t.style.display = 'block'; clearTimeout(toast.t); toast.t = setTimeout(() => t.style.display = 'none', 2500); }
 async function api(p) { const q = new URLSearchParams(Object.assign({ token: me.token }, p)).toString(); return (await fetch(SCRIPT_URL + '?' + q)).json(); }
@@ -145,6 +172,12 @@ function abrir(i) {
   editKey = i; const f = i === null ? { ativo: 'sim', motorista: 'nao' } : lista[i];
   $('mt').textContent = i === null ? 'Novo funcionário' : nomeCompleto(f);
   CAMPOS.forEach(k => $('f_' + k).value = f[k] || (k === 'ativo' ? 'sim' : k === 'motorista' ? 'nao' : ''));
+  const pm = f.perm || null;
+  $('p_login').checked = i === null ? true : !!f.loginAtivo;
+  PERMS.forEach(k => $('p_' + k).checked = pm ? !!pm[k] : !!PERM_PADRAO[k]);
+  $('p_modelo').value = pm ? pm.modelo : ''; $('p_bloq').value = pm ? pm.bloq : '';
+  $('f_email').disabled = !!f.login;
+  $('p_convite').checked = true; togLogin();
   $('ov').classList.add('on');
 }
 function fechar() { $('ov').classList.remove('on'); }
@@ -152,12 +185,23 @@ async function salvar() {
   const d = { action: 'func_salvar', id: editKey === null ? '' : (lista[editKey].id || '') };
   CAMPOS.forEach(k => d[k] = $('f_' + k).value);
   if (!d.nome.trim()) { toast('Informe o nome'); return; }
+  const tinha = editKey !== null && lista[editKey].login;
+  if ($('p_login').checked && !d.email.trim()) { toast('Informe o e-mail para criar o login'); return; }
+  if (d.email.trim()) {
+    if ($('p_login').checked) {
+      d.p_login = '1'; d.p_convite = (!tinha && $('p_convite').checked) ? '1' : '0';
+      PERMS.forEach(k => d['p_' + k] = $('p_' + k).checked ? '1' : '0');
+      d.p_modelo = $('p_modelo').value; d.p_bloq = $('p_bloq').value;
+    } else if (tinha) d.p_login = '0';
+  }
   try {
     const j = await api(d);
     if (!j.ok) throw 0;
     const o = {}; CAMPOS.forEach(k => o[k] = d[k]);
     if (editKey === null) lista.push(Object.assign({ id: j.id }, o)); else Object.assign(lista[editKey], o, { id: j.id, semFicha: false });
-    fechar(); render(); toast('Salvo');
+    if (d.p_login !== undefined) { o.login = d.p_login === '1' || tinha; o.loginAtivo = d.p_login === '1' && d.ativo === 'sim'; if (d.p_login === '1') { o.perm = {}; PERMS.forEach(k => o.perm[k] = d['p_' + k] === '1'); o.perm.modelo = d.p_modelo; o.perm.bloq = d.p_bloq; } }
+    if (d.p_login !== undefined) Object.assign(editKey === null ? lista[lista.length - 1] : lista[editKey], { login: o.login, loginAtivo: o.loginAtivo }, o.perm ? { perm: o.perm } : {});
+    fechar(); render(); toast(j.convite === 'enviado' ? 'Salvo · e-mail enviado' : j.convite === 'falhou' ? 'Salvo · e-mail NÃO enviado' : 'Salvo');
   } catch (e) { toast('Não foi possível salvar'); }
 }
 boot();
