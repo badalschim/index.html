@@ -659,5 +659,6 @@ window.addEventListener('DOMContentLoaded', function(){
   fetch(SCRIPT_URL+'?action=ping&token='+encodeURIComponent(pcsToken())).then(function(r){return r.json();}).then(function(j){ if(!j.ok){ clearAllSessions(); goLogin(); } }).catch(function(){});
 });
 </script>
+<script src="sim.js"></script>
 </body>
 </html>

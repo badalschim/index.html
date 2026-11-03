@@ -130,7 +130,7 @@ body::before { content: ''; position: fixed; top: 0; left: 0; right: 0; height: 
         <button data-lang-btn="en" onclick="setLang('en')">EN</button>
         <button data-lang-btn="es" onclick="setLang('es')">ES</button>
       </div>
-      <button class="logout-btn" onclick="doLogout()" data-i18n="logout_btn">Sair</button>
+      <span style="display:flex;gap:6px"><button class="logout-btn" id="sim-btn" style="display:none" onclick="openSim()">👁 Ver como</button><button class="logout-btn" onclick="doLogout()" data-i18n="logout_btn">Sair</button></span>
     </div>
     <h1><span data-i18n="hello">Olá,</span> <span id="user-name"></span> 👋</h1>
     <p data-i18n="what_today">O que você quer fazer hoje?</p>
@@ -275,7 +275,9 @@ function setLang(lang) {
   applyLanguage();
 }
 
+let currentSimula = false, currentSim = false, currentSimNome = '';
 function applyProfile(p) {
+  currentSimula = !!p.podeSimular;
   currentNome = p.nome || currentUser;
   currentAcessoRelatorio = !!p.acessoRelatorio;
   currentAcessoDash = !!p.acessoDashboard;
@@ -287,7 +289,8 @@ function saveSession(token, expires) {
   try {
     localStorage.setItem(SESSION_KEY, JSON.stringify({
       user: currentUser, token: token, nome: currentNome, acessoRelatorio: currentAcessoRelatorio, acessoDash: currentAcessoDash,
-      ocultas: currentOcultas, modelo: currentModelo, bloqueados: currentBloq, expires: expires || (Date.now() + SESSION_DURATION)
+      ocultas: currentOcultas, modelo: currentModelo, bloqueados: currentBloq, expires: expires || (Date.now() + SESSION_DURATION),
+      simula: currentSimula, sim: currentSim || undefined, simNome: currentSim ? currentSimNome : undefined
     }));
   } catch(e) {}
 }
@@ -300,7 +303,7 @@ function loadSession() {
     return s;
   } catch(e) { return null; }
 }
-function clearSession() { ['pcs_session','pcs_hub_session','pcs_relatorio_session'].forEach(k => { try { localStorage.removeItem(k); } catch(e) {} }); }
+function clearSession() { ['pcs_session','pcs_session_orig','pcs_hub_session','pcs_relatorio_session'].forEach(k => { try { localStorage.removeItem(k); } catch(e) {} }); }
 
 function showLogin() {
   document.getElementById('screen-app').style.display = 'none';
@@ -313,7 +316,40 @@ function showApp() {
   document.getElementById('screen-login').style.display = 'none';
   document.getElementById('screen-app').style.display = 'block';
   document.getElementById('user-name').textContent = currentNome;
+  document.getElementById('sim-btn').style.display = (currentSimula && !currentSim) ? '' : 'none';
   buildMenu();
+}
+
+// ── "Ver como": o dono vê o app como outro funcionário (somente leitura) ──
+async function openSim() {
+  const s = loadSession(); if (!s) return;
+  let r;
+  try { r = await fetch(`${SCRIPT_URL}?action=sim_lista&token=${encodeURIComponent(s.token)}`).then(x => x.json()); } catch(e) { alert('Erro de conexão.'); return; }
+  if (!r.ok) { alert('Sem permissão.'); return; }
+  const ov = document.createElement('div');
+  ov.id = 'sim-ov';
+  ov.style.cssText = 'position:fixed;inset:0;background:rgba(10,20,50,.55);z-index:5000;display:flex;align-items:flex-end;justify-content:center';
+  ov.innerHTML = `<div style="background:#fff;width:100%;max-width:480px;border-radius:24px 24px 0 0;padding:22px 20px calc(22px + env(safe-area-inset-bottom))">
+    <div style="font-weight:800;font-size:17px;margin-bottom:6px">👁 Ver como…</div>
+    <div style="font-size:13px;color:#7a8399;margin-bottom:14px">Você verá o app exatamente como essa pessoa vê. Somente visualização: nada é salvo.</div>
+    <select id="sim-sel" style="width:100%;padding:14px;border:1.5px solid #dfe4f1;border-radius:14px;font-size:16px;font-family:inherit;background:#f8f9fd">${r.lista.map(u => `<option value="${u.email.replace(/"/g, '&quot;')}">${u.nome.replace(/[<>&]/g, '')}</option>`).join('')}</select>
+    <div style="display:flex;gap:8px;margin-top:14px">
+      <button onclick="document.getElementById('sim-ov').remove()" style="flex:1;padding:14px;border:none;border-radius:14px;background:#eef1fa;color:#1a3a8f;font-weight:700;font-size:15px;font-family:inherit">Cancelar</button>
+      <button onclick="entrarSim()" style="flex:2;padding:14px;border:none;border-radius:14px;background:#1a3a8f;color:#fff;font-weight:700;font-size:15px;font-family:inherit">Entrar</button>
+    </div></div>`;
+  document.body.appendChild(ov);
+}
+async function entrarSim() {
+  const s = loadSession(); if (!s) return;
+  const alvo = document.getElementById('sim-sel').value;
+  try {
+    const j = await fetch(`${SCRIPT_URL}?action=sim_entrar&alvo=${encodeURIComponent(alvo)}&token=${encodeURIComponent(s.token)}`).then(x => x.json());
+    if (!j.ok) { alert('Não foi possível entrar.'); return; }
+    localStorage.setItem('pcs_session_orig', localStorage.getItem('pcs_session'));
+    localStorage.setItem('pcs_session', JSON.stringify({ user: j.user, token: j.token, nome: j.nome, acessoRelatorio: j.acessoRelatorio, acessoDash: j.acessoDashboard,
+      ocultas: j.ocultas || [], modelo: j.modelo || '', bloqueados: j.bloqueados || [], expires: Date.now() + 2 * 60 * 60 * 1000, simula: false, sim: true, simNome: j.nome }));
+    location.reload();
+  } catch(e) { alert('Erro de conexão.'); }
 }
 
 function post(body) {
@@ -324,8 +360,8 @@ window.addEventListener('DOMContentLoaded', async () => {
   applyLanguage();
   const s = loadSession();
   if (!s) return;
-  currentUser = s.user;
-  applyProfile({ nome: s.nome, acessoRelatorio: s.acessoRelatorio, acessoDashboard: s.acessoDash, ocultas: s.ocultas, modelo: s.modelo, bloqueados: s.bloqueados });
+  currentUser = s.user; currentSim = !!s.sim; currentSimNome = s.simNome || '';
+  applyProfile({ podeSimular: s.simula, nome: s.nome, acessoRelatorio: s.acessoRelatorio, acessoDashboard: s.acessoDash, ocultas: s.ocultas, modelo: s.modelo, bloqueados: s.bloqueados });
   showApp();
   // confere com o servidor se o acesso ainda vale (e atualiza as permissões)
   try {
@@ -379,6 +415,7 @@ async function doForgot() {
 }
 
 function doLogout() {
+  if (currentSim && window.pcsExitSim) { window.pcsExitSim(); return; }
   const s = loadSession();
   if (s) { try { fetch(`${SCRIPT_URL}?action=logout&token=${encodeURIComponent(s.token)}`); } catch(e) {} }
   clearSession();
@@ -388,5 +425,6 @@ function doLogout() {
   showLogin();
 }
 </script>
+<script src="sim.js"></script>
 </body>
 </html>

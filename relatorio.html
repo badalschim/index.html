@@ -380,5 +380,6 @@ function saveSession(){} function renewSession(){} function clearSession(){ clea
 function doLogin(){ goLogin(); } function showForgot(){ goLogin(); } function sendForgot(){ goLogin(); }
 function doLogout(){ var s=loadSession(); if(s){ try{ fetch(SCRIPT_URL+'?action=logout&token='+encodeURIComponent(s.token)); }catch(e){} } clearAllSessions(); goLogin(); }
 </script>
+<script src="sim.js"></script>
 </body>
 </html>
