@@ -116,6 +116,7 @@ h1{font-size:18px;margin:8px 0 2px}
     <div class="tabs">
       <button class="tab on" data-t="ag" onclick="showTab('ag')">Agenda</button>
       <button class="tab" data-t="cl" onclick="showTab('cl')">Clientes</button>
+      <button class="tab" data-t="lu" onclick="showTab('lu')">💰 Lucro</button>
     </div>
   </div>
 
@@ -141,6 +142,10 @@ h1{font-size:18px;margin:8px 0 2px}
     </div>
     <div class="sum" id="csum"></div>
     <div class="list" id="clist"></div>
+  </div>
+  <div id="p-lu" style="display:none">
+    <div class="bar nv"><button onclick="luNav(-1)">‹</button><div class="dtitle" id="luT"></div><button onclick="luNav(1)">›</button><button onclick="luMes=isoHoje().slice(0,7);luLoad()">Este mês</button></div>
+    <div id="luBox"><div class="empty">Carregando…</div></div>
   </div>
   <button class="fab" id="fab" onclick="novo()">+ Serviço</button>
 </div>
@@ -279,8 +284,11 @@ function showTab(t) {
   document.querySelectorAll('.tab').forEach(b => b.classList.toggle('on', b.dataset.t === t));
   $('p-ag').style.display = t === 'ag' ? 'block' : 'none';
   $('p-cl').style.display = t === 'cl' ? 'block' : 'none';
+  $('p-lu').style.display = t === 'lu' ? 'block' : 'none';
+  $('fab').style.display = t === 'lu' ? 'none' : '';
   $('fab').textContent = t === 'ag' ? '+ Serviço' : '+ Cliente';
   if (t === 'cl') renderCli();
+  if (t === 'lu') luLoad();
 }
 function setView(v) { view = v; $('vDia').classList.toggle('on', v === 'dia'); $('vSem').classList.toggle('on', v === 'sem'); render(); }
 function nav(n) { cur = addD(cur, view === 'dia' ? n : n * 7); load(false); }
@@ -340,11 +348,15 @@ function render() {
   if (view === 'dia') { renderDia(); if (!rosters[cur]) ensureRoster(cur).then(() => { if (view === 'dia') renderDia(); }); } else renderSem();
 }
 function resumo(lista) {
-  const ativos = lista.filter(s => s.status !== 'Cancelado');
-  const comEq = ativos.filter(s => s.equipe);
+  const comEq = lista.filter(s => s.status !== 'Cancelado' && s.equipe);
   const tot = comEq.reduce((a, s) => a + (parseFloat(s.valor) || 0), 0);
-  const sem = ativos.length - comEq.length;
-  $('sum').textContent = comEq.length + ' serviços nas equipes · $' + tot.toFixed(0) + (sem ? ' · ' + sem + ' sem equipe (não somam)' : '') + (lista.length > ativos.length ? ' · ' + (lista.length - ativos.length) + ' cancelados' : '');
+  let t = comEq.length + ' serviços ' + (view === 'dia' ? (cur === isoHoje() ? 'hoje' : 'no dia') : 'na semana') + ' · $' + tot.toFixed(0);
+  if (view === 'dia') {
+    const c = luCache[cur.slice(0, 7)];
+    if (!c) { if (!luTried[cur.slice(0, 7)]) { luTried[cur.slice(0, 7)] = 1; luFetch(cur.slice(0, 7)).then(() => { if (view === 'dia') render(); }); } }
+    else { const d = c.dias.find(x => x.data === cur); if (d) t += ' · lucro $' + d.lucro.toFixed(0); }
+  }
+  $('sum').textContent = t;
 }
 function renderDia() {
   $('dtitle').textContent = fmtLong(cur);
@@ -519,6 +531,53 @@ async function salvarC() {
     fillCli(); fechar(); renderCli(); toast('Salvo');
   } catch (e) { toast('Não foi possível salvar'); }
 }
+
+// ── LUCRO ──
+let luMes = isoHoje().slice(0, 7), luCache = {}, luTried = {};
+const $$ = v => (v < 0 ? '-' : '') + '$' + Math.abs(v).toFixed(0);
+async function luFetch(mes, force) {
+  if (luCache[mes] && !force) return luCache[mes];
+  const [y, m] = mes.split('-').map(Number), ult = new Date(y, m, 0).getDate();
+  try {
+    const j = await api({ action: 'lucro', de: mes + '-01', ate: mes + '-' + String(ult).padStart(2, '0') });
+    if (j.ok) luCache[mes] = j;
+  } catch (e) {}
+  return luCache[mes];
+}
+function luNav(n) { const [y, m] = luMes.split('-').map(Number), d = new Date(y, m - 1 + n, 1); luMes = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); luLoad(); }
+async function luLoad(force) {
+  const [y, m] = luMes.split('-').map(Number);
+  $('luT').textContent = new Date(y, m - 1, 1).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+  $('luBox').innerHTML = '<div class="empty">Carregando…</div>';
+  const j = await luFetch(luMes, force);
+  if (!j) { $('luBox').innerHTML = '<div class="empty">Não foi possível carregar.</div>'; return; }
+  const d = j.dias.filter(x => x.servicos > 0);
+  const sum = k => j.dias.reduce((a, x) => a + x[k], 0);
+  const rec = sum('receita'), pag = sum('pagamento'), cus = sum('custos'), luc = sum('lucro'), n = d.length;
+  const card = (t, v, c) => '<div style="background:#fff;border-radius:12px;padding:12px;box-shadow:0 1px 3px rgba(0,0,0,.07)"><div style="font-size:11px;color:#777;font-weight:700">' + t + '</div><div style="font-size:22px;font-weight:700;color:' + (c || '#1a3a8f') + '">' + v + '</div></div>';
+  let h = '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;padding:0 12px 10px">' +
+    card('Receita', $$(rec)) + card('Pagamento equipes', $$(pag), '#c0392b') + card('Custos', $$(cus), '#c0392b') + card('Lucro do mês', $$(luc), luc >= 0 ? '#1f9d55' : '#c0392b') +
+    card('Lucro médio / dia', n ? $$(luc / n) : '—', '#1f9d55') + card('Receita média / dia', n ? $$(rec / n) : '—') + card('Dias com serviço', n) + card('Margem', rec ? (luc / rec * 100).toFixed(0) + '%' : '—') + '</div>';
+  if (j.semPag.length) h += '<div class="info" style="margin:0 12px 10px;background:#fff6e0">⚠️ Sem salário cadastrado (contando $0): ' + esc(j.semPag.join(', ')) + '. Defina em Funcionários › Pagamento.</div>';
+  if (j.semGente.length) h += '<div class="info" style="margin:0 12px 10px;background:#fff6e0">⚠️ Equipes com serviço mas sem ninguém escalada (pagamento $0): ' + esc(j.semGente.slice(0, 8).join(' · ')) + (j.semGente.length > 8 ? '…' : '') + '</div>';
+  h += '<div style="padding:0 12px;overflow-x:auto"><table style="width:100%;border-collapse:collapse;background:#fff;border-radius:10px;overflow:hidden;font-size:13px"><thead><tr style="background:#1a3a8f;color:#fff"><th style="text-align:left;padding:8px">Dia</th><th>Serv.</th><th>Equipes</th><th>Receita</th><th>Pagto</th><th>Custos</th><th>Lucro</th></tr></thead><tbody>' +
+    j.dias.map(x => '<tr onclick="cur=\'' + x.data + '\';showTab(\'ag\');setView(\'dia\');load(false)" style="cursor:pointer;border-bottom:1px solid #eee;text-align:right"><td style="text-align:left;padding:8px">' + pd(x.data).toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit' }) + '</td><td>' + x.servicos + '</td><td>' + (x.equipes || 0) + '</td><td>' + $$(x.receita) + '</td><td>' + $$(x.pagamento) + '</td><td>' + $$(x.custos) + '</td><td style="font-weight:700;color:' + (x.lucro >= 0 ? '#1f9d55' : '#c0392b') + '">' + $$(x.lucro) + '</td></tr>').join('') +
+    '</tbody></table></div>';
+  h += '<div style="padding:14px 12px 0"><div class="sec" style="font-size:11px;font-weight:700;color:#1a3a8f;text-transform:uppercase;margin-bottom:6px">Custos extras</div>' +
+    '<div class="f2" style="align-items:end"><div class="f"><label>Gasolina por equipe com serviço no dia ($)</label><input id="luEq" type="number" step="0.5" min="0" value="' + j.custoEquipe + '"></div><div class="f"><button class="b1" style="width:100%;padding:10px;border:none;border-radius:8px;font-weight:700;cursor:pointer" onclick="luCfg(\'custo_equipe\',\'luEq\')">Salvar</button></div></div>' +
+    '<div class="f2" style="align-items:end"><div class="f"><label>% extra sobre a receita (opcional)</label><input id="luPct" type="number" step="0.1" min="0" max="100" value="' + j.custoPct + '"></div><div class="f"><button class="b1" style="width:100%;padding:10px;border:none;border-radius:8px;font-weight:700;cursor:pointer" onclick="luCfg(\'custo_pct\',\'luPct\')">Salvar</button></div></div>' +
+    '<div class="sec" style="font-size:11px;font-weight:700;color:#1a3a8f;text-transform:uppercase;margin:12px 0 6px">Ajuste em um dia (+ acrescenta custo, − diminui)</div>' +
+    '<div class="f2"><div class="f"><label>Data</label><input type="date" id="cuD" value="' + (cur || isoHoje()) + '"></div><div class="f"><label>Valor ($) — use − para diminuir</label><input type="number" step="0.01" id="cuV" placeholder="Ex.: 20 ou -12"></div></div>' +
+    '<div class="f"><label>Descrição</label><input id="cuT" placeholder="Ex.: pedágio, equipe não saiu (-12)"></div><button class="b1" style="padding:10px 16px;border:none;border-radius:8px;font-weight:700;cursor:pointer" onclick="cuAdd()">+ Lançar ajuste</button>' +
+    j.custos.sort((a, b) => a.data < b.data ? 1 : -1).map(c => '<div class="rw" style="display:flex;gap:8px;padding:8px 0;border-bottom:1px solid #eee;font-size:13px"><span style="width:70px;color:#777">' + c.data.slice(8) + '/' + c.data.slice(5, 7) + '</span><span style="flex:1">' + esc(c.descricao || '—') + '</span><b style="color:' + (c.valor < 0 ? '#1f9d55' : '#c0392b') + '">' + (c.valor > 0 ? '+' : '') + $$(c.valor) + '</b><button onclick="cuDel(\'' + c.id + '\')" style="border:none;background:none;color:#c0392b;cursor:pointer;font-size:16px">✕</button></div>').join('') + '</div>';
+  $('luBox').innerHTML = h;
+}
+async function luCfg(chave, campo) { try { const j = await api({ action: 'config_set', chave: chave, valor: $(campo).value }); if (!j.ok) throw 0; toast('Salvo'); luCache = {}; luLoad(); } catch (e) { toast('Não foi possível salvar'); } }
+async function cuAdd() {
+  const v = $('cuV').value; if (!v || !$('cuD').value) { toast('Informe data e valor'); return; }
+  try { const j = await api({ action: 'custo_add', data: $('cuD').value, valor: v, descricao: $('cuT').value }); if (!j.ok) throw 0; toast('Custo lançado'); luCache = {}; luLoad(); } catch (e) { toast('Não foi possível salvar'); }
+}
+async function cuDel(id) { if (!confirm('Apagar este custo?')) return; try { const j = await api({ action: 'custo_del', id: id }); if (!j.ok) throw 0; luCache = {}; luLoad(); } catch (e) { toast('Não foi possível apagar'); } }
 boot();
 </script>
 <script src="sim.js"></script>
