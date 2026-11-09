@@ -131,7 +131,7 @@ textarea { resize: vertical; }
 <div id="screen-app">
   <div class="app-header">
     <span class="welcome">Olá, <strong id="user-name"></strong></span>
-    <div style="display:flex;gap:6px"><a class="logout-btn" href="app.html" style="text-decoration:none">‹ Menu</a><button class="logout-btn" onclick="doLogout()">Sair</button></div>
+    <div style="display:flex;gap:6px"><button class="logout-btn" onclick="invAbrirLista()">📂 Meus invoices</button><a class="logout-btn" href="app.html" style="text-decoration:none">‹ Menu</a><button class="logout-btn" onclick="doLogout()">Sair</button></div>
   </div>
 
   <div id="model-tag-el" class="model-tag"></div>
@@ -168,6 +168,12 @@ textarea { resize: vertical; }
   <button class="gen-btn" onclick="generatePDF()">⬇ Gerar e baixar PDF</button>
 </div>
 
+<div id="inv-ov" style="position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:flex-end;justify-content:center;z-index:100" onclick="if(event.target===this)this.style.display='none'">
+  <div style="background:#fff;border-radius:16px 16px 0 0;width:100%;max-width:520px;max-height:85vh;overflow:auto;padding:16px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><strong style="color:#1a3a8f;font-size:16px">Meus invoices</strong><button onclick="document.getElementById('inv-ov').style.display='none'" style="border:none;background:#eee;border-radius:50%;width:30px;height:30px;cursor:pointer">✕</button></div>
+    <div id="inv-list" style="font-size:14px"></div>
+  </div>
+</div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js">
   msgEl.style.color='#888'; msgEl.textContent='Enviando...';
   try {
@@ -226,7 +232,7 @@ const LOGO_B64 = "iVBORw0KGgoAAAANSUhEUgAABAAAAAQACAYAAAB/HSuDAAABCGlDQ1BJQ0MgUH
 const DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
 let currentModel = 0;
 let currentUser = '';
-let invUser = '', invTimer = null, invBusy = false;
+let invUser = '', invTimer = null, invBusy = false, invId = '';
 
 
 function sessionFromHash() {
@@ -376,7 +382,7 @@ function buildDays() {
 const INV_FIELDS = ['acct','zelle','bank','date_issue','date_start','date_end','obs'];
 function invKey() { return 'pcs_inv_' + invUser; }
 function invSnapshot() {
-  const o = { v: 1, model: currentModel, t: Date.now(), f: {}, days: {} };
+  const o = { v: 1, model: currentModel, t: Date.now(), id: invId, f: {}, days: {} };
   INV_FIELDS.forEach(id => { const el = document.getElementById(id); o.f[id] = el ? el.value : ''; });
   DAYS.forEach(day => {
     const rows = sel => Array.from(document.querySelectorAll(sel + ' .house-row')).map(r => Array.from(r.querySelectorAll('input')).map(i => i.value));
@@ -400,41 +406,79 @@ function invSave(gerado) {
   } catch (e) {}
 }
 function invSaveSoon() { clearTimeout(invTimer); invTimer = setTimeout(() => invSave(false), 400); }
+function invApply(o, intro) {
+  invBusy = true;
+  try {
+    INV_FIELDS.forEach(id => { const el = document.getElementById(id); if (el) el.value = o.f[id] || ''; });
+    DAYS.forEach(day => {
+      const x = o.days[day]; if (!x) return;
+      const fill = (cid, list, add) => {
+        const c = document.getElementById(cid); if (!c) return;
+        c.innerHTML = '';
+        const n = Math.max(list.length, cid.indexOf('houses70') === 0 ? 0 : 1);
+        for (let i = 0; i < n; i++) { add(day); const ins = c.lastElementChild.querySelectorAll('input'); (list[i] || []).forEach((v, k) => { if (ins[k]) ins[k].value = v; }); }
+      };
+      fill('houses-' + day, x.h, addHouse);
+      if (currentModel === 3) fill('houses70-' + day, x.h70, addHouse70);
+      const tot = document.getElementById('total-' + day), drv = document.getElementById('driver-' + day);
+      if (tot) tot.value = x.total || ''; if (drv && x.driver) drv.value = x.driver;
+      if (currentModel === 1) calcDayM1(day); else if (currentModel === 2) calcDayM2(day); else calcDayM3(day);
+    });
+    invId = o.id || '';
+    const b = document.getElementById('inv-restored');
+    b.innerHTML = intro + ' <button onclick="invNovo()" style="margin-top:6px;border:1px solid #c9a93a;background:#fff;border-radius:6px;padding:6px 10px;font-weight:700;cursor:pointer;font-family:Arial">Começar um invoice novo</button>';
+    b.style.display = 'block';
+  } catch (e) {}
+  invBusy = false;
+}
 function invRestore() {
   let o = null;
   try { o = JSON.parse(localStorage.getItem(invKey()) || 'null'); } catch (e) {}
   if (!o || o.v !== 1) return;
-  invBusy = true;
+  INV_FIELDS.slice(0, 3).forEach(id => { const el = document.getElementById(id); if (el && o.f[id]) el.value = o.f[id]; });
+  if (o.model === currentModel && invTemConteudo(o)) {
+    const quando = new Date(o.gerado || o.t).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+    invApply(o, '📝 Seu último invoice foi restaurado' + (o.gerado ? ' (PDF gerado em ' : ' (rascunho de ') + quando + '). Corrija o que precisar e gere o PDF de novo.');
+  }
+}
+// ── invoices anteriores (guardados na planilha, abrem em qualquer aparelho) ──
+let invLista = [];
+async function invAbrirLista() {
+  const box = document.getElementById('inv-list');
+  document.getElementById('inv-ov').style.display = 'flex';
+  box.innerHTML = '<div style="padding:20px;text-align:center;color:#888">Carregando…</div>';
   try {
-    INV_FIELDS.slice(0, 3).forEach(id => { const el = document.getElementById(id); if (el && o.f[id]) el.value = o.f[id]; });
-    if (o.model === currentModel && invTemConteudo(o)) {
-      INV_FIELDS.slice(3).forEach(id => { const el = document.getElementById(id); if (el) el.value = o.f[id] || ''; });
-      DAYS.forEach(day => {
-        const x = o.days[day]; if (!x) return;
-        const fill = (cid, list, add) => {
-          const c = document.getElementById(cid); if (!c) return;
-          c.innerHTML = '';
-          const n = Math.max(list.length, cid.indexOf('houses70') === 0 ? 0 : 1);
-          for (let i = 0; i < n; i++) { add(day); const ins = c.lastElementChild.querySelectorAll('input'); (list[i] || []).forEach((v, k) => { if (ins[k]) ins[k].value = v; }); }
-        };
-        fill('houses-' + day, x.h, addHouse);
-        if (currentModel === 3) fill('houses70-' + day, x.h70, addHouse70);
-        const tot = document.getElementById('total-' + day), drv = document.getElementById('driver-' + day);
-        if (tot) tot.value = x.total || ''; if (drv && x.driver) drv.value = x.driver;
-        if (currentModel === 1) calcDayM1(day); else if (currentModel === 2) calcDayM2(day); else calcDayM3(day);
-      });
-      const quando = new Date(o.gerado || o.t).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
-      const b = document.getElementById('inv-restored');
-      b.innerHTML = '📝 Seu último invoice foi restaurado' + (o.gerado ? ' (PDF gerado em ' : ' (rascunho de ') + quando + '). Corrija o que precisar e gere o PDF de novo. ' +
-        '<button onclick="invNovo()" style="margin-top:6px;border:1px solid #c9a93a;background:#fff;border-radius:6px;padding:6px 10px;font-weight:700;cursor:pointer;font-family:Arial">Começar um invoice novo</button>';
-      b.style.display = 'block';
-    }
+    const j = await (await fetch(SCRIPT_URL + '?action=invoice_lista&token=' + encodeURIComponent(pcsToken()))).json();
+    if (!j.ok) throw 0;
+    invLista = j.invoices;
+  } catch (e) { box.innerHTML = '<div style="padding:20px;text-align:center;color:#c00">Não foi possível carregar. Tente de novo.</div>'; return; }
+  if (!invLista.length) { box.innerHTML = '<div style="padding:20px;text-align:center;color:#888">Nenhum invoice salvo ainda. Eles aparecem aqui depois que você gerar o PDF.</div>'; return; }
+  const dm = s => s && s.length >= 10 ? s.slice(8, 10) + '/' + s.slice(5, 7) : s;
+  box.innerHTML = invLista.map((x, i) => '<div style="border:1px solid #e3e7f3;border-radius:10px;padding:10px 12px;margin-bottom:8px">' +
+    '<div style="display:flex;justify-content:space-between;font-weight:700"><span>' + dm(x.ini) + ' a ' + dm(x.fim) + '</span><span style="color:#1f7a45">$' + x.total.toFixed(2) + '</span></div>' +
+    '<div style="font-size:12px;color:#888;margin:2px 0 8px">salvo em ' + dm(x.atualizado.slice(0, 10)) + ' ' + x.atualizado.slice(11, 16) + (String(x.id) === invId ? ' · <b>aberto agora</b>' : '') + '</div>' +
+    '<div style="display:flex;gap:6px"><button onclick="invCarregar(' + i + ',true)" style="flex:1;padding:9px;border:none;border-radius:8px;background:#1a3a8f;color:#fff;font-weight:700;cursor:pointer;font-family:Arial">✎ Editar</button>' +
+    '<button onclick="invCarregar(' + i + ',false)" style="flex:1;padding:9px;border:none;border-radius:8px;background:#eef2ff;color:#1a3a8f;font-weight:700;cursor:pointer;font-family:Arial">Usar como base (novo)</button></div></div>').join('');
+}
+function invCarregar(i, editar) {
+  const x = invLista[i]; if (!x) return;
+  if (parseInt(x.modelo) !== currentModel) { alert('Esse invoice foi feito em outro modelo de pagamento e não pode ser aberto aqui.'); return; }
+  const o = JSON.parse(JSON.stringify(x.snap)); o.id = editar ? x.id : '';
+  invApply(o, editar ? '✎ Editando o invoice do período ' + x.ini.slice(8, 10) + '/' + x.ini.slice(5, 7) + ' a ' + x.fim.slice(8, 10) + '/' + x.fim.slice(5, 7) + '. Ao gerar o PDF, ele será atualizado.' : '📄 Novo invoice a partir do anterior. Ajuste as datas e os valores.');
+  document.getElementById('inv-ov').style.display = 'none';
+  invSave(false); window.scrollTo(0, 0);
+}
+async function invEnviar(total) {
+  try {
+    const snap = invSnapshot(); snap.id = invId;
+    const res = await fetch(SCRIPT_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({ action: 'invoice_salvar', token: pcsToken(), id: invId, snap: snap, total: total }) });
+    const j = await res.json();
+    if (j.ok) { invId = j.id; invSave(true); }
   } catch (e) {}
-  invBusy = false;
 }
 function invNovo() {
   if (!confirm('Começar um invoice novo? Os dados do invoice atual serão apagados deste aparelho.')) return;
-  invBusy = true;
+  invBusy = true; invId = '';
   ['date_issue', 'date_start', 'date_end', 'obs'].forEach(id => { document.getElementById(id).value = ''; });
   buildDays(); document.getElementById('grand-total').textContent = '$0.00';
   document.getElementById('inv-restored').style.display = 'none';
@@ -690,6 +734,7 @@ doc.text(document.getElementById('zelle').value, M+doc.getTextWidth(zelleLabel)+
   if(obs){y+=20;doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(60,60,60);obs.split('\n').forEach(l=>{doc.text(l,M,y);y+=13;});}
 
   invSave(true);
+  invEnviar(grand);
   doc.save(currentModel===1?'invoice-70pct.pdf':'invoice-diaria.pdf');
 }
 
