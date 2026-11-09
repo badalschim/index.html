@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+<script src="config.js"></script>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <meta name="theme-color" content="#1a3a8f" />
@@ -148,7 +149,7 @@ body::before { content: ''; position: fixed; top: 0; left: 0; right: 0; height: 
 </div>
 
 <script>
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyGtMi4dY_1_eewqbyU8w05JNk9IqPOKFHkwzLGEP1tICwpZSyyswetMA8VA_ZwkI83-A/exec";
+const SCRIPT_URL = PCS.SCRIPT_URL;
 
 const TR = {
   pt: { by_item:'Por item', by_person:'Por pessoa', carried:'de semanas anteriores', st_comprado:'Comprado', st_estoque:'Estoque', st_enviado:'Enviado', late_sub:'Não enviado no resumo (semana atrasada)', future_sub:'Pedidos de domingo: entram na compra seguinte', next_cycle:'Próxima', open_week:'A comprar no domingo', closed_week:'Comprado em', open_sub:'Pedidos de segunda a sábado: comprar no domingo e distribuir na segunda', last5_sub:'Últimos 15 feedbacks', back:'‹ Menu', title:'Painel', week:'Escala da semana de', to:'a', tab_sched:'Escala', tab_sup:'Materiais', tab_fb:'Feedbacks', refresh:'↻ Atualizar',

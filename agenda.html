@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+<script src="config.js"></script>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <meta name="theme-color" content="#1a3a8f" />
@@ -246,7 +247,7 @@ h1{font-size:18px;margin:8px 0 2px}
 <div class="toast" id="toast"></div>
 
 <script>
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyGtMi4dY_1_eewqbyU8w05JNk9IqPOKFHkwzLGEP1tICwpZSyyswetMA8VA_ZwkI83-A/exec";
+const SCRIPT_URL = PCS.SCRIPT_URL;
 const $ = id => document.getElementById(id);
 const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const COLORS = ['#1a3a8f','#1f9d55','#c0392b','#8e44ad','#e67e22','#16a085','#d35400','#2c3e50','#b8860b','#c2185b','#0277bd','#6d4c41'];
@@ -296,6 +297,7 @@ async function boot() {
   if (me.acessoLucro) $('tabLu').style.display = '';
   await load(true);
   carregarClientes();
+  try { const tb = new URLSearchParams(location.search).get('tab'); if (tb === 'cl' || tb === 'hi' || (tb === 'lu' && me.acessoLucro)) showTab(tb); } catch (e) {}
 }
 async function load(force) {
   // carrega de 14 dias antes a 60 depois da data atual

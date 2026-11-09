@@ -5,7 +5,7 @@
     try {
       var cur = JSON.parse(localStorage.getItem(SK) || 'null');
       var orig = localStorage.getItem(OK);
-      if (cur && cur.token) { try { fetch('https://script.google.com/macros/s/AKfycbyGtMi4dY_1_eewqbyU8w05JNk9IqPOKFHkwzLGEP1tICwpZSyyswetMA8VA_ZwkI83-A/exec?action=logout&token=' + encodeURIComponent(cur.token)); } catch (e) {} }
+      if (cur && cur.token) { try { fetch(PCS.SCRIPT_URL + '?action=logout&token=' + encodeURIComponent(cur.token)); } catch (e) {} }
       if (orig) localStorage.setItem(SK, orig); else localStorage.removeItem(SK);
       localStorage.removeItem(OK);
     } catch (e) {}

@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+<script src="config.js"></script>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <meta name="theme-color" content="#1a3a8f" />
@@ -59,7 +60,7 @@ body { font-family: -apple-system, 'Segoe UI', Roboto, Arial, sans-serif; backgr
 </div>
 
 <script>
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyGtMi4dY_1_eewqbyU8w05JNk9IqPOKFHkwzLGEP1tICwpZSyyswetMA8VA_ZwkI83-A/exec";
+const SCRIPT_URL = PCS.SCRIPT_URL;
 const TR = {
   pt: { title:'Criar nova senha', sub:'Escolha uma senha com pelo menos 6 caracteres.', new_pw:'Nova senha', repeat_pw:'Repita a nova senha', save:'Salvar nova senha',
     done_t:'Senha alterada!', done_s:'Agora você já pode entrar com a nova senha.', go_login:'Ir para o login', short:'A senha precisa ter pelo menos 6 caracteres.', diff:'As senhas não são iguais.',

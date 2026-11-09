@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+<script src="config.js"></script>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <meta name="theme-color" content="#1a3a8f" />
@@ -142,7 +143,7 @@ body::before { content: ''; position: fixed; top: 0; left: 0; right: 0; height: 
 </div>
 
 <script>
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyGtMi4dY_1_eewqbyU8w05JNk9IqPOKFHkwzLGEP1tICwpZSyyswetMA8VA_ZwkI83-A/exec";
+const SCRIPT_URL = PCS.SCRIPT_URL;
 
 const TR = {
   pt: { next_week:'Próxima semana', week_after:'Semana seguinte', off:'Folga', works:'Trabalha', hint:'Toque só nos dias de folga. Segunda e sexta são fixas (não dá para pedir folga). Os outros contam como trabalho.', req_btn:'Solicitar alteração', req_send:'Enviar solicitação', cancel_req:'Cancelar solicitação', motivo_ph:'Motivo da alteração (obrigatório)', motivo_need:'Informe o motivo da alteração.', req_pending:'⏳ Solicitação enviada, aguardando aprovação.', req_denied:'Sua última solicitação foi recusada.', req_approved:'Sua última solicitação foi aprovada.', req_sent:'Solicitação enviada!', req_dup:'Você já tem uma solicitação pendente.', requests:'Solicitações de alteração', approve:'Aprovar', deny:'Recusar', current_:'Atual:', new_:'Novo:', reason:'Motivo:', decided:'Feito!', confirm_deny:'Recusar esta solicitação?', back:'‹ Menu', title:'Solicitar folga', week:'Semana de', to:'a', pick_days:'Quais dias você precisa de folga?', none_days:'Não posso trabalhar nessa semana',
