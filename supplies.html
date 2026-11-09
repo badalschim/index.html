@@ -153,6 +153,11 @@ textarea { resize: vertical; }
     </div>
   </div>
 
+  <details class="section" id="my-orders" style="display:none">
+    <summary class="sec-title" style="cursor:pointer;margin:0"><span data-i18n="my_orders">Meus pedidos</span></summary>
+    <div id="my-orders-list" style="margin-top:8px"></div>
+  </details>
+
   <div id="form-area">
     <div class="section">
       <div class="sec-title" data-i18n="common_items">Itens comuns</div>
@@ -252,6 +257,14 @@ const TRANSLATIONS = {
     success_sub: 'Recebemos a lista de materiais. Pedidos feitos dentro do prazo (sábado) serão repostos, e até terça você receberá aviso para retirar.',
     save_pdf: 'Salvar minha cópia em PDF',
     new_request: 'Novo pedido',
+    my_orders: 'Meus pedidos',
+    st_lista: 'Na lista da semana',
+    st_comprado: 'Comprado — retire na segunda',
+    st_estoque: 'Já tem em estoque',
+    st_enviado: 'Enviado',
+    ja_na_lista: 'Já está na lista da semana',
+    sem_pedidos: 'Nenhum pedido ainda.',
+    ja_pediu: 'já pediu',
     common_items: 'Itens comuns',
     other_items: 'Outros itens',
     item_product: 'Item / Produto',
@@ -294,6 +307,14 @@ const TRANSLATIONS = {
     success_sub: 'We received the supply list. Requests made within the deadline (Saturday) will be restocked, and by Tuesday you will get a notice to pick them up.',
     save_pdf: 'Save my copy as PDF',
     new_request: 'New request',
+    my_orders: 'My requests',
+    st_lista: 'On the weekly list',
+    st_comprado: 'Bought — pick up on Monday',
+    st_estoque: 'Already in stock',
+    st_enviado: 'Sent',
+    ja_na_lista: 'Already on the weekly list',
+    sem_pedidos: 'No requests yet.',
+    ja_pediu: 'already requested',
     common_items: 'Common items',
     other_items: 'Other items',
     item_product: 'Item / Product',
@@ -336,6 +357,14 @@ const TRANSLATIONS = {
     success_sub: 'Recibimos la lista de materiales. Los pedidos hechos dentro del plazo (sábado) serán repuestos, y hasta el martes recibirás aviso para retirarlos.',
     save_pdf: 'Guardar mi copia en PDF',
     new_request: 'Nuevo pedido',
+    my_orders: 'Mis pedidos',
+    st_lista: 'En la lista de la semana',
+    st_comprado: 'Comprado — retira el lunes',
+    st_estoque: 'Ya hay en stock',
+    st_enviado: 'Enviado',
+    ja_na_lista: 'Ya está en la lista de la semana',
+    sem_pedidos: 'Aún no hay pedidos.',
+    ja_pediu: 'ya pidió',
     common_items: 'Artículos comunes',
     other_items: 'Otros artículos',
     item_product: 'Artículo / Producto',
@@ -605,6 +634,28 @@ const COMMON_ITEMS = [
   { name: 'Sacos de lixo pequenos (banheiro)', us: 'Hero Scent Stripes', icon: 'hero_bags' }
 ];
 
+
+// ── STATUS DOS PEDIDOS ──
+let pendMap = {}, meusPed = [];
+async function carregaStatus() {
+  try {
+    const r = await fetch(SCRIPT_URL + '?action=supplies_status&token=' + encodeURIComponent(pcsToken()));
+    const j = await r.json();
+    if (!j.ok) return;
+    pendMap = j.pendentes || {}; meusPed = j.meus || [];
+    buildCommonItems(); renderMeus();
+  } catch (e) {}
+}
+function renderMeus() {
+  const box = document.getElementById('my-orders'); if (!box) return;
+  box.style.display = 'block';
+  const ST = { lista: ['⏳', 'st_lista', '#9a6a00', '#fff4d6'], comprado: ['✅', 'st_comprado', '#1f7a45', '#e6f6ea'], estoque: ['📦', 'st_estoque', '#1a3a8f', '#eef2ff'], enviado: ['📧', 'st_enviado', '#666', '#f0f0f0'] };
+  const fm = c => /^\d{4}-\d{2}-\d{2}$/.test(c) && c > '2000' ? c.split('-').reverse().slice(0, 2).join('/') : '';
+  document.getElementById('my-orders-list').innerHTML = meusPed.length ? meusPed.map(m => { const x = ST[m.status] || ST.enviado;
+    return '<div style="display:flex;justify-content:space-between;gap:8px;align-items:center;padding:7px 0;border-bottom:1px solid #f1f1f1;font-size:13px"><span>' + escH(m.item) + '</span><span style="background:' + x[3] + ';color:' + x[2] + ';font-weight:700;font-size:11px;border-radius:10px;padding:3px 9px;white-space:nowrap">' + x[0] + ' ' + t(x[1]) + '</span></div>'; }).join('') : '<div style="color:#888;font-size:13px">' + t('sem_pedidos') + '</div>';
+}
+function escH(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+
 function buildCommonItems() {
   const c = document.getElementById('common-items');
   c.innerHTML = '';
@@ -614,10 +665,12 @@ function buildCommonItems() {
     if (isBlocked) return;
     const row = document.createElement('div');
     row.className = 'common-item';
+    const savedName = item.hidden ? item.us : item.name + ' (' + item.us + ')';
+    const jaQuem = pendMap[savedName];
     row.innerHTML = `
-      <input type="checkbox" id="common-${i}" />
+      <input type="checkbox" id="common-${i}" ${jaQuem ? 'disabled' : ''} />
       <span class="item-icon-wrap" style="display:flex;align-items:center;justify-content:center;width:52px;height:52px;background:#f5f7fa;border-radius:8px;flex-shrink:0">${ICONS[item.icon]}</span>
-      <label for="common-${i}" style="flex:1">${item.hidden ? `${item.us}` : `${item.name} <span style="color:#999;font-weight:400">(${item.us})</span>`}</label>`;
+      <label for="common-${i}" style="flex:1">${item.hidden ? `${item.us}` : `${item.name} <span style="color:#999;font-weight:400">(${item.us})</span>`}${jaQuem ? `<div style="font-size:11px;color:#9a6a00;font-weight:700;margin-top:2px">⏳ ${t('ja_na_lista')}${jaQuem.map(x => x.toLowerCase()).indexOf(String(currentNome || '').toLowerCase()) >= 0 ? ' (' + t('ja_pediu') + ': ' + escH(currentNome) + ')' : ''}</div>` : ''}</label>`;
     c.appendChild(row);
   });
 }
@@ -634,6 +687,7 @@ function getCommonItems() {
 // ── ITEMS ──
 function buildItems() {
   buildCommonItems();
+  carregaStatus();
   document.getElementById('items-container').innerHTML = '';
   addItem();
 }

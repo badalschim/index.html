@@ -739,7 +739,7 @@ async function luLoad(force) {
   const rec = sum('receita'), pag = sum('pagamento'), cus = sum('custos'), luc = sum('lucro'), n = d.length;
   const card = (t, v, c) => '<div style="background:#fff;border-radius:12px;padding:12px;box-shadow:0 1px 3px rgba(0,0,0,.07)"><div style="font-size:11px;color:#777;font-weight:700">' + t + '</div><div style="font-size:22px;font-weight:700;color:' + (c || '#1a3a8f') + '">' + v + '</div></div>';
   let h = '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;padding:0 12px 10px">' +
-    card('Receita', $$(rec)) + card('Pagamento equipes', $$(pag), '#c0392b') + card('Custos', $$(cus), '#c0392b') + card('Lucro do mês', $$(luc), luc >= 0 ? '#1f9d55' : '#c0392b') +
+    card('Receita', $$(rec)) + card('Pagamento equipes', $$(pag), '#c0392b') + card('Custos', $$(cus), '#c0392b') + (sum('materiais') ? card('Materiais', $$(sum('materiais')), '#c0392b') : '') + card('Lucro do mês', $$(luc), luc >= 0 ? '#1f9d55' : '#c0392b') +
     card('Lucro médio / dia', n ? $$(luc / n) : '—', '#1f9d55') + card('Receita média / dia', n ? $$(rec / n) : '—') + card('Dias com serviço', n) + card('Margem', rec ? (luc / rec * 100).toFixed(0) + '%' : '—') + '</div>';
   if (j.semPag.length) h += '<div class="info" style="margin:0 12px 10px;background:#fff6e0">⚠️ Sem salário cadastrado (contando $0): ' + esc(j.semPag.join(', ')) + '. Defina em Funcionários › Pagamento.</div>';
   if (j.semGente.length) h += '<div class="info" style="margin:0 12px 10px;background:#fff6e0">⚠️ Equipes com serviço mas sem ninguém escalada (pagamento $0): ' + esc(j.semGente.slice(0, 8).join(' · ')) + (j.semGente.length > 8 ? '…' : '') + '</div>';

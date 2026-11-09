@@ -235,9 +235,11 @@ async function salvarCompra() {
   itens.forEach((it, idx) => { if (resp[idx] === 'sim') compradas.push(...it.linhas); });
   const nNao = itens.filter((it, idx) => resp[idx] === 'nao').length;
   if (!confirm(compradas.length ? 'Salvar? O que ficou como "não comprei" volta na próxima semana.' : 'Nada foi comprado. Tudo volta na próxima semana. Salvar?')) return;
+  let valor = '';
+  if (compradas.length) { const v = prompt('Valor total desta compra em $ (opcional — entra no custo de materiais do Lucro). Deixe vazio para pular:', ''); if (v === null) return; valor = String(v).replace(/[^0-9.,]/g, ''); }
   try {
     if (compradas.length) {
-      const r = await fetch(`${SCRIPT_URL}?action=compra_marcar&status=comprado&linhas=${compradas.join(',')}&token=${encodeURIComponent(pcsToken())}`).then(x => x.json());
+      const r = await fetch(`${SCRIPT_URL}?action=compra_marcar&status=comprado&linhas=${compradas.join(',')}&valor=${encodeURIComponent(valor)}&token=${encodeURIComponent(pcsToken())}`).then(x => x.json());
       if (r.erro === 'perm') { goLogin(); return; }
     }
   } catch(e) { alert('Erro de conexão.'); return; }
