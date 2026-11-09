@@ -266,6 +266,8 @@ const TRANSLATIONS = {
     ja_na_lista: 'Já está na lista da semana',
     sem_pedidos: 'Nenhum pedido ainda.',
     ja_pediu: 'já pediu',
+    ja_outros: 'Já pedido por',
+    pode_tambem: 'você pode pedir também',
     common_items: 'Itens comuns',
     other_items: 'Outros itens',
     item_product: 'Item / Produto',
@@ -316,6 +318,8 @@ const TRANSLATIONS = {
     ja_na_lista: 'Already on the weekly list',
     sem_pedidos: 'No requests yet.',
     ja_pediu: 'already requested',
+    ja_outros: 'Already requested by',
+    pode_tambem: 'you can request it too',
     common_items: 'Common items',
     other_items: 'Other items',
     item_product: 'Item / Product',
@@ -366,6 +370,8 @@ const TRANSLATIONS = {
     ja_na_lista: 'Ya está en la lista de la semana',
     sem_pedidos: 'Aún no hay pedidos.',
     ja_pediu: 'ya pidió',
+    ja_outros: 'Ya pedido por',
+    pode_tambem: 'tú también puedes pedirlo',
     common_items: 'Artículos comunes',
     other_items: 'Otros artículos',
     item_product: 'Artículo / Producto',
@@ -668,10 +674,11 @@ function buildCommonItems() {
     row.className = 'common-item';
     const savedName = item.hidden ? item.us : item.name + ' (' + item.us + ')';
     const jaQuem = pendMap[savedName];
+    const euJa = !!jaQuem && jaQuem.some(x => String(x).trim().toLowerCase() === String(currentNome || '').trim().toLowerCase());
     row.innerHTML = `
-      <input type="checkbox" id="common-${i}" ${jaQuem ? 'disabled' : ''} />
+      <input type="checkbox" id="common-${i}" ${euJa ? 'disabled' : ''} />
       <span class="item-icon-wrap" style="display:flex;align-items:center;justify-content:center;width:52px;height:52px;background:#f5f7fa;border-radius:8px;flex-shrink:0">${ICONS[item.icon]}</span>
-      <label for="common-${i}" style="flex:1">${item.hidden ? `${item.us}` : `${item.name} <span style="color:#999;font-weight:400">(${item.us})</span>`}${jaQuem ? `<div style="font-size:11px;color:#9a6a00;font-weight:700;margin-top:2px">⏳ ${t('ja_na_lista')}${jaQuem.map(x => x.toLowerCase()).indexOf(String(currentNome || '').toLowerCase()) >= 0 ? ' (' + t('ja_pediu') + ': ' + escH(currentNome) + ')' : ''}</div>` : ''}</label>`;
+      <label for="common-${i}" style="flex:1">${item.hidden ? `${item.us}` : `${item.name} <span style="color:#999;font-weight:400">(${item.us})</span>`}${jaQuem ? `<div style="font-size:11px;color:#9a6a00;font-weight:700;margin-top:2px">⏳ ${euJa ? t('ja_na_lista') : t('ja_outros') + ' ' + escH(jaQuem.slice(0, 3).join(', ')) + ' — ' + t('pode_tambem')}</div>` : ''}</label>`;
     c.appendChild(row);
   });
 }
