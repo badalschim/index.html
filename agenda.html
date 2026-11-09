@@ -149,10 +149,10 @@ h1{font-size:18px;margin:8px 0 2px}
   <div id="p-hi" style="display:none">
     <div class="bar" style="flex-wrap:wrap">
       <input type="date" id="hDe" onchange="hiLoad()"><input type="date" id="hAte" onchange="hiLoad()">
-      <button class="pill" style="background:#1a3a8f" onclick="hiPer('sem')">Esta semana</button>
-      <button class="pill" style="background:#1a3a8f" onclick="hiPer('mes')">Este mês</button>
-      <button class="pill" style="background:#1a3a8f" onclick="hiPer('ant')">Mês anterior</button>
-      <button class="pill" style="background:#555" onclick="hiCsv()">⬇ Baixar</button>
+      <button class="pill" style="color:#fff;background:#1a3a8f" onclick="hiPer('sem')">Esta semana</button>
+      <button class="pill" style="color:#fff;background:#1a3a8f" onclick="hiPer('mes')">Este mês</button>
+      <button class="pill" style="color:#fff;background:#1a3a8f" onclick="hiPer('ant')">Mês anterior</button>
+      <button class="pill" style="color:#fff;background:#555" onclick="hiCsv()">⬇ Baixar</button>
     </div>
     <div class="bar" style="flex-wrap:wrap">
       <input id="hCli" placeholder="Cliente…" oninput="hiRender()">
@@ -162,7 +162,7 @@ h1{font-size:18px;margin:8px 0 2px}
       <select id="hTi" onchange="hiRender()"></select>
       <select id="hPg" onchange="hiRender()"><option value="">Pagamento: todos</option><option value="pago">Pago</option><option value="pend">Pendente (concluídas)</option><option value="nao">Não pago</option></select>
       <select id="hTe" onchange="hiRender()"></select>
-      <button class="pill" style="background:#1f9d55" onclick="hiLote()">✔ Marcar filtradas como pagas</button>
+      <button class="pill" style="color:#fff;background:#1f9d55" onclick="hiLote()">✔ Marcar filtradas como pagas</button>
     </div>
     <div class="sum" id="hSum"></div>
     <div id="hBox" style="overflow:auto;padding:0 12px 80px"></div>
