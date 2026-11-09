@@ -160,6 +160,9 @@ h1{font-size:18px;margin:8px 0 2px}
       <select id="hFu" onchange="hiRender()"></select>
       <select id="hSt" onchange="hiRender()"><option value="">Status: todos</option><option>Agendado</option><option>A Caminho</option><option>Iniciado</option><option>Concluído</option><option>Cancelado</option></select>
       <select id="hTi" onchange="hiRender()"></select>
+      <select id="hPg" onchange="hiRender()"><option value="">Pagamento: todos</option><option value="pago">Pago</option><option value="pend">Pendente (concluídas)</option><option value="nao">Não pago</option></select>
+      <select id="hTe" onchange="hiRender()"></select>
+      <button class="pill" style="background:#1f9d55" onclick="hiLote()">✔ Marcar filtradas como pagas</button>
     </div>
     <div class="sum" id="hSum"></div>
     <div id="hBox" style="overflow:auto;padding:0 12px 80px"></div>
@@ -202,6 +205,7 @@ h1{font-size:18px;margin:8px 0 2px}
   <div class="modal">
     <h2 id="cTit">Cliente</h2>
     <div id="cForm"></div>
+    <div id="cNotas"></div>
     <div id="cLimp"></div>
     <div class="mb"><button class="b2" onclick="fechar()">Fechar</button><button class="b1" onclick="salvarC()">Salvar</button></div>
   </div>
@@ -214,6 +218,14 @@ h1{font-size:18px;margin:8px 0 2px}
     <div class="f" style="margin-top:10px"><label>Adicionar equipe (número)</label><input id="eqNova" type="number" min="1" placeholder="Ex.: 13"></div>
     <div class="mb"><button class="b2" onclick="eqTodas(true)">Marcar todas</button><button class="b2" onclick="eqTodas(false)">Desmarcar todas</button></div>
     <div class="mb"><button class="b2" onclick="fechar()">Cancelar</button><button class="b1" onclick="salvarEq()">Aplicar</button></div>
+  </div>
+</div>
+<div class="ov" id="ovPg" onclick="if(event.target===this)fechar()">
+  <div class="modal">
+    <h2 id="pgT">Pagamento</h2>
+    <div class="f"><label>Data do pagamento</label><input type="date" id="pgD"></div>
+    <div class="f"><label>Forma</label><select id="pgF"><option>Zelle</option><option>Cash</option><option>Cartão</option><option>Cheque</option><option>Venmo</option><option>Outro</option></select></div>
+    <div class="mb"><button class="b2" onclick="pgSalvar('')" id="pgDesf">Marcar não pago</button><button class="b1" onclick="pgSalvar('ok')">Salvar</button></div>
   </div>
 </div>
 <div class="ov" id="ovM" onclick="if(event.target===this)fechar()">
@@ -363,6 +375,7 @@ function desenhaPainel() {
   const rw = (k, v) => v ? '<div class="rw"><div class="k">' + k + '</div><div class="v">' + v + '</div></div>' : '';
   $('drB').innerHTML =
     rw('Status', '<span class="st d-' + st.replace(/\s+/g, '-') + '">' + esc(st) + '</span>') +
+    (st === 'Cancelado' ? '' : rw('Pagamento', (pagoTag(s) || '<span style="color:#777">Não pago</span>') + (s.forma ? ' · ' + esc(s.forma) : '') + ' <a href="#" onclick="pgAbrir([\'' + s.id + '\']);return false">' + (s.pago_em ? 'editar' : 'registrar') + '</a>')) +
     '<div class="rw"><div class="k">Equipe</div><div class="v"><select onchange="moverSel(\'' + s.id + '\',this.value)"><option value="__"' + (!s.equipe ? ' selected' : '') + '>Sem equipe</option>' + todasEq().filter(e => hidEq.indexOf(e) < 0 || e === s.equipe).map(e => '<option value="' + e + '"' + (e === s.equipe ? ' selected' : '') + '>Equipe ' + e + '</option>').join('') + '</select></div></div>' +
     rw('Pessoas', esc(pessoasDe(s)) || '—') +
     rw('Endereço', s.end ? esc(s.end) + ' <a target="_blank" href="https://www.google.com/maps/search/?api=1&query=' + q + '">📍 Maps</a>' : '') +
@@ -518,7 +531,7 @@ function novo() {
   $('sTipo').value = 'Regular Cleaning'; $('sData').value = cur; $('sSt').value = 'Agendado'; fillEq(''); chips();
   $('sInfo').style.display = 'none'; $('sCancel').style.display = 'none'; $('ovS').classList.add('on');
 }
-function fechar() { $('ovR').classList.remove('on'); $('ovM').classList.remove('on'); $('ovS').classList.remove('on'); $('ovC').classList.remove('on'); $('ovE').classList.remove('on'); }
+function fechar() { $('ovR').classList.remove('on'); $('ovM').classList.remove('on'); $('ovS').classList.remove('on'); $('ovC').classList.remove('on'); $('ovPg').classList.remove('on'); $('ovE').classList.remove('on'); }
 async function salvarS() {
   const nome = $('sCli').value.trim(), c = clientes.find(x => x.nome === nome);
   if (!nome || !$('sData').value) { toast('Informe cliente e data'); return; }
@@ -537,7 +550,7 @@ async function cancelar() {
 }
 
 // clientes
-const CF = [['nome', 'Nome'], ['telefone', 'Telefone'], ['telefone2', 'Telefone 2'], ['email', 'E-mail'], ['etapa', 'Etapa'], ['endereco', 'Endereço'], ['complemento', 'Complemento'], ['cidade', 'Cidade'], ['estado', 'Estado'], ['cep', 'CEP'], ['acesso', 'Forma de acesso'], ['codigo', 'Código de acesso'], ['equipe', 'Equipe padrão'], ['valor', 'Valor ($)'], ['frequencia', 'Frequência'], ['dia_semana', 'Dia da semana'], ['pagamento', 'Pagamento'], ['info_pagamento', 'Info. pagamento'], ['obs', 'Observações']];
+const CF = [['nome', 'Nome'], ['telefone', 'Telefone'], ['telefone2', 'Telefone 2'], ['email', 'E-mail'], ['etapa', 'Etapa'], ['endereco', 'Endereço'], ['complemento', 'Complemento'], ['tipo_endereco', 'Tipo de endereço'], ['cidade', 'Cidade'], ['estado', 'Estado'], ['cep', 'CEP'], ['acesso', 'Forma de acesso'], ['codigo', 'Código de acesso'], ['equipe', 'Equipe padrão'], ['valor', 'Valor ($)'], ['frequencia', 'Frequência'], ['dia_semana', 'Dia da semana'], ['pagamento', 'Pagamento'], ['info_pagamento', 'Info. pagamento'], ['obs', 'Observações']];
 function renderCli() {
   const q = $('cq').value.trim().toLowerCase(), et = $('cet').value;
   const l = clientes.filter(c => (!et || c.etapa === et) && (!q || [c.nome, c.telefone, c.endereco, c.email, c.cidade].join(' ').toLowerCase().indexOf(q) >= 0));
@@ -548,10 +561,10 @@ function renderCli() {
 function abrirCli(id) {
   editCli = id; const c = id ? clientes.find(x => String(x.id) === String(id)) : {};
   $('cTit').textContent = id ? c.nome : 'Novo cliente';
-  $('cForm').innerHTML = CF.map(([k, l]) => '<div class="f"><label>' + l + '</label>' + (k === 'obs' ? '<textarea id="c_' + k + '" rows="2">' + esc(c[k] || '') + '</textarea>' : '<input id="c_' + k + '" value="' + esc(c[k] || (k === 'etapa' && !id ? 'Ativo' : '')) + '">') + '</div>').join('');
+  $('cForm').innerHTML = CF.map(([k, l]) => '<div class="f"><label>' + l + '</label>' + (k === 'obs' ? '<textarea id="c_' + k + '" rows="2">' + esc(c[k] || '') + '</textarea>' : k === 'tipo_endereco' ? '<select id="c_' + k + '">' + ['', 'House', 'Airbnb', 'Condo', 'Comercial', 'Outro'].map(o => '<option' + ((c[k] || '') === o ? ' selected' : '') + '>' + o + '</option>').join('') + '</select>' : '<input id=""c_' + k + '" value="' + esc(c[k] || (k === 'etapa' && !id ? 'Ativo' : '')) + '">') + '</div>').join('');
   $('cLimp').innerHTML = id ? '<div class="empty">Carregando limpezas…</div>' : '';
   $('ovC').classList.add('on');
-  if (id) cliLimpezas(id);
+  $('cNotas').innerHTML = ''; if (id) { cliNotas(id); cliLimpezas(id); }
 }
 async function cliLimpezas(id) {
   try {
@@ -561,8 +574,8 @@ async function cliLimpezas(id) {
     const hj = isoHoje(), c = clientes.find(x => String(x.id) === String(id)) || {};
     const lin = s => { const st = s.status || 'Agendado';
       return '<div onclick="cliAbreS(\'' + esc(s.id) + '\')" style="display:flex;gap:8px;align-items:center;padding:9px 4px;border-bottom:1px solid #eee;cursor:pointer;font-size:13px">' +
-        '<div style="flex:1"><b>' + esc(fmtLong(s.data)) + '</b><div style="color:#777;font-size:12px">' + esc(s.ini ? s.ini + (s.fim ? ' – ' + s.fim : '') : 'sem horário') + ' · ' + (s.equipe ? 'Equipe ' + esc(s.equipe) : 'Sem equipe') + (s.valor ? ' · $' + esc(s.valor) : '') + '</div></div>' +
-        '<span class="st d-' + st.replace(/\s+/g, '-') + '">' + esc(st) + '</span></div>'; };
+        '<div style="flex:1"><b>' + esc(fmtLong(s.data)) + '</b><div style="color:#777;font-size:12px">' + esc(s.ini ? s.ini + (s.fim ? ' – ' + s.fim : '') : 'sem horário') + ' · ' + (s.equipe ? 'Equipe ' + esc(s.equipe) : 'Sem equipe') + (s.valor ? ' · $' + esc(s.valor) : '') + '</div></div>' + pagoTag(s) +
+        ' <span class="st d-' + st.replace(/\s+/g, '-') + '">' + esc(st) + '</span></div>'; };
     const fut = j.servicos.filter(s => s.data >= hj).sort((a, b) => a.data < b.data ? -1 : 1);
     const pas = j.servicos.filter(s => s.data < hj).sort((a, b) => a.data < b.data ? 1 : -1);
     const tit = t => '<div style="margin:14px 0 4px;font-size:11px;font-weight:700;color:#1a3a8f;text-transform:uppercase">' + t + '</div>';
@@ -571,6 +584,27 @@ async function cliLimpezas(id) {
       tit('Próximas (' + fut.length + ')') + (fut.length ? fut.map(lin).join('') : '<div class="empty" style="padding:8px">Nenhuma</div>') +
       tit('Últimas (' + pas.length + ')') + (pas.length ? pas.slice(0, 30).map(lin).join('') : '<div class="empty" style="padding:8px">Nenhuma</div>');
   } catch (e) { $('cLimp').innerHTML = '<div class="empty">Não foi possível carregar as limpezas.</div>'; }
+}
+
+const NT = { importante: ['⚠️ Importante', '#c0392b'], informacao: ['ℹ️ Informação', '#1a3a8f'], tarefa: ['☑ Tarefa', '#e66b00'], comum: ['Comum', '#777'] };
+async function cliNotas(id) {
+  try {
+    const j = await api({ action: 'nota_lista', cid: id });
+    if (!j.ok || editCli !== id) return;
+    const l = j.notas.sort((a, b) => (a.tipo === 'importante' ? 0 : 1) - (b.tipo === 'importante' ? 0 : 1));
+    $('cNotas').innerHTML = '<div style="margin-top:16px;border-top:2px solid #eee;padding-top:10px"><h2 style="margin:0 0 6px">Notas do cliente (' + l.length + ')</h2>' +
+      '<div style="font-size:11px;color:#777;margin-bottom:6px">⚠️ Importante: a cleaner precisa confirmar antes de iniciar a limpeza.</div>' +
+      l.map(n => { const t = NT[n.tipo] || NT.comum; return '<div style="border-left:4px solid ' + t[1] + ';background:#fafafa;padding:6px 8px;margin:5px 0;font-size:13px"><b style="color:' + t[1] + ';font-size:11px">' + t[0] + '</b> <a href="#" style="float:right;color:#c0392b;font-size:12px" onclick="cliNotaDel(\'' + esc(n.id) + '\');return false">excluir</a><div style="white-space:pre-wrap">' + esc(n.texto) + '</div><div style="font-size:11px;color:#999">' + esc(n.autor) + ' · ' + esc(n.data) + '</div></div>'; }).join('') +
+      '<div style="display:flex;gap:6px;margin-top:8px"><select id="ntT" style="width:auto"><option value="importante">Importante</option><option value="informacao">Informação</option><option value="tarefa">Tarefa</option><option value="comum">Comum</option></select><input id="ntX" placeholder="Escreva a nota…" style="flex:1"><button class="b1" style="padding:6px 12px" onclick="cliNotaAdd()">+</button></div></div>';
+  } catch (e) {}
+}
+async function cliNotaAdd() {
+  const t = $('ntX').value.trim(); if (!t || !editCli) return;
+  try { const j = await api({ action: 'nota_add', cid: editCli, tipo: $('ntT').value, texto: t }); if (!j.ok) throw 0; cliNotas(editCli); toast('Nota salva'); } catch (e) { toast('Não foi possível salvar'); }
+}
+async function cliNotaDel(nid) {
+  if (!confirm('Excluir esta nota?')) return;
+  try { const j = await api({ action: 'nota_del', id: nid }); if (!j.ok) throw 0; cliNotas(editCli); } catch (e) { toast('Não foi possível excluir'); }
 }
 function cliAbreS(sid) { fechar(); painel(sid); }
 function cliNovaS(id) {
@@ -591,6 +625,29 @@ async function salvarC() {
   } catch (e) { toast('Não foi possível salvar'); }
 }
 
+
+
+// ── PAGAMENTO ──
+let pgIds = [];
+const pagoTag = s => s.status === 'Cancelado' ? '' : (s.pago_em ? '<span class="st" style="background:#1f9d55">Pago ' + esc(s.pago_em.split('-').reverse().slice(0, 2).join('/')) + '</span>' : (s.status === 'Concluído' ? '<span class="st" style="background:#c0392b">Pendente</span>' : ''));
+function pgAbrir(ids, tit) {
+  pgIds = ids; $('pgT').textContent = tit || 'Pagamento';
+  const s = ids.length === 1 ? serv.find(x => x.id === ids[0]) : null;
+  $('pgD').value = (s && s.pago_em) || isoHoje(); $('pgF').value = (s && s.forma) || 'Zelle';
+  $('pgDesf').style.display = ''; $('ovPg').classList.add('on');
+}
+async function pgSalvar(modo) {
+  const dia = modo ? $('pgD').value : '', forma = $('pgF').value;
+  if (modo && !dia) { toast('Informe a data'); return; }
+  const ids = pgIds.slice(); fechar();
+  try {
+    const j = await api({ action: 'pago_lote', ids: ids.join(','), pago_em: dia, forma: dia ? forma : '' });
+    if (!j.ok) throw 0;
+    ids.forEach(id => { const s = serv.find(x => x.id === id); if (s) { s.pago_em = dia; s.forma = dia ? forma : ''; } hiDados.forEach(x => { if (x.id === id) { x.pago_em = dia; x.forma = dia ? forma : ''; } }); });
+    if (painelId) desenhaPainel(); if (tab === 'hi') hiRender(); if (editCli) cliLimpezas(editCli);
+    toast(dia ? 'Pagamento registrado' : 'Pagamento removido');
+  } catch (e) { toast('Não foi possível salvar'); }
+}
 
 // ── HISTÓRICO ──
 let hiDados = [], hiList = [];
@@ -617,6 +674,7 @@ async function hiLoad() {
     $('hEq').innerHTML = '<option value="">Equipe: todas</option><option value="__">Sem equipe</option>' + eq.map(e => '<option value="' + esc(e) + '">Equipe ' + esc(e) + '</option>').join('');
     $('hFu').innerHTML = '<option value="">Funcionário: todos</option>' + fu.map(e => '<option>' + esc(e) + '</option>').join('');
     $('hTi').innerHTML = '<option value="">Tipo: todos</option>' + ti.map(e => '<option>' + esc(e) + '</option>').join('');
+    $('hTe').innerHTML = '<option value="">Endereço: todos</option>' + [...new Set(clientes.map(c => c.tipo_endereco).filter(Boolean))].map(e => '<option>' + esc(e) + '</option>').join('');
     $('hEq').value = keep[0] || ''; $('hFu').value = keep[1] || ''; $('hTi').value = keep[2] || '';
     hiRender();
   } catch (e) { $('hBox').innerHTML = '<div class="empty">Não foi possível carregar.</div>'; }
@@ -627,23 +685,33 @@ function hiDur(s) {
   return 0;
 }
 const hiMin = m => m ? Math.floor(m / 60) + 'h ' + String(m % 60).padStart(2, '0') + 'm' : '–';
+const cliTipo = cid => ((clientes.find(c => String(c.id) === String(cid)) || {}).tipo_endereco || '');
 function hiRender() {
-  const q = $('hCli').value.trim().toLowerCase(), eq = $('hEq').value, fu = $('hFu').value, st = $('hSt').value, ti = $('hTi').value;
+  const q = $('hCli').value.trim().toLowerCase(), eq = $('hEq').value, fu = $('hFu').value, st = $('hSt').value, ti = $('hTi').value, pg = $('hPg').value, te = $('hTe').value;
   hiList = hiDados.filter(s => (!q || String(s.cliente).toLowerCase().indexOf(q) >= 0) && (!eq || (eq === '__' ? !s.equipe : s.equipe === eq)) &&
-    (!fu || String(s.pess || '').split(',').map(x => x.trim()).indexOf(fu) >= 0) && (!st || (s.status || 'Agendado') === st) && (!ti || s.tipo === ti))
+    (!fu || String(s.pess || '').split(',').map(x => x.trim()).indexOf(fu) >= 0) && (!st || (s.status || 'Agendado') === st) && (!ti || s.tipo === ti) && (!te || (cliTipo(s.cid) === te)) && (!pg || (pg === 'pago' ? !!s.pago_em : pg === 'nao' ? (!s.pago_em && s.status !== 'Cancelado') : (!s.pago_em && s.status === 'Concluído'))))
     .sort((a, b) => a.data === b.data ? String(a.ini).localeCompare(String(b.ini)) : (a.data < b.data ? -1 : 1));
   const ok = hiList.filter(s => s.status !== 'Cancelado');
   const val = ok.reduce((a, s) => a + (parseFloat(String(s.valor).replace(',', '.')) || 0), 0), dur = ok.reduce((a, s) => a + hiDur(s), 0);
-  $('hSum').innerHTML = '<b>Limpezas:</b> ' + ok.length + (hiList.length > ok.length ? ' (+' + (hiList.length - ok.length) + ' canceladas)' : '') + ' &nbsp; <b>Duração:</b> ' + (dur ? hiMin(dur) : '–') + ' &nbsp; <b>Cobranças:</b> $' + val.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const vn = s => parseFloat(String(s.valor).replace(',', '.')) || 0;
+  const rec = ok.filter(s => s.pago_em).reduce((a, s) => a + vn(s), 0), pend = ok.filter(s => !s.pago_em && s.status === 'Concluído').reduce((a, s) => a + vn(s), 0);
+  const $m = v => '$' + v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  $('hSum').innerHTML = '<b>Recebido:</b> <span style="color:#1f9d55">' + $m(rec) + '</span> &nbsp; <b>A receber (concluídas):</b> <span style="color:#c0392b">' + $m(pend) + '</span><br><b>Limpezas:</b> ' + ok.length + (hiList.length > ok.length ? ' (+' + (hiList.length - ok.length) + ' canceladas)' : '') + ' &nbsp; <b>Duração:</b> ' + (dur ? hiMin(dur) : '–') + ' &nbsp; <b>Cobranças:</b> $' + val.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   const tr = s => { const c = s.status === 'Cancelado', st = s.status || 'Agendado', p = hiDur(s);
     return '<tr onclick="cliAbreS(\'' + esc(s.id) + '\')" style="cursor:pointer;' + (c ? 'background:#fdeaea;color:#c0392b' : '') + '"><td>' + esc(s.data.split('-').reverse().slice(0, 2).join('/')) + '</td><td><b>' + esc(s.cliente) + '</b></td><td>' + esc(s.tipo) + '</td>' +
       '<td>' + (s.equipe ? 'Equipe ' + esc(s.equipe) : 'Sem equipe') + '<div style="font-size:11px;color:#777">' + esc(s.pess || '') + '</div></td><td><span class="st d-' + st.replace(/\s+/g, '-') + '">' + esc(st) + '</span></td>' +
-      '<td>' + esc(s.ini ? s.ini + (s.fim ? ' – ' + s.fim : '') : '–') + '<div style="font-size:11px;color:#777">' + hiMin(p) + '</div></td><td style="text-align:right">' + (c || !s.valor ? '–' : '$' + esc(s.valor)) + '</td></tr>'; };
-  $('hBox').innerHTML = hiList.length ? '<table class="hit"><thead><tr><th>Data</th><th>Cliente</th><th>Tipo</th><th>Equipe</th><th>Status</th><th>Horário / real</th><th>Valor</th></tr></thead><tbody>' + hiList.slice(0, 600).map(tr).join('') + '</tbody></table>' + (hiList.length > 600 ? '<div class="sum">Mostrando 600 de ' + hiList.length + ' — filtre para ver o resto.</div>' : '') : '<div class="empty">Nenhuma limpeza neste período.</div>';
+      '<td>' + esc(s.ini ? s.ini + (s.fim ? ' – ' + s.fim : '') : '–') + '<div style="font-size:11px;color:#777">' + hiMin(p) + '</div></td><td style="text-align:right">' + (c || !s.valor ? '–' : '$' + esc(s.valor)) + '</td><td onclick="event.stopPropagation();pgAbrir([\'' + esc(s.id) + '\'])">' + (c ? '–' : (pagoTag(s) || '<span style="color:#999">não pago</span>')) + (s.forma ? '<div style="font-size:11px;color:#777">' + esc(s.forma) + '</div>' : '') + '</td></tr>'; };
+  $('hBox').innerHTML = hiList.length ? '<table class="hit"><thead><tr><th>Data</th><th>Cliente</th><th>Tipo</th><th>Equipe</th><th>Status</th><th>Horário / real</th><th>Valor</th><th>Pagamento</th></tr></thead><tbody>' + hiList.slice(0, 600).map(tr).join('') + '</tbody></table>' + (hiList.length > 600 ? '<div class="sum">Mostrando 600 de ' + hiList.length + ' — filtre para ver o resto.</div>' : '') : '<div class="empty">Nenhuma limpeza neste período.</div>';
+}
+function hiLote() {
+  const ids = hiList.filter(s => s.status !== 'Cancelado' && !s.pago_em).map(s => s.id);
+  if (!ids.length) { toast('Nada pendente nesta lista'); return; }
+  pgAbrir(ids, 'Marcar ' + ids.length + ' limpezas como pagas');
+  $('pgD').value = isoHoje(); $('pgDesf').style.display = 'none';
 }
 function hiCsv() {
   const q = v => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
-  const L = [['data', 'cliente', 'tipo', 'equipe', 'pessoas', 'status', 'inicio', 'fim', 'duracao_real_min', 'valor'].join(',')].concat(hiList.map(s => [s.data, s.cliente, s.tipo, s.equipe, s.pess, s.status, s.ini, s.fim, hiDur(s) || '', s.status === 'Cancelado' ? '' : s.valor].map(q).join(',')));
+  const L = [['data', 'cliente', 'tipo', 'equipe', 'pessoas', 'status', 'inicio', 'fim', 'duracao_real_min', 'valor', 'pago_em', 'forma'].join(',')].concat(hiList.map(s => [s.data, s.cliente, s.tipo, s.equipe, s.pess, s.status, s.ini, s.fim, hiDur(s) || '', s.status === 'Cancelado' ? '' : s.valor, s.pago_em, s.forma].map(q).join(',')));
   const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['\ufeff' + L.join('\n')], { type: 'text/csv' })); a.download = 'historico_' + $('hDe').value + '_' + $('hAte').value + '.csv'; a.click();
 }
 
