@@ -41,6 +41,7 @@ h1{font-size:18px;margin:8px 0 2px}
 .card .nm{font-weight:700;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3}
 .card .dot{position:absolute;right:8px;top:8px;width:10px;height:10px;border-radius:50%;background:#1a3a8f}
 .d-Agendado{background:#1a3a8f}.d-A-Caminho{background:#e69500}.d-Iniciado{background:#e66b00}.d-Concluído,.d-Concluido{background:#1f9d55}.d-Cancelado{background:#bbb}
+.hit{width:100%;border-collapse:collapse;background:#fff;font-size:13px;border-radius:10px;overflow:hidden}.hit th{background:#f4f6fb;text-align:left;padding:8px;font-size:11px;color:#555;text-transform:uppercase;position:sticky;top:0}.hit td{padding:8px;border-top:1px solid #eee;vertical-align:top}
 .st{display:inline-block;font-size:11px;font-weight:700;border-radius:10px;padding:3px 9px;color:#fff}
 .s-Agendado{background:#1a3a8f}.s-A-Caminho{background:#e69500}.s-Iniciado{background:#e66b00}.s-Concluído,.s-Concluido{background:#1f9d55}.s-Cancelado{background:#999}
 .card.cancel{opacity:.55}.card.cancel .nm{text-decoration:line-through}
@@ -116,6 +117,7 @@ h1{font-size:18px;margin:8px 0 2px}
     <div class="tabs">
       <button class="tab on" data-t="ag" onclick="showTab('ag')">Agenda</button>
       <button class="tab" data-t="cl" onclick="showTab('cl')">Clientes</button>
+      <button class="tab" data-t="hi" onclick="showTab('hi')">📋 Histórico</button>
       <button class="tab" id="tabLu" data-t="lu" onclick="showTab('lu')" style="display:none">💰 Lucro</button>
     </div>
   </div>
@@ -143,6 +145,24 @@ h1{font-size:18px;margin:8px 0 2px}
     </div>
     <div class="sum" id="csum"></div>
     <div class="list" id="clist"></div>
+  </div>
+  <div id="p-hi" style="display:none">
+    <div class="bar" style="flex-wrap:wrap">
+      <input type="date" id="hDe" onchange="hiLoad()"><input type="date" id="hAte" onchange="hiLoad()">
+      <button class="pill" style="background:#1a3a8f" onclick="hiPer('sem')">Esta semana</button>
+      <button class="pill" style="background:#1a3a8f" onclick="hiPer('mes')">Este mês</button>
+      <button class="pill" style="background:#1a3a8f" onclick="hiPer('ant')">Mês anterior</button>
+      <button class="pill" style="background:#555" onclick="hiCsv()">⬇ Baixar</button>
+    </div>
+    <div class="bar" style="flex-wrap:wrap">
+      <input id="hCli" placeholder="Cliente…" oninput="hiRender()">
+      <select id="hEq" onchange="hiRender()"></select>
+      <select id="hFu" onchange="hiRender()"></select>
+      <select id="hSt" onchange="hiRender()"><option value="">Status: todos</option><option>Agendado</option><option>A Caminho</option><option>Iniciado</option><option>Concluído</option><option>Cancelado</option></select>
+      <select id="hTi" onchange="hiRender()"></select>
+    </div>
+    <div class="sum" id="hSum"></div>
+    <div id="hBox" style="overflow:auto;padding:0 12px 80px"></div>
   </div>
   <div id="p-lu" style="display:none">
     <div class="bar nv"><button onclick="luNav(-1)">‹</button><div class="dtitle" id="luT"></div><button onclick="luNav(1)">›</button><button onclick="luMes=isoHoje().slice(0,7);luLoad()">Este mês</button></div>
@@ -295,10 +315,12 @@ function showTab(t) {
   $('p-ag').style.display = t === 'ag' ? 'block' : 'none';
   $('p-cl').style.display = t === 'cl' ? 'block' : 'none';
   $('p-lu').style.display = t === 'lu' ? 'block' : 'none';
-  $('fab').style.display = t === 'lu' ? 'none' : '';
+  $('p-hi').style.display = t === 'hi' ? 'block' : 'none';
+  $('fab').style.display = (t === 'lu' || t === 'hi') ? 'none' : '';
   $('fab').textContent = t === 'ag' ? '+ Serviço' : '+ Cliente';
   if (t === 'cl') renderCli();
   if (t === 'lu') luLoad();
+  if (t === 'hi') { if (!$('hDe').value) hiPer('mes'); else hiRender(); }
 }
 function setView(v) { view = v; $('vDia').classList.toggle('on', v === 'dia'); $('vSem').classList.toggle('on', v === 'sem'); render(); }
 function nav(n) { cur = addD(cur, view === 'dia' ? n : n * 7); load(false); }
@@ -567,6 +589,62 @@ async function salvarC() {
     if (editCli) Object.assign(clientes.find(x => String(x.id) === String(editCli)), o); else clientes.unshift(Object.assign({ id: j.id }, o));
     fillCli(); fechar(); renderCli(); toast('Salvo');
   } catch (e) { toast('Não foi possível salvar'); }
+}
+
+
+// ── HISTÓRICO ──
+let hiDados = [], hiList = [];
+function hiPer(k) {
+  const h = isoHoje(), [y, m] = h.split('-').map(Number);
+  let de, ate;
+  if (k === 'sem') { de = domingo(h); ate = addD(de, 6); }
+  else if (k === 'mes') { de = h.slice(0, 7) + '-01'; ate = iso(new Date(y, m, 0)); }
+  else { de = iso(new Date(y, m - 2, 1)); ate = iso(new Date(y, m - 1, 0)); }
+  $('hDe').value = de; $('hAte').value = ate; hiLoad();
+}
+async function hiLoad() {
+  const de = $('hDe').value, ate = $('hAte').value; if (!de || !ate) return;
+  $('hBox').innerHTML = '<div class="empty">Carregando…</div>';
+  try {
+    const j = await api({ action: 'agenda', de: de, ate: ate, pessoas: 1 });
+    if (!j.ok) throw 0;
+    hiDados = j.servicos;
+    hiDados.forEach(x => { const i = serv.findIndex(y => y.id === x.id); if (i < 0) serv.push(x); });
+    const u = (k) => [...new Set(hiDados.map(s => s[k]).filter(Boolean))];
+    const fu = [...new Set(hiDados.flatMap(s => String(s.pess || '').split(',').map(x => x.trim()).filter(Boolean)))].sort();
+    const eq = u('equipe').sort((a, b) => a - b), ti = u('tipo').sort();
+    const keep = [$('hEq').value, $('hFu').value, $('hTi').value];
+    $('hEq').innerHTML = '<option value="">Equipe: todas</option><option value="__">Sem equipe</option>' + eq.map(e => '<option value="' + esc(e) + '">Equipe ' + esc(e) + '</option>').join('');
+    $('hFu').innerHTML = '<option value="">Funcionário: todos</option>' + fu.map(e => '<option>' + esc(e) + '</option>').join('');
+    $('hTi').innerHTML = '<option value="">Tipo: todos</option>' + ti.map(e => '<option>' + esc(e) + '</option>').join('');
+    $('hEq').value = keep[0] || ''; $('hFu').value = keep[1] || ''; $('hTi').value = keep[2] || '';
+    hiRender();
+  } catch (e) { $('hBox').innerHTML = '<div class="empty">Não foi possível carregar.</div>'; }
+}
+function hiDur(s) {
+  const a = Date.parse(String(s.real_ini || '').replace(' ', 'T')), b = Date.parse(String(s.real_fim || '').replace(' ', 'T'));
+  if (!isNaN(a) && !isNaN(b) && b > a) return Math.round((b - a) / 60000);
+  return 0;
+}
+const hiMin = m => m ? Math.floor(m / 60) + 'h ' + String(m % 60).padStart(2, '0') + 'm' : '–';
+function hiRender() {
+  const q = $('hCli').value.trim().toLowerCase(), eq = $('hEq').value, fu = $('hFu').value, st = $('hSt').value, ti = $('hTi').value;
+  hiList = hiDados.filter(s => (!q || String(s.cliente).toLowerCase().indexOf(q) >= 0) && (!eq || (eq === '__' ? !s.equipe : s.equipe === eq)) &&
+    (!fu || String(s.pess || '').split(',').map(x => x.trim()).indexOf(fu) >= 0) && (!st || (s.status || 'Agendado') === st) && (!ti || s.tipo === ti))
+    .sort((a, b) => a.data === b.data ? String(a.ini).localeCompare(String(b.ini)) : (a.data < b.data ? -1 : 1));
+  const ok = hiList.filter(s => s.status !== 'Cancelado');
+  const val = ok.reduce((a, s) => a + (parseFloat(String(s.valor).replace(',', '.')) || 0), 0), dur = ok.reduce((a, s) => a + hiDur(s), 0);
+  $('hSum').innerHTML = '<b>Limpezas:</b> ' + ok.length + (hiList.length > ok.length ? ' (+' + (hiList.length - ok.length) + ' canceladas)' : '') + ' &nbsp; <b>Duração:</b> ' + (dur ? hiMin(dur) : '–') + ' &nbsp; <b>Cobranças:</b> $' + val.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const tr = s => { const c = s.status === 'Cancelado', st = s.status || 'Agendado', p = hiDur(s);
+    return '<tr onclick="cliAbreS(\'' + esc(s.id) + '\')" style="cursor:pointer;' + (c ? 'background:#fdeaea;color:#c0392b' : '') + '"><td>' + esc(s.data.split('-').reverse().slice(0, 2).join('/')) + '</td><td><b>' + esc(s.cliente) + '</b></td><td>' + esc(s.tipo) + '</td>' +
+      '<td>' + (s.equipe ? 'Equipe ' + esc(s.equipe) : 'Sem equipe') + '<div style="font-size:11px;color:#777">' + esc(s.pess || '') + '</div></td><td><span class="st d-' + st.replace(/\s+/g, '-') + '">' + esc(st) + '</span></td>' +
+      '<td>' + esc(s.ini ? s.ini + (s.fim ? ' – ' + s.fim : '') : '–') + '<div style="font-size:11px;color:#777">' + hiMin(p) + '</div></td><td style="text-align:right">' + (c || !s.valor ? '–' : '$' + esc(s.valor)) + '</td></tr>'; };
+  $('hBox').innerHTML = hiList.length ? '<table class="hit"><thead><tr><th>Data</th><th>Cliente</th><th>Tipo</th><th>Equipe</th><th>Status</th><th>Horário / real</th><th>Valor</th></tr></thead><tbody>' + hiList.slice(0, 600).map(tr).join('') + '</tbody></table>' + (hiList.length > 600 ? '<div class="sum">Mostrando 600 de ' + hiList.length + ' — filtre para ver o resto.</div>' : '') : '<div class="empty">Nenhuma limpeza neste período.</div>';
+}
+function hiCsv() {
+  const q = v => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
+  const L = [['data', 'cliente', 'tipo', 'equipe', 'pessoas', 'status', 'inicio', 'fim', 'duracao_real_min', 'valor'].join(',')].concat(hiList.map(s => [s.data, s.cliente, s.tipo, s.equipe, s.pess, s.status, s.ini, s.fim, hiDur(s) || '', s.status === 'Cancelado' ? '' : s.valor].map(q).join(',')));
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['\ufeff' + L.join('\n')], { type: 'text/csv' })); a.download = 'historico_' + $('hDe').value + '_' + $('hAte').value + '.csv'; a.click();
 }
 
 // ── LUCRO ──
