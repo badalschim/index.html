@@ -136,6 +136,7 @@ textarea { resize: vertical; }
 
   <div id="model-tag-el" class="model-tag"></div>
   
+  <div id="inv-restored" style="display:none;background:#fff8e1;border:1px solid #f0d98a;border-radius:8px;padding:10px 12px;margin:10px 0;font-size:13px;color:#6b5400;line-height:1.5"></div>
   <div id="err-msg" class="err-msg">Preencha todos os campos obrigatórios (*) antes de gerar o PDF.</div>
 
   <div class="section">
@@ -225,6 +226,7 @@ const LOGO_B64 = "iVBORw0KGgoAAAANSUhEUgAABAAAAAQACAYAAAB/HSuDAAABCGlDQ1BJQ0MgUH
 const DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
 let currentModel = 0;
 let currentUser = '';
+let invUser = '', invTimer = null, invBusy = false;
 
 
 function sessionFromHash() {
@@ -246,7 +248,9 @@ currentModel = m === 1 ? 1 : m === 3 ? 3 : 2;
     document.getElementById('user-name').textContent = currentUser;
     const labels = {1:'Modelo: 70% do valor da casa', 2:'Modelo: Diária (valor manual)', 3:'Modelo: Misto (Diária + 70%)'};
   document.getElementById('model-tag-el').textContent = labels[currentModel] || '';
+    invUser = user;
     buildDays();
+    invRestore();
 }
 
 window.addEventListener('DOMContentLoaded', () => {
@@ -367,6 +371,78 @@ function buildDays() {
     addHouse(day);
   });
 }
+
+// ── ÚLTIMO INVOICE SALVO (neste aparelho, por usuário) ──
+const INV_FIELDS = ['acct','zelle','bank','date_issue','date_start','date_end','obs'];
+function invKey() { return 'pcs_inv_' + invUser; }
+function invSnapshot() {
+  const o = { v: 1, model: currentModel, t: Date.now(), f: {}, days: {} };
+  INV_FIELDS.forEach(id => { const el = document.getElementById(id); o.f[id] = el ? el.value : ''; });
+  DAYS.forEach(day => {
+    const rows = sel => Array.from(document.querySelectorAll(sel + ' .house-row')).map(r => Array.from(r.querySelectorAll('input')).map(i => i.value));
+    const tot = document.getElementById('total-' + day), drv = document.getElementById('driver-' + day);
+    o.days[day] = { h: rows('#houses-' + day), h70: rows('#houses70-' + day), total: tot ? tot.value : '', driver: drv ? drv.value : '' };
+  });
+  return o;
+}
+function invTemConteudo(o) {
+  if (INV_FIELDS.slice(3).some(id => o.f[id])) return true;
+  return DAYS.some(d => { const x = o.days[d]; return x.total || x.h.concat(x.h70).some(r => r.some(v => v)); });
+}
+function invSave(gerado) {
+  if (invBusy || !invUser) return;
+  try {
+    const o = invSnapshot();
+    // identidade (nome, zelle, banco) é sempre lembrada; o resto só se houver conteúdo
+    const prev = JSON.parse(localStorage.getItem(invKey()) || 'null');
+    o.gerado = gerado ? Date.now() : (prev && prev.gerado) || 0;
+    localStorage.setItem(invKey(), JSON.stringify(o));
+  } catch (e) {}
+}
+function invSaveSoon() { clearTimeout(invTimer); invTimer = setTimeout(() => invSave(false), 400); }
+function invRestore() {
+  let o = null;
+  try { o = JSON.parse(localStorage.getItem(invKey()) || 'null'); } catch (e) {}
+  if (!o || o.v !== 1) return;
+  invBusy = true;
+  try {
+    INV_FIELDS.slice(0, 3).forEach(id => { const el = document.getElementById(id); if (el && o.f[id]) el.value = o.f[id]; });
+    if (o.model === currentModel && invTemConteudo(o)) {
+      INV_FIELDS.slice(3).forEach(id => { const el = document.getElementById(id); if (el) el.value = o.f[id] || ''; });
+      DAYS.forEach(day => {
+        const x = o.days[day]; if (!x) return;
+        const fill = (cid, list, add) => {
+          const c = document.getElementById(cid); if (!c) return;
+          c.innerHTML = '';
+          const n = Math.max(list.length, cid.indexOf('houses70') === 0 ? 0 : 1);
+          for (let i = 0; i < n; i++) { add(day); const ins = c.lastElementChild.querySelectorAll('input'); (list[i] || []).forEach((v, k) => { if (ins[k]) ins[k].value = v; }); }
+        };
+        fill('houses-' + day, x.h, addHouse);
+        if (currentModel === 3) fill('houses70-' + day, x.h70, addHouse70);
+        const tot = document.getElementById('total-' + day), drv = document.getElementById('driver-' + day);
+        if (tot) tot.value = x.total || ''; if (drv && x.driver) drv.value = x.driver;
+        if (currentModel === 1) calcDayM1(day); else if (currentModel === 2) calcDayM2(day); else calcDayM3(day);
+      });
+      const quando = new Date(o.gerado || o.t).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+      const b = document.getElementById('inv-restored');
+      b.innerHTML = '📝 Seu último invoice foi restaurado' + (o.gerado ? ' (PDF gerado em ' : ' (rascunho de ') + quando + '). Corrija o que precisar e gere o PDF de novo. ' +
+        '<button onclick="invNovo()" style="margin-top:6px;border:1px solid #c9a93a;background:#fff;border-radius:6px;padding:6px 10px;font-weight:700;cursor:pointer;font-family:Arial">Começar um invoice novo</button>';
+      b.style.display = 'block';
+    }
+  } catch (e) {}
+  invBusy = false;
+}
+function invNovo() {
+  if (!confirm('Começar um invoice novo? Os dados do invoice atual serão apagados deste aparelho.')) return;
+  invBusy = true;
+  ['date_issue', 'date_start', 'date_end', 'obs'].forEach(id => { document.getElementById(id).value = ''; });
+  buildDays(); document.getElementById('grand-total').textContent = '$0.00';
+  document.getElementById('inv-restored').style.display = 'none';
+  invBusy = false; invSave(false); window.scrollTo(0, 0);
+}
+document.addEventListener('input', e => { if (e.target.closest && e.target.closest('#screen-app')) invSaveSoon(); });
+document.addEventListener('change', e => { if (e.target.closest && e.target.closest('#screen-app')) invSaveSoon(); });
+addEventListener('pagehide', () => invSave(false));
 
 function addHouse(day) {
   const c = document.getElementById('houses-'+day);
@@ -613,6 +689,7 @@ doc.text(document.getElementById('zelle').value, M+doc.getTextWidth(zelleLabel)+
   const obs=document.getElementById('obs').value.trim();
   if(obs){y+=20;doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(60,60,60);obs.split('\n').forEach(l=>{doc.text(l,M,y);y+=13;});}
 
+  invSave(true);
   doc.save(currentModel===1?'invoice-70pct.pdf':'invoice-diaria.pdf');
 }
 
