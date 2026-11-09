@@ -182,6 +182,7 @@ h1{font-size:18px;margin:8px 0 2px}
   <div class="modal">
     <h2 id="cTit">Cliente</h2>
     <div id="cForm"></div>
+    <div id="cLimp"></div>
     <div class="mb"><button class="b2" onclick="fechar()">Fechar</button><button class="b1" onclick="salvarC()">Salvar</button></div>
   </div>
 </div>
@@ -526,7 +527,34 @@ function abrirCli(id) {
   editCli = id; const c = id ? clientes.find(x => String(x.id) === String(id)) : {};
   $('cTit').textContent = id ? c.nome : 'Novo cliente';
   $('cForm').innerHTML = CF.map(([k, l]) => '<div class="f"><label>' + l + '</label>' + (k === 'obs' ? '<textarea id="c_' + k + '" rows="2">' + esc(c[k] || '') + '</textarea>' : '<input id="c_' + k + '" value="' + esc(c[k] || (k === 'etapa' && !id ? 'Ativo' : '')) + '">') + '</div>').join('');
+  $('cLimp').innerHTML = id ? '<div class="empty">Carregando limpezas…</div>' : '';
   $('ovC').classList.add('on');
+  if (id) cliLimpezas(id);
+}
+async function cliLimpezas(id) {
+  try {
+    const j = await api({ action: 'agenda', cid: id });
+    if (!j.ok || editCli !== id) return;
+    j.servicos.forEach(x => { const i = serv.findIndex(y => y.id === x.id); if (i < 0) serv.push(x); });
+    const hj = isoHoje(), c = clientes.find(x => String(x.id) === String(id)) || {};
+    const lin = s => { const st = s.status || 'Agendado';
+      return '<div onclick="cliAbreS(\'' + esc(s.id) + '\')" style="display:flex;gap:8px;align-items:center;padding:9px 4px;border-bottom:1px solid #eee;cursor:pointer;font-size:13px">' +
+        '<div style="flex:1"><b>' + esc(fmtLong(s.data)) + '</b><div style="color:#777;font-size:12px">' + esc(s.ini ? s.ini + (s.fim ? ' – ' + s.fim : '') : 'sem horário') + ' · ' + (s.equipe ? 'Equipe ' + esc(s.equipe) : 'Sem equipe') + (s.valor ? ' · $' + esc(s.valor) : '') + '</div></div>' +
+        '<span class="st d-' + st.replace(/\s+/g, '-') + '">' + esc(st) + '</span></div>'; };
+    const fut = j.servicos.filter(s => s.data >= hj).sort((a, b) => a.data < b.data ? -1 : 1);
+    const pas = j.servicos.filter(s => s.data < hj).sort((a, b) => a.data < b.data ? 1 : -1);
+    const tit = t => '<div style="margin:14px 0 4px;font-size:11px;font-weight:700;color:#1a3a8f;text-transform:uppercase">' + t + '</div>';
+    $('cLimp').innerHTML = '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:16px;border-top:2px solid #eee;padding-top:10px"><h2 style="margin:0">Limpezas</h2>' +
+      '<button class="b1" style="padding:6px 12px;font-size:12px" onclick="cliNovaS(\'' + esc(id) + '\')">+ Nova limpeza</button></div>' +
+      tit('Próximas (' + fut.length + ')') + (fut.length ? fut.map(lin).join('') : '<div class="empty" style="padding:8px">Nenhuma</div>') +
+      tit('Últimas (' + pas.length + ')') + (pas.length ? pas.slice(0, 30).map(lin).join('') : '<div class="empty" style="padding:8px">Nenhuma</div>');
+  } catch (e) { $('cLimp').innerHTML = '<div class="empty">Não foi possível carregar as limpezas.</div>'; }
+}
+function cliAbreS(sid) { fechar(); painel(sid); }
+function cliNovaS(id) {
+  const c = clientes.find(x => String(x.id) === String(id)); if (!c) return;
+  fechar(); const t0 = tab; tab = 'ag'; novo(); tab = t0;
+  $('sCli').value = c.nome; $('sEnd').value = [c.endereco, c.cidade].filter(Boolean).join(', '); $('sVal').value = c.valor || ''; fillEq(c.equipe || '');
 }
 async function salvarC() {
   const d = { action: 'cliente_salvar', id: editCli || '' };
