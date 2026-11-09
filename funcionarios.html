@@ -125,7 +125,7 @@ h1{font-size:18px;margin:8px 0 2px}.sub{font-size:12px;opacity:.85}
       <label class="chk"><input type="checkbox" id="p_dash"> 📊 Painel</label>
       <label class="chk"><input type="checkbox" id="p_atend"> 🧹 Meu atendimento (serviços do dia)</label>
       <label class="chk"><input type="checkbox" id="p_agenda"> 🗓️ Agenda, clientes e histórico</label>
-      <label class="chk"><input type="checkbox" id="p_func"> 👥 Funcionários (exige Agenda)</label>
+      <label class="chk"><input type="checkbox" id="p_func"> 👥 Funcionários (exige Agenda e ficha Administrativo)</label>
       <label class="chk" id="rowLucro"><input type="checkbox" id="p_lucro"> 💰 Lucro e salários (exige Agenda)</label>
       <label class="chk"><input type="checkbox" id="p_simula"> 👁️ "Ver como"</label>
       <label class="chk"><input type="checkbox" id="p_folga"> Aparece no relatório de folgas</label>
@@ -227,6 +227,7 @@ function abrir(i) {
   if (f.semFicha) $('f_vinc').innerHTML = '<option value="">Criar ficha nova</option>' + lista.map((x, n) => x.id && !x.email ? '<option value="' + n + '">' + esc(nomeCompleto(x)) + (x.equipe ? ' · ' + esc(x.equipe) : '') + (x.perfil ? ' · ' + esc(x.perfil) : '') + '</option>' : '').join('');
   $('p_login').checked = i === null ? true : !!f.loginAtivo;
   PERMS.forEach(k => $('p_' + k).checked = pm ? !!pm[k] : !!PERM_PADRAO[k]);
+  if (pm) $('p_func').checked = !!pm.func && !!pm.agenda;
   $('p_modelo').value = pm ? pm.modelo : ''; $('p_bloq').value = pm ? pm.bloq : '';
   $('f_email').disabled = !!f.login; togPag();
   const vl = !!me.acessoLucro; ['boxPag1', 'boxPag2', 'rowLucro'].forEach(i => $(i).style.display = vl ? '' : 'none');
