@@ -130,6 +130,7 @@ h1{font-size:18px;margin:8px 0 2px}
       <button id="vDia" class="on" onclick="setView('dia')">Dia</button>
       <button id="vSem" onclick="setView('sem')">Semana</button>
       <button onclick="abrirEq()">⚙ Equipes</button>
+      <button onclick="abrirRec()">🔁 Recorrência</button>
     </div>
     <div class="sum" id="sum"></div>
     <div id="view"></div>
@@ -202,6 +203,13 @@ h1{font-size:18px;margin:8px 0 2px}
   </div></div>
 <div id="tip"></div>
 <div id="dr"><div class="dr-h" id="drH"><button class="x" onclick="fechaPainel()">✕</button><div class="n" id="drN"></div><div class="t" id="drT"></div></div><div class="dr-b" id="drB"></div><div class="dr-f" id="drF"></div></div>
+<div class="ov" id="ovR" onclick="if(event.target===this)fechar()">
+  <div class="modal"><h2>🔁 Gerar serviços recorrentes</h2>
+    <div class="info">Continua a agenda dos clientes <b>ativos</b> (semanal, a cada N semanas, primeiro/terceiro/último do mês) a partir do último serviço de cada um. Não cria serviço repetido nem recria os cancelados.</div>
+    <div class="f"><label>Gerar quantas semanas à frente?</label><select id="recSem"><option value="4">4 semanas</option><option value="8" selected>8 semanas</option><option value="12">12 semanas</option></select></div>
+    <div id="recRes" class="info" style="display:none"></div>
+    <div class="mb"><button class="b2" onclick="fechar()">Fechar</button><button class="b2" onclick="recPrevia()">Ver prévia</button><button class="b1" id="recGo" onclick="recGerar()" disabled>Gerar</button></div>
+  </div></div>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -487,7 +495,7 @@ function novo() {
   $('sTipo').value = 'Regular Cleaning'; $('sData').value = cur; $('sSt').value = 'Agendado'; fillEq(''); chips();
   $('sInfo').style.display = 'none'; $('sCancel').style.display = 'none'; $('ovS').classList.add('on');
 }
-function fechar() { $('ovM').classList.remove('on'); $('ovS').classList.remove('on'); $('ovC').classList.remove('on'); $('ovE').classList.remove('on'); }
+function fechar() { $('ovR').classList.remove('on'); $('ovM').classList.remove('on'); $('ovS').classList.remove('on'); $('ovC').classList.remove('on'); $('ovE').classList.remove('on'); }
 async function salvarS() {
   const nome = $('sCli').value.trim(), c = clientes.find(x => x.nome === nome);
   if (!nome || !$('sData').value) { toast('Informe cliente e data'); return; }
@@ -579,6 +587,30 @@ async function cuAdd() {
   try { const j = await api({ action: 'custo_add', data: $('cuD').value, valor: v, descricao: $('cuT').value }); if (!j.ok) throw 0; toast('Custo lançado'); luCache = {}; luLoad(); } catch (e) { toast('Não foi possível salvar'); }
 }
 async function cuDel(id) { if (!confirm('Apagar este custo?')) return; try { const j = await api({ action: 'custo_del', id: id }); if (!j.ok) throw 0; luCache = {}; luLoad(); } catch (e) { toast('Não foi possível apagar'); } }
+// ── RECORRÊNCIA ──
+function abrirRec() { $('recRes').style.display = 'none'; $('recGo').disabled = true; $('ovR').classList.add('on'); }
+function fmtBR(s) { return s.slice(8, 10) + '/' + s.slice(5, 7); }
+async function recPrevia() {
+  $('recGo').disabled = true; $('recRes').style.display = 'block'; $('recRes').textContent = 'Calculando…';
+  try {
+    const j = await api({ action: 'recorrencia', semanas: $('recSem').value, simular: '1' });
+    if (!j.ok) throw 0;
+    $('recRes').innerHTML = '<b>' + j.total + ' serviços</b> para <b>' + j.clientes + ' clientes</b> (de ' + fmtBR(j.de) + ' a ' + fmtBR(j.ate) + ').' +
+      (j.amostra.length ? '<br><br>Exemplos:<br>• ' + j.amostra.map(esc).join('<br>• ') : '') +
+      (j.nSemBase ? '<br><br>⚠️ ' + j.nSemBase + ' cliente(s) sem data base (sem serviço nem "última limpeza"): ' + esc(j.semBase.join(', ')) : '');
+    $('recGo').disabled = !j.total;
+    if (!j.total) $('recRes').innerHTML += '<br><br>Nada a gerar: a agenda já está em dia.';
+  } catch (e) { $('recRes').textContent = 'Não foi possível calcular.'; }
+}
+async function recGerar() {
+  if (!confirm('Criar os serviços da prévia na agenda?')) return;
+  $('recGo').disabled = true; $('recRes').textContent = 'Gerando…';
+  try {
+    const j = await api({ action: 'recorrencia', semanas: $('recSem').value, simular: '0' });
+    if (!j.ok) throw 0;
+    fechar(); toast(j.total + ' serviços criados'); loaded = [null, null]; await load(true);
+  } catch (e) { $('recRes').textContent = 'Não foi possível gerar (modo "Ver como" é só leitura).'; }
+}
 boot();
 </script>
 <script src="sim.js"></script>
