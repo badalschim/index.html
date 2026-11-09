@@ -20,15 +20,28 @@ h1{font-size:18px;margin:8px 0 2px}.sub{font-size:12px;opacity:.85}
 .bar input,.bar select,.bar button{border:1px solid #cfd6ea;background:#fff;border-radius:8px;padding:9px 10px;font-size:13px;font-family:Arial}
 .bar .grow{flex:1;min-width:150px}
 .bar button.on{background:#1a3a8f;color:#fff;font-weight:700}
-.list{padding:0 12px;display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:10px}
-.fc{background:#fff;border-radius:12px;padding:12px;box-shadow:0 1px 3px rgba(0,0,0,.07);cursor:pointer;border-left:5px solid #1a3a8f}
-.fc.off{opacity:.55;border-left-color:#999}
-.fc .n{font-weight:700;font-size:15px}
-.fc .m{font-size:12px;color:#666;margin-top:3px;line-height:1.5}
-.tag{display:inline-block;font-size:10px;font-weight:700;border-radius:10px;padding:2px 8px;margin:4px 4px 0 0;background:#eef2ff;color:#1a3a8f}
+.list{padding:0 12px 12px;max-width:1500px;margin:0 auto}
+.stats{display:flex;gap:8px;padding:10px 12px 0;overflow-x:auto;max-width:1500px;margin:0 auto}
+.st{background:#fff;border-radius:12px;padding:8px 14px;box-shadow:0 1px 3px rgba(0,0,0,.07);min-width:96px;flex:0 0 auto}
+.st b{display:block;font-size:20px;color:#1a3a8f}.st span{font-size:11px;color:#777;font-weight:700}
+.st.w b{color:#c0392b}
+.grp{margin-top:14px}
+.gh{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;color:#fff;border-radius:10px;padding:7px 12px;margin-bottom:8px}
+.gh .c{margin-left:auto;background:rgba(255,255,255,.25);border-radius:10px;padding:1px 9px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px}
+.fc{background:#fff;border-radius:12px;padding:12px;box-shadow:0 1px 3px rgba(0,0,0,.07);cursor:pointer;display:flex;gap:11px;align-items:flex-start;transition:box-shadow .15s,transform .15s}
+.fc:hover{box-shadow:0 4px 12px rgba(0,0,0,.13);transform:translateY(-1px)}
+.fc.off{opacity:.55}
+.av{width:42px;height:42px;border-radius:50%;color:#fff;font-weight:700;font-size:15px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.fb{flex:1;min-width:0}
+.fc .n{font-weight:700;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fc .m{font-size:12px;color:#666;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tag{display:inline-block;font-size:10px;font-weight:700;border-radius:10px;padding:2px 8px;margin:5px 4px 0 0;background:#eef2ff;color:#1a3a8f}
 .tag.g{background:#e6f6ea;color:#1f7a45}.tag.o{background:#fff4d6;color:#9a6a00}.tag.r{background:#fdeaea;color:#c0392b}
-.acts{display:flex;gap:6px;margin-top:8px}
-.acts a{font-size:12px;font-weight:700;text-decoration:none;background:#f0f4ff;color:#1a3a8f;border-radius:14px;padding:5px 10px}
+.acts{display:flex;flex-direction:column;gap:6px}
+.acts a{width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-size:15px;text-decoration:none;background:#f0f4ff;border-radius:50%}
+.seg{display:inline-flex;border:1px solid #cfd6ea;border-radius:8px;overflow:hidden}
+.seg button{border:none!important;border-radius:0!important}
 .fab{position:fixed;right:16px;bottom:16px;background:#1a3a8f;color:#fff;border:none;border-radius:28px;padding:14px 20px;font-weight:700;font-size:14px;box-shadow:0 4px 14px rgba(0,0,0,.3);cursor:pointer;font-family:Arial}
 .ov{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:flex-end;justify-content:center;z-index:50}
 .ov.on{display:flex}
@@ -61,7 +74,9 @@ h1{font-size:18px;margin:8px 0 2px}.sub{font-size:12px;opacity:.85}
     <button id="bA" class="on" onclick="setAt('sim')">Ativos</button>
     <button id="bI" onclick="setAt('nao')">Inativos</button>
     <button id="bT" onclick="setAt('')">Todos</button>
+    <span class="seg"><button id="vG" class="on" onclick="setVw('g')">Por equipe</button><button id="vL" onclick="setVw('l')">Lista</button></span>
   </div>
+  <div class="stats" id="stats"></div>
   <div class="list" id="list"></div>
   <button class="fab" onclick="abrir(null)">+ Funcionário</button>
 </div>
@@ -160,21 +175,46 @@ async function load() {
   } catch (e) { $('list').innerHTML = '<div class="empty">Erro de conexão.</div>'; }
 }
 function setAt(v) { at = v; ['A', 'I', 'T'].forEach(k => $('b' + k).classList.toggle('on', (k === 'A' && v === 'sim') || (k === 'I' && v === 'nao') || (k === 'T' && v === ''))); render(); }
+const COLORS = ['#1a3a8f','#1f9d55','#c0392b','#8e44ad','#e67e22','#16a085','#d35400','#2c3e50','#b8860b','#c2185b','#0277bd','#6d4c41'];
+const cor = eq => /^\d+$/.test(eq || '') ? COLORS[parseInt(eq) % COLORS.length] : '#777';
+let vw = 'g';
+function setVw(v) { vw = v; $('vG').classList.toggle('on', v === 'g'); $('vL').classList.toggle('on', v === 'l'); render(); }
+const norm = s => String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ').trim();
+const ini = f => { const p = ((f.nome || '') + ' ' + (f.sobrenome || '')).trim().split(/\s+/); return ((p[0] || '?')[0] + (p[1] ? p[1][0] : '')).toUpperCase(); };
+function pagTxt(f) { return f.pag_tipo && f.pag_valor ? (f.pag_tipo === 'percentual' ? esc(f.pag_valor) + '%' : f.pag_tipo === 'misto' ? '$' + esc(f.pag_valor) + '/dia + ' + esc(f.pag_valor2 || 0) + '% fds' : '$' + esc(f.pag_valor) + '/dia') : ''; }
+function cardF(f, dup) {
+  const i = lista.indexOf(f), a = aniv(f.nascimento), tel = String(f.telefone || '').replace(/\D/g, '');
+  const eh = /^\d+$/.test(f.equipe || '');
+  const semPag = !!me.acessoLucro && eh && !(f.pag_tipo && f.pag_valor) && (f.ativo || 'sim') === 'sim';
+  return '<div class="fc' + ((f.ativo || 'sim') === 'nao' ? ' off' : '') + '" onclick="abrir(' + i + ')"><div class="av" style="background:' + cor(f.equipe) + '">' + esc(ini(f)) + '</div><div class="fb"><div class="n">' + esc(nomeCompleto(f)) + '</div>' +
+    '<div class="m">' + esc([f.perfil, f.telefone].filter(Boolean).join(' · ') || f.email || '—') + '</div>' +
+    (f.email ? '<div class="m">' + esc(f.email) + '</div>' : '') +
+    '<div>' + (vw === 'l' && f.equipe ? '<span class="tag">' + (eh ? 'Equipe ' : '') + esc(f.equipe) + '</span>' : '') +
+    (f.motorista === 'sim' ? '<span class="tag o">🚗 Motorista</span>' : '') + (me.acessoLucro && pagTxt(f) ? '<span class="tag o">' + pagTxt(f) + '</span>' : '') +
+    (f.login ? '<span class="tag g">📱 App</span>' : '') + (a !== null && a <= 14 ? '<span class="tag r">🎂 ' + (a === 0 ? 'hoje' : 'em ' + a + 'd') + '</span>' : '') +
+    (f.semFicha ? '<span class="tag r">sem ficha</span>' : '') + (semPag ? '<span class="tag r">⚠ sem pagamento</span>' : '') + (dup ? '<span class="tag r">nome repetido</span>' : '') + '</div></div>' +
+    (tel ? '<div class="acts" onclick="event.stopPropagation()"><a title="Ligar" href="tel:' + tel + '">📞</a><a title="WhatsApp" href="https://wa.me/' + (tel.length === 10 ? '1' : '') + tel + '" target="_blank">💬</a></div>' : '') + '</div>';
+}
 function render() {
   const q = $('q').value.trim().toLowerCase(), fe = $('fe').value;
   const l = lista.filter(f => (!at || (f.ativo || 'sim') === at) && (!fe || f.equipe === fe) && (!q || [nomeCompleto(f), f.telefone, f.email, f.perfil].join(' ').toLowerCase().indexOf(q) >= 0))
     .sort((a, b) => nomeCompleto(a).localeCompare(nomeCompleto(b)));
-  const ativos = lista.filter(f => (f.ativo || 'sim') === 'sim').length;
-  $('sub').textContent = ativos + ' ativos · ' + (lista.length - ativos) + ' inativos';
-  $('list').innerHTML = l.length ? l.map(f => {
-    const i = lista.indexOf(f), a = aniv(f.nascimento), tel = String(f.telefone || '').replace(/\D/g, '');
-    return '<div class="fc' + ((f.ativo || 'sim') === 'nao' ? ' off' : '') + '" onclick="abrir(' + i + ')"><div class="n">' + esc(nomeCompleto(f)) + '</div>' +
-      '<div class="m">' + esc([f.telefone, f.email].filter(Boolean).join(' · ')) + '</div>' +
-      '<div>' + (f.equipe ? '<span class="tag">' + (/^\d+$/.test(f.equipe) ? 'Equipe ' : '') + esc(f.equipe) + '</span>' : '') + (f.perfil ? '<span class="tag g">' + esc(f.perfil) + '</span>' : '') +
-      (f.motorista === 'sim' ? '<span class="tag o">🚗 Motorista</span>' : '') + (f.pag_tipo && f.pag_valor ? '<span class="tag o">' + (f.pag_tipo === 'percentual' ? esc(f.pag_valor) + '%' : f.pag_tipo === 'misto' ? '$' + esc(f.pag_valor) + '/dia + ' + esc(f.pag_valor2 || 0) + '% fds' : '$' + esc(f.pag_valor) + '/dia') + '</span>' : (f.pagamento ? '<span class="tag o">' + esc(f.pagamento) + '</span>' : '')) +
-      (f.login ? '<span class="tag">📱 App</span>' : '') + (a !== null && a <= 14 ? '<span class="tag r">🎂 ' + (a === 0 ? 'hoje' : 'em ' + a + 'd') + '</span>' : '') + (f.semFicha ? '<span class="tag r">sem ficha</span>' : '') + '</div>' +
-      (tel ? '<div class="acts" onclick="event.stopPropagation()"><a href="tel:' + tel + '">📞 Ligar</a><a href="https://wa.me/' + (tel.length === 10 ? '1' : '') + tel + '" target="_blank">💬 WhatsApp</a></div>' : '') + '</div>';
-  }).join('') : '<div class="empty">Nenhum funcionário.</div>';
+  const atv = lista.filter(f => (f.ativo || 'sim') === 'sim');
+  $('sub').textContent = atv.length + ' ativos · ' + (lista.length - atv.length) + ' inativos';
+  const cont = {}; atv.forEach(f => { const k = norm(nomeCompleto(f)); cont[k] = (cont[k] || 0) + 1; });
+  const dupN = Object.keys(cont).filter(k => cont[k] > 1).length;
+  const semPagN = me.acessoLucro ? atv.filter(f => /^\d+$/.test(f.equipe || '') && !(f.pag_tipo && f.pag_valor)).length : 0;
+  const eqN = new Set(atv.map(f => f.equipe).filter(e => /^\d+$/.test(e || ''))).size;
+  const niver = atv.filter(f => { const a = aniv(f.nascimento); return a !== null && a <= 14; }).length;
+  const stat = (n, t, w) => '<div class="st' + (w && n ? ' w' : '') + '"><b>' + n + '</b><span>' + t + '</span></div>';
+  $('stats').innerHTML = stat(atv.length, 'Ativos') + stat(eqN, 'Equipes em uso') + stat(atv.filter(f => f.login).length, 'Com app') + (me.acessoLucro ? stat(semPagN, 'Sem pagamento', 1) : '') + stat(dupN, 'Nomes repetidos', 1) + stat(niver, 'Aniversários 14d');
+  if (!l.length) { $('list').innerHTML = '<div class="empty">Nenhum funcionário.</div>'; return; }
+  const dup = f => cont[norm(nomeCompleto(f))] > 1 && (f.ativo || 'sim') === 'sim';
+  if (vw === 'l') { $('list').innerHTML = '<div class="grid">' + l.map(f => cardF(f, dup(f))).join('') + '</div>'; return; }
+  const g = {}; l.forEach(f => { const k = f.equipe || ''; (g[k] = g[k] || []).push(f); });
+  const ordem = k => /^\d+$/.test(k) ? parseInt(k) : (k === '' ? 9998 : 9000 + k.charCodeAt(0));
+  $('list').innerHTML = Object.keys(g).sort((a, b) => ordem(a) - ordem(b)).map(k =>
+    '<div class="grp"><div class="gh" style="background:' + cor(k) + '">' + (k === '' ? 'Sem equipe' : /^\d+$/.test(k) ? 'Equipe ' + esc(k) : esc(k)) + '<span class="c">' + g[k].length + '</span></div><div class="grid">' + g[k].map(f => cardF(f, dup(f))).join('') + '</div></div>').join('');
 }
 function abrir(i) {
   editKey = i; const f = i === null ? { ativo: 'sim', motorista: 'nao' } : lista[i];
